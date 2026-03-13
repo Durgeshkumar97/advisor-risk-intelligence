@@ -34,6 +34,11 @@
 
         </div>
 
+        <!-- TRUST NOTE -->
+        <p class="hero-subtrust">
+            No advisory. No stock tips. Structural risk intelligence only.
+        </p>
+
         <!-- CREDIBILITY STRIP -->
         <div class="credibility-strip">
             <div>Sector Risk Models</div>
@@ -59,6 +64,24 @@
 </section>
 
 
+<!-- TRUST STRIP -->
+<section class="trust-strip">
+
+    <div class="trust-item">
+        Institutional-style portfolio risk framing
+    </div>
+
+    <div class="trust-item">
+        Manual analytical delivery
+    </div>
+
+    <div class="trust-item">
+        Built for self-directed investors
+    </div>
+
+</section>
+
+
 <!-- PROBLEM SECTION -->
 <section class="problem">
 
@@ -76,4 +99,90 @@
 
 </section>
 
-@endsection
+
+<!-- PAGE STYLING -->
+<style>
+
+/* HERO TRUST NOTE */
+
+.hero-subtrust {
+    margin-top: 18px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+
+/* TRUST STRIP */
+
+.trust-strip {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 28px 24px;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    background: var(--card-bg);
+}
+
+.trust-item {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+
+/* CREDIBILITY STRIP */
+
+.credibility-strip {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+
+/* PROBLEM SECTION */
+
+.problem {
+    padding: 80px 24px;
+}
+
+.problem-container {
+    max-width: 900px;
+    margin: auto;
+    text-align: center;
+}
+
+.problem h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.problem p {
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .credibility-strip {
+        justify-content: center;
+    }
+
+    .trust-strip {
+        flex-direction: column;
+        text-align: center;
+    }
+
+}
+
+</style>
+
+@endsection 
