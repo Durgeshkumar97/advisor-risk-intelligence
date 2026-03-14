@@ -91,14 +91,38 @@
 
         <p>
             Most traders assume diversification equals safety.
-            But capital often clusters across sectors, themes,
-            and liquidity regimes. Hidden exposure creates structural drawdowns.
+            But capital often clusters across sectors, themes, and liquidity regimes.
+            Hidden exposure creates structural drawdowns.
         </p>
 
     </div>
 
 </section>
 
+<style>
+
+.problem {
+    padding: 100px 20px 80px;
+    text-align: center;
+}
+
+.problem-container {
+    max-width: 900px;
+    margin: auto;
+}
+
+.problem h2 {
+    font-size: 54px;
+    margin-bottom: 28px;
+}
+
+.problem p {
+    font-size: 20px;
+    line-height: 1.8;
+    color: var(--text-muted);
+}
+
+</style>
 
 <!-- PAGE STYLING -->
 <style>
@@ -113,27 +137,24 @@
 
 
 /* TRUST STRIP */
-
 .trust-strip {
     display: flex;
     justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    padding: 28px 24px;
+    gap: 60px;
+    padding: 36px 20px;
     border-top: 1px solid var(--border-light);
     border-bottom: 1px solid var(--border-light);
-    background: var(--card-bg);
+    margin-top: 40px;
+    flex-wrap: wrap;
 }
 
 .trust-item {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-muted);
-}
+} 
 
-
-/* CREDIBILITY STRIP */
-
+/* CREDIBILITY STRIP */ 
 .credibility-strip {
     display: flex;
     gap: 20px;
@@ -185,4 +206,5 @@
 
 </style>
 
-@endsection 
+@endsection  
+

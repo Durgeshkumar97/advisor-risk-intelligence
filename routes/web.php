@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IntakeController;
 
 Route::get('/', [PageController::class, 'home']);
 Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -15,7 +16,7 @@ Route::get('/about', [PageController::class, 'about']);
 Route::get('/legal', [PageController::class, 'legal']);
 Route::get('/contact', [PageController::class, 'contact']);
 Route::get('/intake', [PageController::class, 'intake']);
-
+Route::post('/intake-submit', [IntakeController::class, 'submit'])->name('intake.submit');
 Route::get('/market-returns', [MarketController::class, 'returns'])
     ->name('market.returns');
 
