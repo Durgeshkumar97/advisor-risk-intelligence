@@ -1,394 +1,294 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Risk Intelligence</title>
 
-<title>Portfolio Risk Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
- 
-<script>
-if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark-mode");
-}
-</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
 
-<style>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-nav: rgba(255,255,255,.92);
 
-/* =========================
-   THEME VARIABLES
-========================= */
+            --text-main: #0f172a;
+            --text-muted: #475569;
 
-:root {
-    --bg-main: #ffffff;
-    --bg-hero: #ffffff;
-    --text-main: #000000;
-    --text-muted: #334155;
+            --border-light: #e2e8f0;
 
-    --nav-bg: #ffffff;
-    --footer-bg: #ffffff;
+            --shadow-soft: 0 10px 30px rgba(0,0,0,.08);
+            --shadow-strong: 0 18px 40px rgba(0,0,0,.25);
 
-    --card-bg: #ffffff;
-    --border-light: #e5e7eb;
-}
+            --accent: #0f172a;
 
-.dark-mode {
-    --bg-main: #0e0e0e;
-    --bg-hero: #151515;
-    --text-main: #f5f5f5;
-    --text-muted: #bbbbbb;
+            --radius-card: 22px;
+            --radius-input: 14px;
 
-    --nav-bg: #1a1a1a;
-    --footer-bg: #1a1a1a;
+            --transition-fast: .25s ease;
+        }
 
-    --card-bg: #1f1f1f;
-    --border-light: rgba(255,255,255,0.12);
-}
+        .dark-mode {
+            --bg-main: #020617;
+            --bg-card: #0f172a;
+            --bg-nav: rgba(15,23,42,.92);
 
-/* =========================
-   GLOBAL
-========================= */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
 
-* {
-    box-sizing: border-box;
-}
+            --border-light: rgba(255,255,255,.08);
 
-html,
-body {
-    background: var(--bg-main);
-}
+            --shadow-soft: 0 10px 30px rgba(0,0,0,.28);
+            --shadow-strong: 0 18px 40px rgba(0,0,0,.45);
 
-body {
-    margin: 0;
-    padding-top: 80px;
-    font-family: Arial, sans-serif;
-    color: var(--text-main);
-    transition: background 0.3s ease, color 0.3s ease;
-}
+            --accent: #f8fafc;
+        }
 
-/* =========================
-   NAVBAR
-========================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
 
-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: var(--nav-bg);
-    padding: 18px 40px;
-    border-bottom: 1px solid var(--border-light);
-    z-index: 1000;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-top: 90px;
+            transition: background .3s ease, color .3s ease;
+        }
 
-.nav-wrapper {
-    max-width: 1200px;
-    margin: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
 
-nav a {
-    color: var(--text-main);
-    margin-right: 25px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 14px;
-}
+        .container {
+            width: 90%;
+            max-width: 1280px;
+            margin: auto;
+        }
 
-.theme-toggle {
-    cursor: pointer;
-    padding: 8px 14px;
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    font-size: 13px;
-    background: transparent;
-    color: var(--text-main);
-}
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--bg-nav);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 1000;
+        }
 
-/* =========================
-   CONTAINER
-========================= */
+        .nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
 
-.container {
-    max-width: 1400px;
-    margin: auto;
-    padding: 0 24px;
-}
+        nav ul {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
 
-/* =========================
-   HERO SECTION
-========================= */
+        nav ul li a {
+            font-size: 14px;
+            font-weight: 500;
+            transition: opacity .2s ease;
+        }
 
-.hero {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 80px;
-    padding: 100px 40px;
-    min-height: 85vh;
-    max-width: 1400px;
-    margin: auto;
-    background: var(--bg-hero);
-}
+        nav ul li a:hover {
+            opacity: 0.65;
+        }
 
-.hero-left {
-    flex: 1;
-    max-width: 620px;
-}
+        .theme-toggle {
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-main);
+            cursor: pointer;
+        }
 
-.hero-left h1 {
-    font-size: clamp(54px, 5vw, 72px);
-    line-height: 1.05;
-    margin-bottom: 24px;
-}
+        section {
+            padding: 72px 0;
+        }
 
-.hero-left p {
-    font-size: 20px;
-    line-height: 1.7;
-    color: var(--text-muted);
-    max-width: 540px;
-}
+        h1 {
+            font-size: clamp(40px, 4.6vw, 64px);
+            line-height: 1.02;
+            letter-spacing: -0.8px;
+            font-weight: 800;
+            max-width: 720px;
+        }
 
-/* =========================
-   BUTTON SYSTEM
-========================= */
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 22px;
+            letter-spacing: -0.4px;
+        }
 
-.hero-buttons {
-    margin-top: 28px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-}
+        h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
 
-.btn-primary,
-.btn-secondary {
-    padding: 14px 24px;
-    min-width: 220px;
-    min-height: 54px;
+        p {
+            color: var(--text-muted);
+        }
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 220px;
+            padding: 16px 30px;
+            border-radius: var(--radius-input);
+            background: var(--accent);
+            color: var(--bg-card);
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            transition: all var(--transition-fast);
+        }
 
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 16px;
-    text-align: center;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-strong);
+        }
 
-    white-space: nowrap;
-}
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-soft);
+        }
 
-.btn-primary {
-    background: #28ae2f;
-    color: #ffffff;
-    border: none;
-}
+        .premium-card {
+            transition: transform var(--transition-fast);
+        }
 
-.btn-secondary {
-    border: 1.5px solid var(--border-light);
-    color: var(--text-main);
-    background: transparent;
-}
+        .premium-card:hover {
+            transform: translateY(-4px);
+        }
 
-/* =========================
-   TOGGLE BUTTONS
-========================= */
+        input,
+        textarea {
+            width: 100%;
+            padding: 18px;
+            border-radius: var(--radius-input);
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 15px;
+        }
 
-.toggle-btn {
-    padding: 10px 20px;
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: bold;
-    color: var(--text-main);
-    background: transparent;
-    margin: 0 10px;
-    transition: all 0.2s ease;
-}
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(15,23,42,0.08);
+        }
 
-.toggle-btn:hover {
-    background: var(--border-light);
-}
+        button[type="submit"] {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: var(--radius-input);
+            background: var(--accent);
+            color: var(--bg-card);
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-.toggle-btn.active {
-    background: var(--text-main);
-    color: var(--bg-main);
-}
+        .success-box,
+        .error-box {
+            max-width: 760px;
+            margin: 0 auto 20px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
 
-/* =========================
-   DASHBOARD IMAGE
-========================= */
+        .success-box {
+            background: #ecfdf5;
+            color: #166534;
+        }
 
-.hero-right {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
+        .error-box {
+            background: #fef2f2;
+            color: #991b1b;
+        }
 
-.dashboard-wrapper {
-    width: 100%;
-    max-width: 650px;
-}
+        footer {
+            padding: 45px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-light);
+        }
 
-.dashboard-wrapper img {
-    width: 100%;
-    display: block;
-    border-radius: 14px;
-}
+        @media (max-width: 900px) {
+            .nav-wrapper {
+                flex-wrap: wrap;
+                gap: 14px;
+            }
 
-body:not(.dark-mode) .dashboard-wrapper img {
-    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-}
+            nav ul {
+                gap: 14px;
+                flex-wrap: wrap;
+            }
 
-.dark-mode .dashboard-wrapper img {
-    box-shadow:
-        0 20px 40px rgba(0,0,0,0.25),
-        0 5px 15px rgba(0,0,0,0.15);
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-footer {
-    padding: 40px 20px;
-}
-
-.footer-box {
-    background: var(--footer-bg);
-    max-width: 900px;
-    margin: auto;
-    padding: 24px;
-    border-radius: 10px;
-    text-align: center;
-    border: 1px solid var(--border-light);
-}
-
-.footer-links {
-    display: flex;
-    justify-content: center;
-    gap: 28px;
-    flex-wrap: wrap;
-}
-
-.footer-links a {
-    color: var(--text-main);
-    text-decoration: none;
-    font-size: 13px;
-    opacity: 0.75;
-}
-
-.footer-links a:hover {
-    opacity: 1;
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 1024px) {
-
-    .hero {
-        flex-direction: column;
-        text-align: center;
-        padding: 60px 24px;
-        gap: 40px;
-    }
-
-    .hero-left {
-        max-width: 100%;
-    }
-
-    .hero-left p {
-        margin: auto;
-    }
-
-    .hero-buttons {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .btn-primary,
-    .btn-secondary {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .hero-right {
-        width: 100%;
-    }
-
-    .dashboard-wrapper {
-        max-width: 100%;
-    }
-}
-
-</style>
+            section {
+                padding: 56px 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<nav>
-    <div class="nav-wrapper">
-        <div>
-            <a href="/">Home</a>
-            <a href="/service">Service</a>
-            <a href="/pricing">Pricing</a>
-            <a href="/how-it-works">How It Works</a>
-            <a href="/contact">Contact</a>
-        </div>
-
-        <button id="themeBtn" class="theme-toggle">
-            🌙 Night Mode
-        </button>
-    </div>
-</nav>
-
-<div class="container">
-    @yield('content')
-</div>
-
-<footer>
-    <div class="footer-box">
-        <div style="font-size:14px;margin-bottom:14px;">
-            Risk Intelligence — Not Investment Advisory
-        </div>
-
-        <div class="footer-links">
-            <a href="https://www.sebi.gov.in" target="_blank">SEBI Official Website</a>
-            <a href="https://investor.sebi.gov.in" target="_blank">SEBI Investor Education</a>
-            <a href="https://www.nseindia.com/invest/education" target="_blank">NSE Risk Education</a>
-        </div>
-    </div>
-</footer>
+@yield('content')
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('themeBtn');
 
-    const btn = document.getElementById("themeBtn");
+    if (!btn) return;
 
     function setTheme(mode) {
-        if (mode === "dark") {
-            document.documentElement.classList.add("dark-mode");
-            btn.textContent = "☀️ Day Mode";
+        if (mode === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            btn.textContent = '☀️';
         } else {
-            document.documentElement.classList.remove("dark-mode");
-            btn.textContent = "🌙 Night Mode";
+            document.documentElement.classList.remove('dark-mode');
+            btn.textContent = '🌙';
         }
     }
 
-    btn.addEventListener("click", function () {
-        const isDark = document.documentElement.classList.contains("dark-mode");
-        const newMode = isDark ? "light" : "dark";
-        localStorage.setItem("theme", newMode);
-        setTheme(newMode);
+    btn.addEventListener('click', function () {
+        const next = document.documentElement.classList.contains('dark-mode')
+            ? 'light'
+            : 'dark';
+
+        localStorage.setItem('theme', next);
+        setTheme(next);
     });
 
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-
+    setTheme(localStorage.getItem('theme') || 'light');
 });
 </script>
 
