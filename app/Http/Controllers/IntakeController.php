@@ -11,63 +11,110 @@ class IntakeController extends Controller
 {
     public function ifaSubmit(Request $request)
     {
-        $request->validate([
-            'advisor_name' => 'required',
-            'email' => 'required|email',
-            'firm_name' => 'required',
-            'clients_managed' => 'required',
-            'main_concern' => 'nullable',
-            'portfolio_file' => 'required|file|mimes:pdf,xlsx,xls,csv,jpg,jpeg,png,webp|max:10240'
+        $validated = $request->validate([
+            'advisor_name'   => 'required|string|max:120',
+            'email'          => 'required|email|max:200',
+            'whatsapp'       => 'required|string|max:20',
+            'firm_name'      => 'required|string|max:200',
+            'plan'           => 'required|in:starter,pro,team',
+            'portfolio_type' => 'required|in:midcap,largecap,debt,multi',
+            'main_concern'   => 'nullable|string|max:1000',
         ]);
- 
+
         $submissionId = Str::uuid();
- 
-        $file = $request->file('portfolio_file');
-        $folder = 'ifa_uploads/' . now()->format('Y-m');
-        $filePath = $file->store($folder);
- 
+
+        $planLabels = [
+            'starter' => 'Starter — ₹799/mo',
+            'pro'     => 'Pro — ₹1,499/mo',
+            'team'    => 'Team — ₹3,499/mo',
+        ];
+
+        $portfolioLabels = [
+            'midcap'   => 'Mid-cap equity',
+            'largecap' => 'Large-cap equity',
+            'debt'     => 'Debt / hybrid',
+            'multi'    => 'Multi-asset (all three)',
+        ];
+
         ClientIntake::create([
             'submission_uuid' => $submissionId,
-            'name' => $request->advisor_name,
-            'email' => $request->email,
-            'phone' => null,
-            'portfolio_value' => $request->clients_managed,
-            'objective' => 'IFA Submission',
-            'horizon' => 'NA',
-            'archetype' => 'Advisor',
-            'concern' => $request->main_concern ?? 'No concern specified',
-            'notes' => $request->firm_name,
-            'lead_score' => 'IFA Lead',
-            'ai_status' => 'pending'
+            'name'            => $validated['advisor_name'],
+            'email'           => $validated['email'],
+            'phone'           => $validated['whatsapp'],
+            'portfolio_value' => $portfolioLabels[$validated['portfolio_type']],
+            'objective'       => 'IFA Trial Subscription — ' . $planLabels[$validated['plan']],
+            'horizon'         => 'Ongoing subscription',
+            'archetype'       => 'IFA Advisor',
+            'concern'         => $validated['main_concern'] ?? 'No specific concern provided',
+            'notes'           => $validated['firm_name'],
+            'lead_score'      => 'IFA Lead — ' . strtoupper($validated['plan']),
+            'ai_status'       => 'pending',
         ]);
- 
+
+        $emailBody = "New RiskLens Trial Subscription\n";
+        $emailBody .= str_repeat('─', 46) . "\n\n";
+        $emailBody .= "Submission ID : {$submissionId}\n";
+        $emailBody .= "Name          : {$validated['advisor_name']}\n";
+        $emailBody .= "Email         : {$validated['email']}\n";
+        $emailBody .= "WhatsApp      : {$validated['whatsapp']}\n";
+        $emailBody .= "Firm          : {$validated['firm_name']}\n";
+        $emailBody .= "Plan selected : {$planLabels[$validated['plan']]}\n";
+        $emailBody .= "Portfolio type: {$portfolioLabels[$validated['portfolio_type']]}\n";
+        $emailBody .= "Concern       : " . ($validated['main_concern'] ?? 'None') . "\n\n";
+        $emailBody .= "ACTION: Add WhatsApp number to Monday morning broadcast list.\n";
+        $emailBody .= "First report to be sent this coming Monday at 9:00 AM.\n";
+
         try {
             Mail::raw(
-                "New Advisor Submission Received:
-
-Submission ID: {$submissionId}
-Advisor Name: {$request->advisor_name}
-Email: {$request->email}
-Firm Name: {$request->firm_name}
-Clients Managed: {$request->clients_managed}
-Main Concern: " . ($request->main_concern ?? 'No concern specified') . "
-Stored File: {$filePath}",
-                function ($message) use ($file, $request) {
+                $emailBody,
+                function ($message) use ($validated, $submissionId) {
                     $message->to('durgeshduklan5@gmail.com')
-                            ->subject('New Advisor Submission')
-                            ->attach(
-                                $file->getRealPath(),
-                                [
-                                    'as' => str_replace(' ', '_', $request->advisor_name) . '_' . $file->getClientOriginalName()
-                                ]
-                            );
+                            ->subject("New Trial Signup — {$validated['advisor_name']} ({$validated['plan']})");
                 }
             );
         } catch (\Exception $e) {
-            return back()->with('error', 'Mail failed: ' . $e->getMessage());
+            // Log the error but don't fail the submission — the DB record is saved.
+            Log::error('RiskLens signup email failed: ' . $e->getMessage(), [
+                'submission_uuid' => $submissionId,
+                'email'           => $validated['email'],
+            ]);
         }
 
-        return back()->with('success', 'Advisor submission received successfully.');
+        return back()->with('success', 'You\'re in. Your first report arrives this Monday at 9am on WhatsApp.');
     }
-}
 
+    /**
+     * Legacy general intake (keep for other forms)
+     */
+    public function submit(Request $request)
+    {
+        $request->validate([
+            'name'            => 'required|string|max:120',
+            'email'           => 'required|email',
+            'phone'           => 'nullable|string|max:20',
+            'portfolio_value' => 'nullable|string|max:100',
+            'objective'       => 'nullable|string|max:200',
+            'horizon'         => 'nullable|string|max:100',
+            'concern'         => 'nullable|string|max:1000',
+        ]);
+
+        $submissionId = Str::uuid();
+
+        ClientIntake::create([
+            'submission_uuid' => $submissionId,
+            'name'            => $request->name,
+            'email'           => $request->email,
+            'phone'           => $request->phone,
+            'portfolio_value' => $request->portfolio_value,
+            'objective'       => $request->objective ?? 'General enquiry',
+            'horizon'         => $request->horizon ?? 'NA',
+            'archetype'       => 'Prospect',
+            'concern'         => $request->concern ?? 'No concern specified',
+            'notes'           => null,
+            'lead_score'      => 'General Lead',
+            'ai_status'       => 'pending',
+        ]);
+
+        return back()->with('success', 'Thank you. We will be in touch within 24 hours.');
+    }
+} 
