@@ -6,11 +6,14 @@
     <title>RiskLens — Risk Intelligence for Independent Advisors</title>
     <meta name="description" content="Weekly plain-English risk intelligence reports for IFAs managing ₹5L–₹25L client portfolios. Delivered every Monday on WhatsApp.">
 
+    {{-- CSRF token in meta so JS fetch calls can read it if needed --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
-        /* ── TOKENS ─────────────────────────────── */
+        /* ── DESIGN TOKENS ───────────────────────────────── */
         :root {
             --ink:        #0f0e0c;
             --ink-2:      #3a3830;
@@ -33,16 +36,15 @@
             --sans:   'DM Sans', system-ui, sans-serif;
             --mono:   'JetBrains Mono', monospace;
 
-            --radius-sm:  3px;
-            --radius-md:  6px;
-            --radius-lg:  10px;
+            --radius-sm: 3px;
+            --radius-md: 6px;
+            --radius-lg: 10px;
 
-            --shadow-sm:  0 1px 4px rgba(0,0,0,.06);
-            --shadow-md:  0 4px 20px rgba(0,0,0,.08);
-            --shadow-lg:  0 8px 40px rgba(0,0,0,.10);
+            --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
+            --shadow-md: 0 4px 20px rgba(0,0,0,.08);
         }
 
-        /* ── RESET ───────────────────────────────── */
+        /* ── RESET ───────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
 
@@ -55,11 +57,11 @@
             font-size: 16px;
         }
 
-        a { text-decoration: none; color: inherit; }
-        ul { list-style: none; }
-        img { display: block; max-width: 100%; }
+        a    { text-decoration: none; color: inherit; }
+        ul   { list-style: none; }
+        img  { display: block; max-width: 100%; }
 
-        /* ── TYPOGRAPHY ──────────────────────────── */
+        /* ── TYPOGRAPHY ──────────────────────────────────── */
         h1 {
             font-family: var(--serif);
             font-size: clamp(2.4rem, 5vw, 3.8rem);
@@ -92,19 +94,16 @@
             color: var(--ink-3);
         }
 
-        /* ── LAYOUT ──────────────────────────────── */
+        /* ── LAYOUT ──────────────────────────────────────── */
         .container {
             width: min(90%, 1160px);
             margin-inline: auto;
         }
 
         section { padding: 80px 0; }
+        section + section { border-top: 1px solid var(--paper-3); }
 
-        section + section {
-            border-top: 1px solid var(--paper-3);
-        }
-
-        /* ── NAV ─────────────────────────────────── */
+        /* ── NAV ─────────────────────────────────────────── */
         nav {
             position: fixed;
             inset: 0 0 auto 0;
@@ -121,18 +120,10 @@
             padding: 1.1rem 0;
         }
 
-        .nav-logo {
-            font-family: var(--serif);
-            font-size: 1.25rem;
-            color: var(--ink);
-        }
-
+        .nav-logo { font-family: var(--serif); font-size: 1.25rem; color: var(--ink); }
         .nav-logo span { color: var(--gold); }
 
-        nav ul {
-            display: flex;
-            gap: 2rem;
-        }
+        nav ul { display: flex; gap: 2rem; }
 
         nav ul li a {
             font-size: .875rem;
@@ -142,7 +133,7 @@
 
         nav ul li a:hover { color: var(--ink); }
 
-        /* ── BUTTONS ─────────────────────────────── */
+        /* ── BUTTONS ─────────────────────────────────────── */
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -160,11 +151,7 @@
             letter-spacing: .01em;
         }
 
-        .btn-primary:hover {
-            background: var(--ink-2);
-            transform: translateY(-1px);
-        }
-
+        .btn-primary:hover  { background: var(--ink-2); transform: translateY(-1px); }
         .btn-primary:active { transform: scale(.98); }
 
         .btn-outline {
@@ -186,7 +173,7 @@
 
         .btn-outline:hover { background: var(--ink); color: var(--paper); }
 
-        /* ── CARDS ───────────────────────────────── */
+        /* ── CARDS ───────────────────────────────────────── */
         .card {
             background: white;
             border: 1px solid var(--paper-3);
@@ -194,16 +181,10 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .card-hover {
-            transition: box-shadow .2s, transform .2s;
-        }
+        .card-hover { transition: box-shadow .2s, transform .2s; }
+        .card-hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 
-        .card-hover:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        /* ── METRIC BOX ──────────────────────────── */
+        /* ── METRIC BOX ──────────────────────────────────── */
         .metric-box {
             background: var(--paper-2);
             border: 1px solid var(--paper-3);
@@ -213,7 +194,7 @@
             color: var(--ink-2);
         }
 
-        /* ── PILLS / BADGES ──────────────────────── */
+        /* ── PILLS ───────────────────────────────────────── */
         .pill {
             display: inline-block;
             font-family: var(--mono);
@@ -224,13 +205,13 @@
             font-weight: 500;
         }
 
-        .pill-high   { background: var(--red-lt);   color: var(--red);   }
-        .pill-med    { background: var(--amber-lt);  color: var(--amber); }
-        .pill-low    { background: var(--green-lt);  color: var(--green); }
-        .pill-gold   { background: var(--gold-lt);   color: var(--gold);  }
-        .pill-blue   { background: var(--blue-lt);   color: var(--blue);  }
+        .pill-high { background: var(--red-lt);   color: var(--red);   }
+        .pill-med  { background: var(--amber-lt);  color: var(--amber); }
+        .pill-low  { background: var(--green-lt);  color: var(--green); }
+        .pill-gold { background: var(--gold-lt);   color: var(--gold);  }
+        .pill-blue { background: var(--blue-lt);   color: var(--blue);  }
 
-        /* ── FORMS ───────────────────────────────── */
+        /* ── FORMS ───────────────────────────────────────── */
         .form-group { margin-bottom: 1.1rem; }
 
         .form-group label {
@@ -266,7 +247,7 @@
 
         textarea { resize: vertical; min-height: 110px; }
 
-        /* ── ALERTS ──────────────────────────────── */
+        /* ── FLASH ALERTS ────────────────────────────────── */
         .alert {
             max-width: 680px;
             margin: 0 auto 1.5rem;
@@ -280,20 +261,21 @@
         .alert-success { background: var(--green-lt); color: var(--green); }
         .alert-error   { background: var(--red-lt);   color: var(--red);   }
 
-        /* ── FOOTER ──────────────────────────────── */
+        /* ── FOOTER ──────────────────────────────────────── */
         footer {
             background: var(--ink);
             color: rgba(255,255,255,.45);
             text-align: center;
             padding: 2.5rem 1rem;
-            font-size: .8rem;
+            font-size: .78rem;
             font-family: var(--mono);
             letter-spacing: .04em;
+            line-height: 1.9;
         }
 
         footer strong { color: rgba(255,255,255,.7); font-weight: 500; }
 
-        /* ── UTILITIES ───────────────────────────── */
+        /* ── UTILITIES ───────────────────────────────────── */
         .text-center { text-align: center; }
         .text-muted  { color: var(--ink-3); }
         .mt-sm { margin-top: .5rem; }
@@ -301,12 +283,12 @@
         .mt-lg { margin-top: 1.5rem; }
         .mt-xl { margin-top: 2.5rem; }
 
-        /* ── RESPONSIVE ──────────────────────────── */
+        /* ── RESPONSIVE ──────────────────────────────────── */
         @media (max-width: 768px) {
-            nav ul { display: none; }
+            nav ul    { display: none; }
             .nav-inner { padding: .9rem 0; }
-            h1 { font-size: 2.2rem; }
-            section { padding: 56px 0; }
+            h1         { font-size: 2.2rem; }
+            section    { padding: 56px 0; }
         }
     </style>
 </head>
@@ -316,11 +298,14 @@
 @yield('content')
 
 <footer>
-    <strong>RiskLens</strong> &nbsp;·&nbsp; Risk intelligence, not investment advice &nbsp;·&nbsp;
-    For informational purposes only. Not SEBI-registered investment advisory. &nbsp;·&nbsp;
-    © {{ date('Y') }} RiskLens
+    <strong>RiskLens</strong>
+    &nbsp;·&nbsp;
+    Risk intelligence for independent financial advisors
+    &nbsp;·&nbsp;
+    For informational purposes only. Not SEBI-registered investment advice.
+    <br>
+    © {{ date('Y') }} RiskLens &nbsp;·&nbsp; durgeshduklan5@gmail.com
 </footer>
 
 </body>
 </html>
- 
