@@ -6,75 +6,59 @@ use App\Http\Controllers\MarketController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\Admin\AdminIntakeController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
 | PUBLIC PAGES
 |--------------------------------------------------------------------------
 */
-Route::controller(PageController::class)->group(function () {
-    Route::get('/',              'home')->name('home');
-    Route::get('/service',       'service')->name('service');
-    Route::get('/how-it-works',  'how')->name('how');
-    Route::get('/sample-report', 'sample')->name('sample');
-    Route::get('/pricing',       'pricing')->name('pricing');
-    Route::get('/about',         'about')->name('about');
-    Route::get('/legal',         'legal')->name('legal');
-    Route::get('/contact',       'contact')->name('contact');
+Route::get('/', [PageController::class, 'home'])->name('home');
+
+Route::get('/service', [PageController::class, 'service']);
+Route::get('/how-it-works', [PageController::class, 'how']);
+Route::get('/sample-report', [PageController::class, 'sample']);
+Route::get('/pricing', [PageController::class, 'pricing']);
+Route::get('/about', [PageController::class, 'about']);
+Route::get('/legal', [PageController::class, 'legal']);
+Route::get('/contact', [PageController::class, 'contact']);
+
+/*
+|--------------------------------------------------------------------------
+| INTAKE
+|--------------------------------------------------------------------------
+*/
+Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])->name('ifa.submit');
+Route::post('/intake-submit', [IntakeController::class, 'submit']);
+
+/*
+|--------------------------------------------------------------------------
+| AUTH DASHBOARD (Breeze)
+|--------------------------------------------------------------------------
+*/
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN PANEL (IMPORTANT)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/intakes', [AdminIntakeController::class, 'index'])->name('intakes.index');
+    Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])->name('intakes.show');
 });
 
 /*
 |--------------------------------------------------------------------------
-| INTAKE & LEAD CAPTURE (RATE LIMITED)
+| PROFILE (Breeze)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['throttle:10,1'])->group(function () {
-    Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
-        ->name('ifa.submit');
-
-    Route::post('/intake-submit', [IntakeController::class, 'submit'])
-        ->name('intake.submit');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Legacy intake page
-Route::get('/intake', [PageController::class, 'intake'])->name('intake');
-
-/*
-|--------------------------------------------------------------------------
-| TOOLS
-|--------------------------------------------------------------------------
-*/
-Route::prefix('tools')->group(function () {
-    Route::get('/market-returns', [MarketController::class, 'returns'])
-        ->name('market.returns');
-
-    Route::get('/investor-profile', fn () => view('archetype'))
-        ->name('investor.profile');
-});
-
-/*
-|--------------------------------------------------------------------------
-| USER DASHBOARD (PROTECTED)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
-});
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN PANEL (STRICT CONTROL)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'can:admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-
-        Route::get('/intakes', [AdminIntakeController::class, 'index'])
-            ->name('intakes.index');
-
-        Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])
-            ->name('intakes.show');
-    });
+require __DIR__.'/auth.php';
