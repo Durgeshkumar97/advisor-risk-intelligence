@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\ClientIntake;
+use Carbon\Carbon;
 
 class IntakeController extends Controller
 {
@@ -23,6 +24,11 @@ class IntakeController extends Controller
         'multi'    => 'Multi-asset',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | MAIN SIGNUP (CORE FLOW)
+    |--------------------------------------------------------------------------
+    */
     public function ifaSubmit(Request $request)
     {
         $validated = $request->validate([
@@ -35,24 +41,44 @@ class IntakeController extends Controller
             'main_concern'   => 'nullable|string|max:1000',
         ]);
 
-        // Deduplication (critical)
+        /*
+        |--------------------------------------------------------------------------
+        | DEDUP CHECK (IMPORTANT)
+        |--------------------------------------------------------------------------
+        */
         $exists = ClientIntake::where('email', $validated['email'])
-            ->orWhere('phone', $validated['whatsapp'])
-            ->exists();
+            ->orWhere('whatsapp', $validated['whatsapp'])
+            ->first();
 
         if ($exists) {
             return back()->with('success', 'Already registered. We will contact you.');
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | CORE BUSINESS LOGIC
+        |--------------------------------------------------------------------------
+        */
         $submissionId = (string) Str::uuid();
+
+        $trialStart = now();
+        $trialEnd   = now()->addDays(14); // 14 day trial
 
         ClientIntake::create([
             'submission_uuid' => $submissionId,
+
+            // BASIC
             'name'            => $validated['advisor_name'],
             'email'           => $validated['email'],
-            'phone'           => $validated['whatsapp'],
+            'whatsapp'        => $validated['whatsapp'],
 
-            // store raw + label (important for analytics)
+            // BUSINESS
+            'plan'            => $validated['plan'],
+            'trial_started_at'=> $trialStart,
+            'trial_ends_at'   => $trialEnd,
+            'status'          => 'trial',
+
+            // INTAKE
             'portfolio_type'  => $validated['portfolio_type'],
             'portfolio_value' => $this->portfolioLabels[$validated['portfolio_type']],
 
@@ -62,20 +88,28 @@ class IntakeController extends Controller
             'concern'         => $validated['main_concern'] ?? null,
             'notes'           => $validated['firm_name'],
 
-            // numeric scoring (important)
+            // AI
             'lead_score'      => $this->getLeadScore($validated['plan']),
-
             'ai_status'       => 'pending',
         ]);
 
-        // async email (non-blocking)
+        /*
+        |--------------------------------------------------------------------------
+        | ASYNC EMAIL (NON-BLOCKING)
+        |--------------------------------------------------------------------------
+        */
         dispatch(function () use ($submissionId, $validated) {
             $this->sendSignupNotification($submissionId, $validated);
         });
 
-        return back()->with('success', 'You\'re in. First report arrives Monday 9 AM on WhatsApp.');
+        return back()->with('success', 'Trial started. First report Monday 9 AM.');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | GENERIC CONTACT FORM
+    |--------------------------------------------------------------------------
+    */
     public function submit(Request $request)
     {
         $validated = $request->validate([
@@ -92,51 +126,59 @@ class IntakeController extends Controller
             'submission_uuid' => (string) Str::uuid(),
             'name'            => $validated['name'],
             'email'           => $validated['email'],
-            'phone'           => $validated['phone'],
-            'portfolio_value' => $validated['portfolio_value'],
+            'whatsapp'        => $validated['phone'],
+
             'objective'       => $validated['objective'] ?? 'General enquiry',
             'horizon'         => $validated['horizon'],
             'archetype'       => 'Prospect',
             'concern'         => $validated['concern'],
-            'notes'           => null,
+
+            'status'          => 'lead',
             'lead_score'      => 10,
             'ai_status'       => 'pending',
         ]);
 
-        return back()->with('success', 'Thank you. We will contact you within 24 hours.');
+        return back()->with('success', 'We will contact you within 24 hours.');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LEAD SCORING ENGINE
+    |--------------------------------------------------------------------------
+    */
     private function getLeadScore(string $plan): int
     {
         return match ($plan) {
-            'team' => 90,
-            'pro' => 70,
+            'team'    => 90,
+            'pro'     => 70,
             'starter' => 50,
         };
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN NOTIFICATION
+    |--------------------------------------------------------------------------
+    */
     private function sendSignupNotification(string $submissionId, array $validated): void
     {
         $plan      = $this->planLabels[$validated['plan']];
         $portfolio = $this->portfolioLabels[$validated['portfolio_type']];
 
-        $body  = "New Trial Signup\n";
-        $body .= "----------------------------------------\n\n";
-        $body .= "ID        : {$submissionId}\n";
-        $body .= "Name      : {$validated['advisor_name']}\n";
-        $body .= "Email     : {$validated['email']}\n";
-        $body .= "WhatsApp  : {$validated['whatsapp']}\n";
-        $body .= "Firm      : {$validated['firm_name']}\n";
-        $body .= "Plan      : {$plan}\n";
-        $body .= "Portfolio : {$portfolio}\n";
-        $body .= "Concern   : " . ($validated['main_concern'] ?? 'None') . "\n\n";
-        $body .= "ACTION: Add to WhatsApp broadcast list.\n";
+        $body  = "New Trial Signup\n\n";
+        $body .= "ID: {$submissionId}\n";
+        $body .= "Name: {$validated['advisor_name']}\n";
+        $body .= "Email: {$validated['email']}\n";
+        $body .= "WhatsApp: {$validated['whatsapp']}\n";
+        $body .= "Firm: {$validated['firm_name']}\n";
+        $body .= "Plan: {$plan}\n";
+        $body .= "Portfolio: {$portfolio}\n";
 
         try {
             Mail::raw($body, function ($message) use ($validated, $plan) {
                 $message
-                    ->to(config('mail.admin_email')) 
-                    ->subject("New signup — {$validated['advisor_name']} ({$plan})");
+                    ->to(config('mail.admin_email'))
+                    ->subject("New Signup — {$validated['advisor_name']} ({$plan})");
             });
         } catch (\Exception $e) {
             Log::error('Signup email failed', [
