@@ -7,16 +7,16 @@ use Illuminate\Support\Facades\Route;
 | CONTROLLERS
 |--------------------------------------------------------------------------
 */
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\MarketController;
+use App\Http\Controllers\PageController; 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\Admin\AdminIntakeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
-| SERVICES (NEW ADD)
+| SERVICES
 |--------------------------------------------------------------------------
 */
 use App\Services\ReportService;
@@ -25,15 +25,14 @@ use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC PAGES (LANDING + SECTIONS)
+| PUBLIC PAGES
 |--------------------------------------------------------------------------
-| Single-page app → sab sections home pe hi render ho rahe hain
-*/
+*/ 
 Route::get('/', [PageController::class, 'home'])->name('home');
 
 /*
 |--------------------------------------------------------------------------
-| TEST ROUTE (DEV ONLY)
+| TEST ROUTE
 |--------------------------------------------------------------------------
 */
 Route::get('/test', function () {
@@ -42,10 +41,9 @@ Route::get('/test', function () {
 
 /*
 |--------------------------------------------------------------------------
-| TEST REPORT (🔥 NEW - IMPORTANT)
+| TEST REPORT (DEBUG TOOL)
 |--------------------------------------------------------------------------
-| Weekly report test (manual trigger)
-*/
+*/ 
 Route::get('/test-report', function () {
 
     $user = ClientIntake::first();
@@ -54,8 +52,7 @@ Route::get('/test-report', function () {
         return "No users found in database";
     }
 
-    $service = new ReportService();
-
+    $service = new ReportService(); 
     $report = $service->generate($user);
 
     Mail::raw($report, function ($message) use ($user) {
@@ -68,7 +65,7 @@ Route::get('/test-report', function () {
 
 /*
 |--------------------------------------------------------------------------
-| INTAKE (FORM SUBMISSION)
+| INTAKE
 |--------------------------------------------------------------------------
 */
 Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
@@ -76,7 +73,21 @@ Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD (AUTH)
+| CHECKOUT + PAYMENT FLOW (FINAL)
+|--------------------------------------------------------------------------
+*/
+Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
+    ->name('checkout');
+
+Route::post('/checkout/process', [CheckoutController::class, 'process'])
+    ->name('checkout.process');
+
+Route::get('/payment/success', [CheckoutController::class, 'success'])
+    ->name('payment.success');
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
 |--------------------------------------------------------------------------
 */
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -85,7 +96,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN PANEL
+| ADMIN
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])
@@ -103,7 +114,7 @@ Route::middleware(['auth'])
 
 /*
 |--------------------------------------------------------------------------
-| PROFILE (USER SETTINGS)
+| PROFILE
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
@@ -119,9 +130,13 @@ Route::middleware('auth')->group(function () {
 
 });
 
+Route::view('/terms', 'legal.terms')->name('terms');
+Route::view('/privacy', 'legal.privacy')->name('privacy');
+Route::view('/refund', 'legal.refund')->name('refund');
+
 /*
 |--------------------------------------------------------------------------
-| AUTH (BREEZE)
+| AUTH
 |--------------------------------------------------------------------------
 */
 require __DIR__.'/auth.php';

@@ -52,13 +52,24 @@
   --shadow-hover: 0 4px 20px rgba(0,0,0,.5);
 }
 
-/* =========================
-   BASE RESET
-========================= */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+
+.content-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.content-list li {
+    position: relative;
+    padding-left: 1.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.content-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: bold;
 }
 
 body {
@@ -274,6 +285,51 @@ nav ul li a:hover { color: var(--ink); }
 
 .form-group textarea { min-height: 90px; resize: vertical; }
 
+/* ─────────────────────────────
+   SCROLL REVEAL (TOPMATE STYLE)
+───────────────────────────── */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    transition: all 0.7s cubic-bezier(0.2, 0.65, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* LEFT / RIGHT ENTRY */
+.reveal-left {
+    transform: translateX(-60px);
+}
+.reveal-left.active {
+    transform: translateX(0);
+}
+
+.reveal-right {
+    transform: translateX(60px);
+}
+.reveal-right.active {
+    transform: translateX(0);
+}
+
+/* SCALE POP (Topmate feel) */
+.reveal-pop {
+    transform: scale(0.92);
+}
+.reveal-pop.active {
+    transform: scale(1);
+}
+
+/* STAGGER SUPPORT */
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
 /* =========================
    ALERT
 ========================= */
@@ -285,3 +341,52 @@ nav ul li a:hover { color: var(--ink); }
    PLAN OPTION
 ========================= */
 .plan-opt:hover { border-color: var(--ink) !important; }
+
+/* =========================
+   PRICING BADGE (MOST POPULAR)
+========================= */
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Light mode */
+[data-theme="light"] .popular-badge {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* Dark mode */
+[data-theme="dark"] .popular-badge {
+  background: #f9fafb;
+  color: #111827;
+}
+
+/* =========================
+   PRO CARD IMPROVEMENT
+========================= */
+.pro-card {
+  position: relative;
+  border: 2px solid var(--ink);
+  transform: scale(1.03);
+}
+
+/* Dark mode */
+[data-theme="dark"] .pro-card {
+  border: 2px solid #ffffff20;
+}
+
+/* Hover effect */
+.pro-card:hover {
+  transform: scale(1.05);
+  transition: all 0.25s ease;
+}
+
