@@ -5,7 +5,7 @@
 {{-- ── NAV ──────────────────────────────────────────── --}}
 <nav class="reveal reveal-pop">
     <div class="container nav-inner">
-        <a href="#home" class="nav-logo">Risk<span>Lens</span></a>
+        <a href="#home" class="nav-logo">Risk<span>Signal</span></a>
         <ul>
             <li><a href="#service">Services</a></li>
             <li><a href="#how-it-works">How it works</a></li>
@@ -43,7 +43,7 @@
             </h1>
 
             <p style="margin-top:1.4rem;max-width:480px;font-size:1rem;">
-                RiskLens delivers a plain-English weekly risk report to IFAs managing
+                RiskSignal delivers a plain-English weekly risk report to IFAs managing
                 ₹5L–₹25L portfolios. One page. Three risks. One script to use with
                 clients. On WhatsApp every Monday morning.
             </p>
@@ -235,7 +235,7 @@
             corrections — not because their portfolios were wrong, but because they didn't
             know what to say when a client called in a panic. The entire Indian research
             industry writes for analysts. Nobody writes for the IFA in Jaipur with 40
-            clients and 20 minutes to prepare. RiskLens fixes that.
+            clients and 20 minutes to prepare. RiskSignal fixes that.
         </p>
 
         <div class="reveal reveal-pop reveal-delay-2"
@@ -250,7 +250,7 @@
                     Durgesh Kumar
                 </div>
                 <div style="font-size:.75rem;color:var(--ink-3);">
-                    Founder, RiskLens · Independent Financial Advisor
+                    Founder, RiskSignal · Independent Financial Advisor
                 </div>
             </div>
 
@@ -408,7 +408,7 @@
     <div class="card reveal reveal-right reveal-delay-2"
          style="padding:1.5rem;border:2px solid var(--gold);">
 
-        <strong style="display:block;margin-bottom:.8rem;">RiskLens</strong>
+        <strong style="display:block;margin-bottom:.8rem;">RiskSignal</strong>
 
         <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;">
 
@@ -571,7 +571,7 @@
                      style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--paper-3);display:flex;justify-content:space-between;align-items:center;">
 
                     <span style="font-family:var(--serif);font-size:.9rem;color:var(--ink-3);">
-                        Risk<span style="color:var(--gold);">Lens</span>
+                        Risk<span style="color:var(--gold);">Signal</span>
                     </span>
 
                     <span style="font-family:var(--mono);font-size:.65rem;color:var(--ink-3);">
@@ -607,7 +607,7 @@
             </p>
 
             <p style="margin-top:.8rem;font-size:.9rem;color:var(--ink-2);">
-                <strong>Your response (from RiskLens):</strong><br>
+                <strong>Your response (from RiskSignal):</strong><br>
                 “Foreign investors have been selling for 3 weeks — that's normal during uncertainty.
                 Your long-term plan is intact. No action needed.”
             </p>

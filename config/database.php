@@ -8,120 +8,141 @@ return [
     |--------------------------------------------------------------------------
     | Default Database Connection
     |--------------------------------------------------------------------------
-    | PostgreSQL is the single source of truth across local + production.
-    | No SQLite/MySQL usage outside edge-case testing.
     */
-    'default' => env('DB_CONNECTION', 'pgsql'),
+
+    'default' => env('DB_CONNECTION', 'mysql'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Connections
+    |--------------------------------------------------------------------------
+    */
 
     'connections' => [
 
         /*
         |--------------------------------------------------------------------------
-        | PostgreSQL (PRIMARY)
+        | MySQL (PRIMARY - Hostinger Compatible)
         |--------------------------------------------------------------------------
-        | Local:
-        |   createdb risklens
-        |
-        | Production:
-        |   Managed via Laravel Cloud (auto-injected env vars)
-        |
-        | Notes:
-        |   - UUID supported natively
-        |   - SSL auto-handled in production
         */
-        'pgsql' => [
-            'driver'   => 'pgsql',
-            'url'      => env('DB_URL'),
 
-            'host'     => env('DB_HOST', '127.0.0.1'),
-            'port'     => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'risklens'),
-            'username' => env('DB_USERNAME', 'postgres'),
+        'mysql' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
 
-            'charset'  => 'utf8',
-            'prefix'   => '',
+            'unix_socket' => env('DB_SOCKET', ''),
+
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+
+            'prefix' => '',
             'prefix_indexes' => true,
 
-            'search_path' => 'public',
+            'strict' => true,
+            'engine' => null,
 
-            /*
-            | SSL:
-            | - prefer → local works without SSL
-            | - require → enforce encrypted connections
-            */
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
-
-            /*
-            | Performance + Safety (IMPORTANT)
-            */
-            'options' => extension_loaded('pdo_pgsql') ? array_filter([
-                PDO::ATTR_TIMEOUT => 5, // fail fast on slow connections
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_TIMEOUT => 5,
             ]) : [],
         ],
 
         /*
         |--------------------------------------------------------------------------
-        | SQLite (Testing Only)
+        | SQLite (Optional - Testing)
         |--------------------------------------------------------------------------
         */
+
         'sqlite' => [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix'   => '',
+            'prefix' => '',
             'foreign_key_constraints' => true,
         ],
 
         /*
         |--------------------------------------------------------------------------
-        | Fallback Drivers (DO NOT USE)
+        | PostgreSQL (Optional - Future Use)
         |--------------------------------------------------------------------------
-        | Kept only to avoid package-level crashes.
         */
-        'mysql' => [
-            'driver' => 'mysql',
-        ], 
 
-        'mariadb' => [
-            'driver' => 'mariadb',
-        ], 
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'postgres'),
+            'password' => env('DB_PASSWORD', ''),
+
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | SQL Server (Optional)
+        |--------------------------------------------------------------------------
+        */
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',
+            'url' => env('DB_URL'),
+
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => env('DB_PORT', '1433'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'sa'),
+            'password' => env('DB_PASSWORD', ''),
+
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
         ],
+
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Migration Table
+    | Migration Repository Table
     |--------------------------------------------------------------------------
-    */ 
+    */
+
     'migrations' => [
         'table' => 'migrations',
-    ], 
+    ],
 
     /*
     |--------------------------------------------------------------------------
-    | Redis (Future Use: Queues, Caching)
+    | Redis Connections
     |--------------------------------------------------------------------------
-    | Activate when:
-    |   - Queue system enabled
-    |   - WhatsApp automation live
     */
-    'redis' => [ 
+
+    'redis' => [
 
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
-            'prefix' => Str::slug(env('APP_NAME', 'risklens')) . '-',
+            'prefix' => Str::slug(env('APP_NAME', 'laravel')) . '-',
         ],
 
         'default' => [
-            'host'     => env('REDIS_HOST', '127.0.0.1'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD'),
-            'port'     => env('REDIS_PORT', 6379),
+            'port' => env('REDIS_PORT', 6379),
             'database' => 0,
-        ], 
+        ],
+
     ],
 
-]; 
+];
