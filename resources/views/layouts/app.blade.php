@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>RiskLens</title>
+    <title>RiskSignal</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -48,7 +48,7 @@
     </div>
 
     <div style="font-size:0.95rem;color:var(--ink-3);">
-        © {{ date('Y') }} RiskLens. All rights reserved.
+        © {{ date('Y') }} RiskSignal. All rights reserved.
     </div>
 </footer>
 
