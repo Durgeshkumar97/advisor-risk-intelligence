@@ -65,7 +65,7 @@ Route::get('/test-report', function () {
 
 /*
 |--------------------------------------------------------------------------
-| INTAKE
+| INTAKE (ONLY ONE ROUTE — KEEP THIS)
 |--------------------------------------------------------------------------
 */
 Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
@@ -73,7 +73,7 @@ Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
 
 /*
 |--------------------------------------------------------------------------
-| CHECKOUT + PAYMENT FLOW (FINAL)
+| CHECKOUT + PAYMENT FLOW
 |--------------------------------------------------------------------------
 */
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
@@ -140,4 +140,3 @@ Route::view('/refund', 'legal.refund')->name('refund');
 |--------------------------------------------------------------------------
 */
 require __DIR__.'/auth.php';
- 

@@ -782,51 +782,66 @@
             <div class="eyebrow" style="margin-bottom:.8rem;">Get started</div>
             <h2>Start your 2-week free trial</h2>
             <p style="margin-top:.6rem;font-size:.875rem;">
-                No credit card. First report arrives this Monday at 9am on WhatsApp.
+                No credit card. First report arrives this Monday at 8am on WhatsApp.
             </p>
         </div>
 
+        {{-- SUCCESS --}}
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div style="background:#d4edda;color:#155724;padding:10px;margin-bottom:10px;border-radius:6px;">
+                {{ session('success') }}
+            </div>
         @endif
 
-        @if(session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
+        {{-- ERRORS --}}
+        @if ($errors->any())
+            <div style="background:#fff3cd;color:#856404;padding:10px;margin-bottom:10px;border-radius:6px;">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
 
-        <div class="card reveal reveal-pop reveal-delay-2"
-             style="max-width:560px;margin-inline:auto;padding:2rem 2.5rem;">
+        <form method="POST" action="{{ route('ifa.submit') }}">
+            @csrf
 
-            <form method="POST" action="{{ route('ifa.submit') }}">
-                @csrf
+            <div class="form-group">
+                <label>Full name</label>
+                <input type="text" name="advisor_name" required>
+            </div>
 
-                <input type="hidden" name="plan" value="pro">
+            <div class="form-group">
+                <label>WhatsApp number</label>
+                <input type="tel" name="whatsapp" required>
+            </div>
 
-                <div class="form-group">
-                    <label>Full name</label>
-                    <input type="text" name="advisor_name" required>
-                </div>
+            <div class="form-group">
+                <label>Email address</label>
+                <input type="email" name="email" required>
+            </div>
 
-                <div class="form-group">
-                    <label>WhatsApp number</label>
-                    <input type="tel" name="whatsapp" required>
-                </div>
+            <div class="form-group">
+                <label>Firm name</label>
+                <input type="text" name="firm_name" required>
+            </div>
 
-                <div class="form-group">
-                    <label>Email address</label>
-                    <input type="email" name="email" required>
-                </div>
+            <div class="form-group">
+                <label>Portfolio type</label>
+                <select name="portfolio_type" required>
+                    <option value="">Select</option>
+                    <option value="midcap">Mid-cap</option>
+                    <option value="largecap">Large-cap</option>
+                    <option value="debt">Debt</option>
+                    <option value="multi">Multi-asset</option>
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>Firm name</label>
-                    <input type="text" name="firm_name" required>
-                </div>
-
-                <button type="submit" class="btn-primary"
-                        style="width:100%;margin-top:.5rem;">
-                    Start free trial
-                </button>
-            </form> 
+            <button type="submit" class="btn-primary" style="width:100%;">
+                Start free trial
+            </button>
+        </form>
 
         </div>
 
