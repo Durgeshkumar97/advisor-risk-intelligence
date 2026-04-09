@@ -13,6 +13,8 @@ use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\Admin\AdminIntakeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\FileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,7 +29,7 @@ use Illuminate\Support\Facades\Mail;
 |--------------------------------------------------------------------------
 | PUBLIC PAGES
 |--------------------------------------------------------------------------
-*/ 
+*/
 Route::get('/', [PageController::class, 'home'])->name('home');
 
 /*
@@ -41,9 +43,9 @@ Route::get('/test', function () {
 
 /*
 |--------------------------------------------------------------------------
-| TEST REPORT (DEBUG TOOL)
+| TEST REPORT
 |--------------------------------------------------------------------------
-*/ 
+*/
 Route::get('/test-report', function () {
 
     $user = ClientIntake::first();
@@ -65,7 +67,7 @@ Route::get('/test-report', function () {
 
 /*
 |--------------------------------------------------------------------------
-| INTAKE (ONLY ONE ROUTE — KEEP THIS)
+| INTAKE (TRIAL)
 |--------------------------------------------------------------------------
 */
 Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
@@ -73,7 +75,15 @@ Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
 
 /*
 |--------------------------------------------------------------------------
-| CHECKOUT + PAYMENT FLOW
+| PLAN UPGRADE
+|--------------------------------------------------------------------------
+*/
+Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
+    ->name('upgrade');
+
+/*
+|--------------------------------------------------------------------------
+| OPTIONAL CHECKOUT (FUTURE)
 |--------------------------------------------------------------------------
 */
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
@@ -114,6 +124,14 @@ Route::middleware(['auth'])
 
 /*
 |--------------------------------------------------------------------------
+| File VIEW (PRIVATE)
+|--------------------------------------------------------------------------
+*/
+Route::get('/file/{id}', [FileController::class, 'view'])
+    ->middleware('auth')
+    ->name('file.view');
+/*
+|--------------------------------------------------------------------------
 | PROFILE
 |--------------------------------------------------------------------------
 */
@@ -130,6 +148,11 @@ Route::middleware('auth')->group(function () {
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| LEGAL
+|--------------------------------------------------------------------------
+*/
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/refund', 'legal.refund')->name('refund');
@@ -139,4 +162,4 @@ Route::view('/refund', 'legal.refund')->name('refund');
 | AUTH
 |--------------------------------------------------------------------------
 */
-require __DIR__.'/auth.php';
+require __DIR__.'/auth.php'; 

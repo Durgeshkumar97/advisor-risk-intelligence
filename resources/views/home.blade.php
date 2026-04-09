@@ -3,21 +3,76 @@
 @section('content')
 
 {{-- ── NAV ──────────────────────────────────────────── --}}
-<nav class="reveal reveal-pop">
-    <div class="container nav-inner">
-        <a href="#home" class="nav-logo">Risk<span>Signal</span></a>
-        <ul>
+{{-- ── NAV ──────────────────────────────────────────── --}}
+<nav class="reveal reveal-pop" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div class="container nav-inner" style="display:flex;justify-content:space-between;align-items:center;">
+
+        <!-- LEFT: LOGO -->
+        <a href="#home" class="nav-logo" style="font-weight:600;font-size:18px;">
+            Risk<span style="color:#facc15;">Signal</span>
+        </a>
+
+        <!-- CENTER: NAV LINKS -->
+        <ul style="display:flex;gap:28px;align-items:center;list-style:none;margin:0;">
             <li><a href="#service">Services</a></li>
             <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="#sample-report">Sample report</a></li>
-            <li>
-                <a href="#contact" style="color:var(--ink);font-weight:500;">
+        </ul>
+
+        <!-- RIGHT: AUTH + CTA -->
+        <div style="display:flex;align-items:center;gap:16px;">
+
+            @auth
+                <!-- Dashboard -->
+                <a href="{{ route('dashboard') }}" style="
+                    color:#fff;
+                    text-decoration:none;
+                    font-weight:500;
+                ">
+                    Dashboard
+                </a>
+
+                <!-- Logout -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" style="
+                        background:none;
+                        border:none;
+                        color:#9ca3af;
+                        cursor:pointer;
+                    ">
+                        Logout
+                    </button>
+                </form>
+            @else
+                <!-- Login -->
+                <a href="{{ route('login') }}" style="
+                    color:#9ca3af;
+                    text-decoration:none;
+                    font-weight:500;
+                ">
+                    Log in
+                </a>
+
+                <!-- CTA -->
+                <a href="#contact" style="
+                    background:#fff;
+                    color:#000;
+                    padding:10px 16px;
+                    border-radius:8px;
+                    text-decoration:none;
+                    font-weight:600;
+                    transition:all 0.2s ease;
+                " 
+                onmouseover="this.style.opacity='0.85'" 
+                onmouseout="this.style.opacity='1'">
                     Start free trial →
                 </a>
-            </li>
-        </ul> 
-    </div> 
+            @endauth
+
+        </div>
+    </div>
 </nav>
 
 {{-- ── HERO ─────────────────────────────────────────── --}}
@@ -804,7 +859,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('ifa.submit') }}">
+        <form method="POST" action="{{ route('ifa.submit') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="form-group">
@@ -828,14 +883,8 @@
             </div>
 
             <div class="form-group">
-                <label>Portfolio type</label>
-                <select name="portfolio_type" required>
-                    <option value="">Select</option>
-                    <option value="midcap">Mid-cap</option>
-                    <option value="largecap">Large-cap</option>
-                    <option value="debt">Debt</option>
-                    <option value="multi">Multi-asset</option>
-                </select>
+                <label>Upload client file (PDF, PNG, ZIP)</label>
+                <input type="file" name="document">
             </div>
 
             <button type="submit" class="btn-primary" style="width:100%;">
