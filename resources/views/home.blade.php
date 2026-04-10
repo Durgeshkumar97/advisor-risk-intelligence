@@ -2,87 +2,10 @@
 
 @section('content')
 
-{{-- ── NAV ──────────────────────────────────────────── --}}
-{{-- ── NAV ──────────────────────────────────────────── --}}
-<nav class="reveal reveal-pop" style="border-bottom:1px solid rgba(255,255,255,0.05);">
-    <div class="container nav-inner" style="display:flex;justify-content:space-between;align-items:center;">
-
-        <!-- LEFT: LOGO -->
-        <a href="#home" class="nav-logo" style="font-weight:600;font-size:18px;">
-            Risk<span style="color:#facc15;">Signal</span>
-        </a>
-
-        <!-- CENTER: NAV LINKS -->
-        <ul style="display:flex;gap:28px;align-items:center;list-style:none;margin:0;">
-            <li><a href="#service">Services</a></li>
-            <li><a href="#how-it-works">How it works</a></li>
-            <li><a href="#pricing">Pricing</a></li>
-            <li><a href="#sample-report">Sample report</a></li>
-        </ul>
-
-        <!-- RIGHT: AUTH + CTA -->
-        <div style="display:flex;align-items:center;gap:16px;">
-
-            @auth
-                <!-- Dashboard -->
-                <a href="{{ route('dashboard') }}" style="
-                    color:#fff;
-                    text-decoration:none;
-                    font-weight:500;
-                ">
-                    Dashboard
-                </a>
-
-                <!-- Logout -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" style="
-                        background:none;
-                        border:none;
-                        color:#9ca3af;
-                        cursor:pointer;
-                    ">
-                        Logout
-                    </button>
-                </form>
-            @else
-                <!-- Login -->
-                <a href="{{ route('login') }}" style="
-                    color:#9ca3af;
-                    text-decoration:none;
-                    font-weight:500;
-                ">
-                    Log in
-                </a>
-
-                <!-- CTA -->
-                <a href="#contact" style="
-                    background:#fff;
-                    color:#000;
-                    padding:10px 16px;
-                    border-radius:8px;
-                    text-decoration:none;
-                    font-weight:600;
-                    transition:all 0.2s ease;
-                " 
-                onmouseover="this.style.opacity='0.85'" 
-                onmouseout="this.style.opacity='1'">
-                    Start free trial →
-                </a>
-            @endauth
-
-        </div>
-    </div>
-</nav>
-
 {{-- ── HERO ─────────────────────────────────────────── --}}
 <section id="home" style="padding-top:96px;">
-    <div class="container" style="
-        display:grid;
-        grid-template-columns:1.15fr 1fr;
-        gap:4rem;
-        align-items:center;
-    ">
+
+    <div class="container hero-grid">
 
         <!-- LEFT SIDE -->
         <div class="reveal reveal-left">
@@ -120,7 +43,13 @@
 
         <!-- RIGHT SIDE CARD -->
         <div class="card card-hover reveal reveal-right reveal-delay-2"
-             style="overflow:hidden;transform:rotate(1.2deg);">
+             style="
+                overflow:hidden;
+                transform:rotate(1.2deg);
+                width:100%;
+                max-width:100%;
+                word-break:break-word;
+             ">
 
             <div style="
                 background:var(--ink);
@@ -151,7 +80,7 @@
                 ">
                     <span style="
                         font-family:var(--serif);
-                        font-size:2.6rem;
+                        font-size:2.2rem;
                         color:var(--amber);
                         line-height:1;
                     ">
@@ -161,7 +90,6 @@
                     <div>
                         <div style="
                             font-size:.7rem;
-                            font-family:var(--mono);
                             letter-spacing:.07em;
                             color:var(--amber);
                             text-transform:uppercase;
@@ -237,6 +165,33 @@
     </div>
 </section>
 
+{{-- HERO RESPONSIVE FIX --}}
+<style>
+.hero-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-grid .card {
+        transform: none !important;
+    }
+}
+
+/* DESKTOP */
+@media (min-width: 768px) {
+    .hero-grid {
+        grid-template-columns: 1.15fr 1fr;
+        align-items: center;
+        gap: 4rem;
+    }
+}
+</style>
 
 {{-- ── TRUST STRIP ──────────────────────────────────── --}}
 <section style="padding:2rem 0;background:var(--paper-2);">
