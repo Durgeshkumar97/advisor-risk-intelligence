@@ -193,6 +193,23 @@
 }
 </style>
 
+<section>
+    <div class="container text-center">
+
+        <h2>If you don’t control the narrative, clients will</h2>
+
+        <p>
+            When markets fall, clients don’t ask about valuation models.
+            They ask: “Should I exit?”
+        </p>
+
+        <p>
+            If you hesitate → you lose trust.
+        </p>
+
+    </div>
+</section>
+
 {{-- ── TRUST STRIP ──────────────────────────────────── --}}
 <section style="padding:2rem 0;background:var(--paper-2);">
     <div class="container reveal reveal-pop">
@@ -200,7 +217,7 @@
             
             <div class="reveal reveal-pop reveal-delay-1">
                 <div style="font-size:.8rem;font-weight:500;color:var(--ink-2);">
-                    Pure market intelligence
+                    Not investment advice
                 </div>
                 <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">
                     Not SEBI-registered advice
@@ -209,10 +226,10 @@
 
             <div class="reveal reveal-pop reveal-delay-2">
                 <div style="font-size:.8rem;font-weight:500;color:var(--ink-2);">
-                    WhatsApp PDF every Monday
+                    WhatsApp PDF every Monday morning
                 </div>
                 <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">
-                    No app, no login, no friction
+                    No app login, no friction
                 </div>
             </div>
 
@@ -301,40 +318,6 @@
                 <p style="font-size:.875rem;">
                     The exact words to say when a client calls worried.
                 </p>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-{{-- ── WHEN ADVISORS USE THIS ───────────────────────── --}}
-<section style="background:var(--paper-2);">
-    <div class="container">
-
-        <div class="text-center reveal reveal-pop" style="margin-bottom:2rem;">
-            <h2>Moments this pays for itself</h2>
-        </div>
-
-        <div style="display:grid;gap:1rem;max-width:680px;margin-inline:auto;">
-
-            <div class="card reveal reveal-left reveal-delay-1" style="padding:1.1rem 1.4rem;display:flex;gap:1rem;">
-                <div>01</div>
-                <div>Client calls after a market fall</div>
-            </div>
-
-            <div class="card reveal reveal-left reveal-delay-2" style="padding:1.1rem 1.4rem;display:flex;gap:1rem;">
-                <div>02</div>
-                <div>Client asks about risk</div>
-            </div>
-
-            <div class="card reveal reveal-left reveal-delay-3" style="padding:1.1rem 1.4rem;display:flex;gap:1rem;">
-                <div>03</div>
-                <div>Rebalancing justification</div>
-            </div>
-
-            <div class="card reveal reveal-left reveal-delay-4" style="padding:1.1rem 1.4rem;display:flex;gap:1rem;">
-                <div>04</div>
-                <div>Competing with apps</div>
             </div>
 
         </div>
@@ -798,14 +781,14 @@
 
         {{-- SUCCESS --}}
         @if(session('success'))
-            <div style="background:#d4edda;color:#155724;padding:10px;margin-bottom:10px;border-radius:6px;">
+            <div class="alert-success">
                 {{ session('success') }}
             </div>
         @endif
 
         {{-- ERRORS --}}
         @if ($errors->any())
-            <div style="background:#fff3cd;color:#856404;padding:10px;margin-bottom:10px;border-radius:6px;">
+            <div class="alert-warning">
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -847,10 +830,5 @@
             </button>
         </form>
 
-        </div>
-
     </div>
 </section>
-
-@endsection
-

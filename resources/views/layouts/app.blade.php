@@ -2,8 +2,13 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
+
+    <!-- ✅ VIEWPORT FIX (prevents zoom bugs on mobile) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSRF -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>RiskSignal</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -11,7 +16,7 @@
 
 <body class="flex flex-col min-h-screen">
 
-    <!-- ✅ NAVBAR (REQUIRED) -->
+    <!-- NAVBAR -->
     @include('navigation')
 
     <!-- MAIN CONTENT -->
@@ -26,11 +31,11 @@
 
             <!-- LINKS -->
             <div class="flex flex-wrap justify-center gap-6 text-sm mb-4">
-                <a href="{{ route('terms') }}">Terms</a>
+                <a href="{{ route('terms') ?? '#' }}">Terms</a>
                 <span>•</span>
-                <a href="{{ route('privacy') }}">Privacy</a>
+                <a href="{{ route('privacy') ?? '#' }}">Privacy</a>
                 <span>•</span>
-                <a href="{{ route('refund') }}">Refund</a>
+                <a href="{{ route('refund') ?? '#' }}">Refund</a>
             </div>
 
             <!-- COPYRIGHT -->
@@ -42,51 +47,65 @@
     </footer>
 
     <!-- =========================
-         THEME SCRIPT (CLEAN FIX)
+         THEME SCRIPT (HARDENED)
     ========================= -->
     <script>
-        function toggleTheme() {
+        (function () {
             const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const next = current === 'light' ? 'dark' : 'light';
 
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
+            // Load theme early (prevents flash)
+            const saved = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', saved);
 
-            const icon = document.querySelector('.theme-icon');
-            if (icon) {
-                icon.textContent = next === 'dark' ? '☀️' : '🌙';
+            window.toggleTheme = function () {
+                const current = html.getAttribute('data-theme');
+                const next = current === 'light' ? 'dark' : 'light';
+
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+
+                updateIcon(next);
+            };
+
+            function updateIcon(theme) {
+                const icon = document.querySelector('.theme-icon');
+                if (icon) {
+                    icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+                }
             }
-        }
 
-        // Load saved theme
-        const saved = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const icon = document.querySelector('.theme-icon');
-            if (icon) {
-                icon.textContent = saved === 'dark' ? '☀️' : '🌙';
-            }
-        });
+            document.addEventListener('DOMContentLoaded', () => {
+                updateIcon(saved);
+            });
+        })();
     </script>
 
     <!-- =========================
-         SCROLL ANIMATION
+         SCROLL ANIMATION (OPTIMIZED)
     ========================= -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
             const elements = document.querySelectorAll(".reveal");
 
-            const observer = new IntersectionObserver((entries) => {
+            if (!("IntersectionObserver" in window)) {
+                // fallback for old browsers
+                elements.forEach(el => el.classList.add("active"));
+                return;
+            }
+
+            const observer = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add("active");
+
+                        // stop observing once revealed (performance win)
+                        observer.unobserve(entry.target);
                     }
                 });
             }, {
-                threshold: 0.15
+                threshold: 0.15,
+                rootMargin: "0px 0px -50px 0px"
             });
 
             elements.forEach(el => observer.observe(el));

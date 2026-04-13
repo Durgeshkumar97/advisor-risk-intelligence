@@ -1,145 +1,115 @@
-<nav x-data="{ open: false }"
-     style="background:var(--nav-bg); border-bottom:1px solid var(--paper-3);">
+<!-- NAVBAR -->
+<nav class="fixed top-0 left-0 w-full z-50 border-b backdrop-blur"
+     style="background:var(--nav-bg); border-color:var(--paper-3);">
 
-    <!-- CONTAINER -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="flex justify-between h-16 items-center">
 
-            <!-- LEFT: LOGO -->
-            <div class="flex items-center gap-8">
+            <!-- LOGO -->
+            <a href="{{ url('/') }}"
+               class="text-lg font-bold tracking-tight"
+               style="color:var(--ink);">
+                Risk<span style="color:var(--gold);">Signal</span>
+            </a>
 
-                <a href="/" class="text-lg font-bold"
-                   style="color:var(--ink);">
-                    Risk<span style="color:var(--gold);">Signal</span>
-                </a>
+            <!-- DESKTOP MENU -->
+            <div class="hidden md:flex gap-6 items-center">
 
-                <!-- DESKTOP MENU -->
-                <div class="hidden md:flex gap-6">
-
-                    <a href="#" class="text-sm whitespace-nowrap"
-                       style="color:var(--ink);opacity:0.8;">Services</a>
-
-                    <a href="#" class="text-sm whitespace-nowrap"
-                       style="color:var(--ink);opacity:0.8;">How it works</a>
-
-                    <a href="#" class="text-sm whitespace-nowrap"
-                       style="color:var(--ink);opacity:0.8;">Pricing</a>
-
-                    <a href="#" class="text-sm whitespace-nowrap"
-                       style="color:var(--ink);opacity:0.8;">Sample Log report</a>
-
-                </div>
-            </div>
-
-            <!-- RIGHT: AUTH + THEME -->
-            <div class="hidden md:flex items-center gap-4">
-
-                <!-- THEME BUTTON -->
-                <button onclick="toggleTheme()"
-                        style="background:none;border:none;cursor:pointer;font-size:18px;">
-                    <span class="theme-icon">🌙</span>
-                </button>
+                <a href="#service" class="nav-link">Services</a>
+                <a href="#how" class="nav-link">How it works</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="#sample-report" class="nav-link">Sample report</a>
 
                 @auth
-                    <div class="text-sm"
-                         style="color:var(--ink);opacity:0.8;">
+                    <span class="text-sm opacity-80 truncate max-w-[120px]"
+                          style="color:var(--ink);"
+                          title="{{ Auth::user()->name }}">
                         {{ Auth::user()->name }}
-                    </div>
+                    </span>
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button class="text-sm" style="color:red;">
+                        <button type="submit"
+                                class="text-sm text-red-500 hover:opacity-80">
                             Logout
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}"
-                       class="text-sm"
-                       style="color:var(--ink);">
-                        Login
-                    </a>
+                    <a href="{{ route('login') }}" class="nav-link">Login</a>
                 @endauth
 
             </div>
 
             <!-- MOBILE BUTTON -->
-            <div class="md:hidden">
-                <button @click="open = !open" class="p-2">
-                    <svg class="h-6 w-6" style="color:var(--ink);"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path :class="{ 'hidden': open, 'block': !open }"
-                              class="block"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{ 'block': open, 'hidden': !open }"
-                              class="hidden"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+            <button id="menu-toggle"
+                    class="md:hidden p-2 rounded focus:outline-none"
+                    style="color:var(--ink);"
+                    aria-label="Toggle menu"
+                    aria-expanded="false"
+                    aria-controls="mobile-menu">
+
+                <!-- OPEN -->
+                <svg id="icon-open"
+                     class="h-6 w-6 block"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+
+                <!-- CLOSE -->
+                <svg id="icon-close"
+                     class="h-6 w-6 hidden"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+
+            </button>
 
         </div>
     </div>
 
     <!-- MOBILE MENU -->
-    <div x-show="open"
-         class="md:hidden px-4 pb-4 space-y-3"
-         style="background:var(--nav-bg);">
+    <div id="mobile-menu"
+        class="hidden md:hidden absolute top-16 left-0 w-full z-40 border-t shadow-sm"
+        style="background:var(--nav-bg); border-color:var(--paper-3);">
 
-        <!-- NAV LINKS -->
-        <a href="#" class="block text-sm"
-           style="color:var(--ink);">Services</a>
+        <div class="px-4 py-6 flex flex-col gap-5 max-w-md mx-auto">
 
-        <a href="#" class="block text-sm"
-           style="color:var(--ink);">How it works</a>
+            <a href="#service" class="nav-link text-base">Services</a>
+            <a href="#how" class="nav-link text-base">How it works</a>
+            <a href="#pricing" class="nav-link text-base">Pricing</a>
+            <a href="#sample-report" class="nav-link text-base">Sample report</a>
 
-        <a href="#" class="block text-sm"
-           style="color:var(--ink);">Pricing</a>
+            <div class="border-t pt-4" style="border-color:var(--paper-3);"></div>
 
-        <a href="#" class="block text-sm"
-           style="color:var(--ink);">Sample Log report</a>
+            @auth
+                <div class="text-sm opacity-80 truncate"
+                     style="color:var(--ink);">
+                    {{ Auth::user()->name }}
+                </div>
 
-        <hr style="border-color:var(--paper-3);">
-
-        <!-- AUTH + THEME -->
-        <div class="flex items-center justify-between">
-
-            <div>
-                @auth
-                    <div class="text-sm"
-                         style="color:var(--ink);opacity:0.8;">
-                        {{ Auth::user()->name }}
-                    </div>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="text-sm" style="color:red;">
-                            Logout
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('login') }}"
-                       class="text-sm"
-                       style="color:var(--ink);">
-                        Login
-                    </a>
-                @endauth
-            </div>
-
-            <!-- THEME BUTTON -->
-            <button onclick="toggleTheme()"
-                    style="background:none;border:none;cursor:pointer;font-size:18px;">
-                <span class="theme-icon">🌙</span>
-            </button>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                            class="text-sm text-red-500 hover:opacity-80">
+                        Logout
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}"
+                class="btn-primary text-center"
+                style="display:inline-block;">
+                    Login
+                </a>
+            @endauth
 
         </div>
-
     </div>
 
 </nav>
