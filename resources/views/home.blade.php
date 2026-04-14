@@ -325,8 +325,8 @@
 </section>
 
 {{-- ── HOW IT WORKS ─────────────────────────────────── --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;max-width:900px;margin-inline:auto;">
-
+<div id="how-it-works"
+     style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;max-width:900px;margin-inline:auto;">
     {{-- STEP 1 --}}
     <div class="reveal reveal-pop reveal-delay-1" style="text-align:center;padding:1.5rem 1rem;">
         <div style="font-family:var(--serif);font-size:3rem;color:var(--paper-3);margin-bottom:.8rem;">1</div>

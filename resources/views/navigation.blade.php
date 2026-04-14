@@ -17,7 +17,7 @@
             <div class="hidden md:flex gap-6 items-center">
 
                 <a href="#service" class="nav-link">Services</a>
-                <a href="#how" class="nav-link">How it works</a>
+                <a href="#how-it-works" class="nav-link">How it works</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#sample-report" class="nav-link">Sample report</a>
 
@@ -45,9 +45,7 @@
             <button id="menu-toggle"
                     class="md:hidden p-2 rounded focus:outline-none"
                     style="color:var(--ink);"
-                    aria-label="Toggle menu"
-                    aria-expanded="false"
-                    aria-controls="mobile-menu">
+                    aria-label="Toggle menu">
 
                 <!-- OPEN -->
                 <svg id="icon-open"
@@ -76,13 +74,13 @@
 
     <!-- MOBILE MENU -->
     <div id="mobile-menu"
-        class="hidden md:hidden absolute top-16 left-0 w-full z-40 border-t shadow-sm"
-        style="background:var(--nav-bg); border-color:var(--paper-3);">
+         class="hidden md:hidden absolute top-16 left-0 w-full z-40 border-t shadow-sm"
+         style="background:var(--nav-bg); border-color:var(--paper-3);">
 
         <div class="px-4 py-6 flex flex-col gap-5 max-w-md mx-auto">
 
             <a href="#service" class="nav-link text-base">Services</a>
-            <a href="#how" class="nav-link text-base">How it works</a>
+            <a href="#how-it-works" class="nav-link text-base">How it works</a>
             <a href="#pricing" class="nav-link text-base">Pricing</a>
             <a href="#sample-report" class="nav-link text-base">Sample report</a>
 
@@ -103,8 +101,8 @@
                 </form>
             @else
                 <a href="{{ route('login') }}"
-                class="btn-primary text-center"
-                style="display:inline-block;">
+                   class="btn-primary text-center"
+                   style="display:inline-block;">
                     Login
                 </a>
             @endauth
