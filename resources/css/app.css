@@ -18,7 +18,7 @@ html, body {
 }
 
 body {
-    margin: 0;
+    padding-top: 64px;
 }
 
 body.overflow-hidden {
@@ -133,27 +133,32 @@ section {
 nav {
   background: var(--nav-bg);
   border-bottom: 1px solid var(--paper-3);
-  position: sticky;
+
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
+
   z-index: 1000;
+
   backdrop-filter: blur(8px);
+
+  transition: all 0.25s ease; 
 }
 
-.nav-link {
-  font-size: 0.85rem;
-  opacity: 0.7;
-  transition: all 0.2s ease;
+/* DEFAULT (top state) */
+nav.nav-default {
+  padding: 1rem 0;
+  background: var(--nav-bg);
 }
 
-.nav-link:hover {
-  opacity: 1;
-  color: var(--gold);
-}
+/* SCROLLED STATE */
+nav.nav-scrolled {
+  padding: 0.5rem 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(12px);
 
-.nav-link.active {
-  color: var(--gold);
-  opacity: 1;
-  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25); 
 }
 
 /* =====================================
@@ -167,8 +172,7 @@ nav {
   background: var(--nav-bg);
   border-bottom: 1px solid var(--paper-3);
   padding: 1rem;
-  z-index: 999;
-
+  z-index: 2000; 
   transform: translateY(-10px);
   opacity: 0;
   pointer-events: none;
@@ -310,4 +314,84 @@ img, video {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+/* =====================================
+   THEME TOGGLE BUTTON 
+===================================== */
+#theme-toggle {
+    position: fixed;
+
+    bottom: 20px;   /* move to footer */
+    right: 20px;
+
+    z-index: 100;   /* safe, not too high */
+
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--paper-3);
+
+    background: var(--paper);
+    color: var(--ink);
+
+    cursor: pointer;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#theme-toggle:hover {
+    transform: translateY(-1px);
+}
+
+/* =====================================
+   HOW IT WORKS (MOBILE FIX)
+===================================== */
+
+#how-it-works {
+  display: grid;
+  gap: 2rem;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  #how-it-works {
+    grid-template-columns: 1fr;
+    gap: 2.2rem;
+  }
+
+  #how-it-works > div {
+    text-align: left;
+    padding: 0 0.5rem;
+
+    border-left: 2px solid var(--paper-3); /* merged */
+    padding-left: 1rem;
+  }
+
+  /* STEP NUMBER */
+  #how-it-works > div div:first-child {
+    font-size: 2rem;
+    opacity: 0.35; 
+    margin-bottom: 0.5rem;
+  }
+
+  /* TITLE */
+  #how-it-works h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* TEXT */
+  #how-it-works p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  
+  #how-it-works > div {
+    transition: all 0.2s ease;
+  }
+
+  #how-it-works > div:hover {
+    transform: translateX(4px);
+  }
 }

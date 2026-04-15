@@ -4,13 +4,11 @@ import './bootstrap';
 // APP INITIALIZATION
 // ─────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-
     initScrollAnimations();
     initMobileMenu();
     initTheme();
-
+    initNavbarScroll(); 
 });
-
 
 // ─────────────────────────────
 // SCROLL ANIMATION ENGINE
@@ -21,7 +19,6 @@ function initScrollAnimations() {
 
     if (!elements.length) return;
 
-    // Fallback for older browsers
     if (!("IntersectionObserver" in window)) {
         elements.forEach(el => el.classList.add("active"));
         return;
@@ -32,8 +29,6 @@ function initScrollAnimations() {
 
             if (entry.isIntersecting) {
                 entry.target.classList.add("active");
-
-                // Stop observing after reveal (performance)
                 observer.unobserve(entry.target);
             }
 
@@ -56,12 +51,23 @@ function initMobileMenu() {
     const menu = document.getElementById("mobile-menu");
     const openIcon = document.getElementById("icon-open");
     const closeIcon = document.getElementById("icon-close");
+    const themeToggle = document.getElementById("theme-toggle");
 
     if (!toggle || !menu) return;
 
     toggle.addEventListener("click", () => {
 
+        // FIRST: toggle menu
         menu.classList.toggle("hidden");
+
+        // handle theme toggle visibility
+        if (themeToggle) {
+            if (menu.classList.contains("hidden")) {
+                themeToggle.style.display = "block"; // menu closed
+            } else {
+                themeToggle.style.display = "none";  // menu open
+            }
+        }
 
         // Toggle icons
         if (openIcon && closeIcon) {
@@ -74,15 +80,26 @@ function initMobileMenu() {
         toggle.setAttribute("aria-expanded", !expanded);
 
         // Prevent background scroll
-        document.body.classList.toggle("overflow-hidden");
+        if (menu.classList.contains("hidden")) {
+            document.body.classList.remove("overflow-hidden");
+        } else {
+            document.body.classList.add("overflow-hidden");
+        }
     });
 
-    // Close menu when clicking a link
+    // CLOSE MENU ON LINK CLICK
     const links = menu.querySelectorAll("a");
+
     links.forEach(link => {
         link.addEventListener("click", () => {
+
             menu.classList.add("hidden");
             document.body.classList.remove("overflow-hidden");
+
+            // Restore theme toggle
+            if (themeToggle) {
+                themeToggle.style.display = "block";
+            }
 
             if (openIcon && closeIcon) {
                 openIcon.classList.remove("hidden");
@@ -94,22 +111,29 @@ function initMobileMenu() {
     });
 }
 
-
 // ─────────────────────────────
-// THEME TOGGLE SYSTEM
+// THEME TOGGLE SYSTEM (FIXED)
 // ─────────────────────────────
 function initTheme() {
 
     const html = document.documentElement;
+    const toggleBtn = document.getElementById("theme-toggle");
 
-    // Load saved theme early
-    const savedTheme = localStorage.getItem("theme") || "light";
+    // ✅ Load saved theme (default = dark recommended)
+    const savedTheme = localStorage.getItem("theme") || "dark";
     html.setAttribute("data-theme", savedTheme);
 
     updateThemeIcon(savedTheme);
 
-    // Expose toggle globally (for button onclick)
-    window.toggleTheme = function () {
+    // ✅ Button click handler (if button exists)
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", toggleTheme);
+    }
+
+    // ✅ Global fallback (optional use in HTML onclick)
+    window.toggleTheme = toggleTheme;
+
+    function toggleTheme() {
         const current = html.getAttribute("data-theme");
         const next = current === "light" ? "dark" : "light";
 
@@ -117,15 +141,47 @@ function initTheme() {
         localStorage.setItem("theme", next);
 
         updateThemeIcon(next);
-    };
+    }
 }
 
 
-// Update icon (🌙 / ☀️)
+// ─────────────────────────────
+// UPDATE THEME ICON
+// ─────────────────────────────
 function updateThemeIcon(theme) {
+
+    // Support BOTH:
+    // 1. .theme-icon (inside button)
+    // 2. #theme-toggle (direct button)
+
     const icon = document.querySelector(".theme-icon");
+    const button = document.getElementById("theme-toggle");
 
-    if (!icon) return;
+    if (icon) {
+        icon.textContent = theme === "dark" ? "☀️" : "🌙";
+    } else if (button) {
+        button.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+}
 
-    icon.textContent = theme === "dark" ? "☀️" : "🌙";
+function initNavbarScroll() {
+
+    const nav = document.querySelector("nav");
+
+    if (!nav) return;
+
+    function updateNav() {
+        if (window.scrollY > 40) {
+            nav.classList.add("nav-scrolled");
+            nav.classList.remove("nav-default");
+        } else {
+            nav.classList.add("nav-default");
+            nav.classList.remove("nav-scrolled");
+        }
+    }
+
+    // initial state
+    updateNav();
+
+    window.addEventListener("scroll", updateNav);
 }

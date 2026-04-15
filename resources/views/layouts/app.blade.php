@@ -6,9 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>RiskSignal</title>
 
-    <!-- Vite (auto handles local + production) -->
+    <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
 </head>
 
 <body class="flex flex-col min-h-screen">
@@ -39,6 +38,11 @@
 
         </div>
     </footer>
+
+    <!-- THEME TOGGLE (BOTTOM RIGHT FLOATING) -->
+    <button id="theme-toggle" aria-label="Toggle theme">
+        <span class="theme-icon"></span>
+    </button>
 
 </body>
 </html>

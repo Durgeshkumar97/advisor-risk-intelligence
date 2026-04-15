@@ -1,7 +1,5 @@
 <!-- NAVBAR -->
-<nav class="fixed top-0 left-0 w-full z-50 border-b backdrop-blur"
-     style="background:var(--nav-bg); border-color:var(--paper-3);">
-
+<nav class="nav-default fixed top-0 left-0 w-full z-[1000] border-b backdrop-blur">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="flex justify-between h-16 items-center">
@@ -20,25 +18,9 @@
                 <a href="#how-it-works" class="nav-link">How it works</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#sample-report" class="nav-link">Sample report</a>
-
-                @auth
-                    <span class="text-sm opacity-80 truncate max-w-[120px]"
-                          style="color:var(--ink);"
-                          title="{{ Auth::user()->name }}">
-                        {{ Auth::user()->name }}
-                    </span>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit"
-                                class="text-sm text-red-500 hover:opacity-80">
-                            Logout
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('login') }}" class="nav-link">Login</a>
-                @endauth
-
+                <a href="#contact" class="btn-outline">
+                    Start free trial
+                </a>
             </div>
 
             <!-- MOBILE BUTTON -->
@@ -86,26 +68,9 @@
 
             <div class="border-t pt-4" style="border-color:var(--paper-3);"></div>
 
-            @auth
-                <div class="text-sm opacity-80 truncate"
-                     style="color:var(--ink);">
-                    {{ Auth::user()->name }}
-                </div>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit"
-                            class="text-sm text-red-500 hover:opacity-80">
-                        Logout
-                    </button>
-                </form>
-            @else
-                <a href="{{ route('login') }}"
-                   class="btn-primary text-center"
-                   style="display:inline-block;">
-                    Login
-                </a>
-            @endauth
+            <a href="#contact" class="btn-outline">
+                Start free trial
+            </a>
 
         </div>
     </div>
