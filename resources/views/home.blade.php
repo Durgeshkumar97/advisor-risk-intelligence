@@ -6,6 +6,7 @@
 <section id="home" style="padding-top:96px;">
 
     <div class="container hero-grid"
+    
          style="
             display:grid;
             grid-template-columns:1.1fr 1fr;
@@ -468,7 +469,7 @@
             <a href="#contact" class="btn-primary">Start getting this daily →</a>
 
             <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
-                Start free trial →
+                Get Today’s Client Panic Report Free
             </div>
         </div>
 
@@ -720,7 +721,7 @@
             </div>
 
             <h2 style="margin-bottom:.5rem;">
-                Start free trial
+                Get Today’s Client Panic Report Free
             </h2>
 
             <div style="font-size:.9rem;color:var(--ink-2);line-height:1.5;">
@@ -804,7 +805,7 @@
                         font-size:.95rem;
                         font-weight:500;
                     ">
-                    Start free trial →
+                    Get Today’s Client Panic Report Free
                 </button>
 
                 <p style="
