@@ -1,31 +1,45 @@
 <!-- NAVBAR -->
-<nav class="nav-default fixed top-0 left-0 w-full z-[1000] border-b backdrop-blur">
+<nav class="nav-default fixed top-0 left-0 w-full z-[1000] border-b backdrop-blur"
+     style="box-sizing:border-box;">
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div class="flex justify-between h-16 items-center">
+        <div class="flex justify-between items-center h-16 w-full">
 
             <!-- LOGO -->
             <a href="{{ url('/') }}"
-               class="text-lg font-bold tracking-tight"
+               class="text-lg font-bold tracking-tight shrink-0"
                style="color:var(--ink);">
                 Risk<span style="color:var(--gold);">Signal</span>
             </a>
 
             <!-- DESKTOP MENU -->
-            <div class="hidden md:flex gap-6 items-center">
+            <div class="hidden md:flex items-center gap-5 overflow-hidden">
 
-                <a href="#service" class="nav-link">Services</a>
-                <a href="#how-it-works" class="nav-link">How it works</a>
-                <a href="#pricing" class="nav-link">Pricing</a>
-                <a href="#sample-report" class="nav-link">Sample report</a>
-                <a href="#contact" class="btn-outline">
+                <!-- LINKS -->
+                <div class="flex items-center gap-5 whitespace-nowrap">
+                    <a href="#service" class="nav-link">Services</a>
+                    <a href="#how-it-works" class="nav-link">How it works</a>
+                    <a href="#pricing" class="nav-link">Pricing</a>
+                    <a href="#sample-report" class="nav-link">Sample report</a>
+                </div>
+
+                <!-- CTA -->
+                <a href="#contact"
+                   class="btn-outline shrink-0 flex items-center justify-center"
+                   style="
+                        height:36px;
+                        padding:0 0.9rem;
+                        white-space:nowrap;
+                   ">
                     Start free trial
                 </a>
+
             </div>
 
             <!-- MOBILE BUTTON -->
             <button id="menu-toggle"
-                    class="md:hidden p-2 rounded focus:outline-none"
+                    class="md:hidden p-2 rounded focus:outline-none shrink-0"
                     style="color:var(--ink);"
                     aria-label="Toggle menu">
 
@@ -68,11 +82,11 @@
 
             <div class="border-t pt-4" style="border-color:var(--paper-3);"></div>
 
-            <a href="#contact" class="btn-outline">
+            <a href="#contact" class="btn-outline flex justify-center items-center"
+               style="height:40px;">
                 Start free trial
             </a>
 
         </div>
     </div>
-
 </nav>

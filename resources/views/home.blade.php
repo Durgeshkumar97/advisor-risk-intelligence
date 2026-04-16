@@ -5,16 +5,22 @@
 {{-- ── HERO ─────────────────────────────────────────── --}}
 <section id="home" style="padding-top:96px;">
 
-    <div class="container hero-grid">
+    <div class="container hero-grid"
+         style="
+            display:grid;
+            grid-template-columns:1.1fr 1fr;
+            align-items:center;
+            gap:3rem;
+         ">
 
         <!-- LEFT SIDE -->
-        <div class="reveal reveal-left">
+        <div class="reveal reveal-left" style="max-width:520px;">
 
             <div class="eyebrow" style="margin-bottom:1.2rem;">
                 risk intelligence · Independent financial advisors
             </div>
 
-            <h1>
+            <h1 style="line-height:1.2;">
                 When markets fall,<br>
                 your clients call.<br>
                 <em style="color:var(--gold);">
@@ -22,16 +28,29 @@
                 </em>
             </h1>
 
-            <p style="margin-top:1.4rem;max-width:460px;font-size:1rem;">
-                risk signal for IFAs managing ₹5L–₹25L portfolios.
+            <p style="
+                margin-top:1.4rem;
+                font-size:1rem;
+                color:var(--ink-2);
+                line-height:1.6;
+            ">
+                Risk signal for IFAs managing ₹5L–₹25L portfolios.
                 One page. Three risks. One client script.
                 Delivered on WhatsApp at 4:30 PM.
             </p>
 
-            <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
+            <!-- CTA -->
+            <div style="
+                margin-top:2rem;
+                display:flex;
+                gap:1rem;
+                flex-wrap:wrap;
+                align-items:center;
+            ">
                 <a href="#contact" class="btn-primary">
                     Start free trial →
                 </a>
+
                 <a href="#sample-report" class="btn-outline">
                     See a sample report
                 </a>
@@ -39,129 +58,138 @@
         </div> 
 
         <!-- RIGHT SIDE CARD -->
-        <div class="card card-hover reveal reveal-right reveal-delay-2"
-             style="
-                overflow:hidden;
-                transform:rotate(1.2deg);
-                width:100%;
-                max-width:100%;
-                word-break:break-word;
-             ">
+        <div class="reveal reveal-right reveal-delay-2"
+             style="display:flex; justify-content:center;">
 
-            <div style="
-                background:var(--ink);
-                color:var(--paper);
-                padding:1rem 1.25rem;
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-            ">
-                <span style="font-family:var(--serif);font-size:1rem;">
-                    Risk Intelligence
-                </span>
+            <div class="card card-hover"
+                 style="
+                    max-width:420px;
+                    width:100%;
+                    overflow:hidden;
+                    transform:rotate(1.2deg);
+                 ">
 
-                <span class="pill pill-gold" style="font-size:.6rem;">
-                    DAY 12 · 2026
-                </span>
-            </div>
-
-            <div style="padding:1.25rem;">
-
+                <!-- HEADER -->
                 <div style="
+                    background:var(--ink);
+                    color:var(--paper);
+                    padding:1rem 1.25rem;
                     display:flex;
-                    align-items:baseline;
-                    gap:.75rem;
-                    padding-bottom:1rem;
-                    margin-bottom:1rem;
-                    border-bottom:1px solid var(--paper-3);
+                    justify-content:space-between;
+                    align-items:center;
                 ">
-                    <span style="
-                        font-family:var(--serif);
-                        font-size:2.2rem;
-                        color:var(--amber);
-                        line-height:1;
-                    ">
-                        6.4
+                    <span style="font-family:var(--serif);font-size:1rem;">
+                        Risk Intelligence
                     </span>
 
-                    <div>
-                        <div style="
-                            font-size:.7rem;
-                            letter-spacing:.07em;
-                            color:var(--amber);
-                            text-transform:uppercase;
-                        ">
-                            Moderate-High
-                        </div>
-
-                        <div style="font-size:.7rem;color:var(--ink-3);">
-                            ↑ from 5.1 yesterday
-                        </div>
-                    </div>
+                    <span class="pill pill-gold" style="font-size:.6rem;">
+                        DAY 12 · 2026
+                    </span>
                 </div>
 
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    gap:.6rem;
-                    margin-bottom:1rem;
-                ">
+                <!-- BODY -->
+                <div style="padding:1.25rem;">
 
-                    <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                        <span style="color:var(--ink-2);flex:1;">
-                            FII outflows — 3rd week
-                        </span>
-                        <span class="pill pill-high">HIGH</span>
-                    </div>
-
-                    <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                        <span style="color:var(--ink-2);flex:1;">
-                            Rupee above 83.5 — import exposure
-                        </span>
-                        <span class="pill pill-high">HIGH</span>
-                    </div>
-
-                    <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                        <span style="color:var(--ink-2);flex:1;">
-                            Mid-cap valuations elevated
-                        </span>
-                        <span class="pill pill-med">MED</span>
-                    </div>
-                </div> 
-
-                <div style="
-                    background:var(--paper);
-                    border-left:3px solid var(--gold);
-                    padding:.8rem 1rem;
-                ">
-                    <div class="eyebrow" style="margin-bottom:.35rem;">
-                        What to tell your client
-                    </div>
-
+                    <!-- SCORE -->
                     <div style="
-                        font-size:.78rem;
-                        color:var(--ink-2);
-                        line-height:1.5;
-                        font-style:italic;
+                        display:flex;
+                        align-items:baseline;
+                        gap:.75rem;
+                        padding-bottom:1rem;
+                        margin-bottom:1rem;
+                        border-bottom:1px solid var(--paper-3);
                     ">
-                        "Foreign investors have been selling — this is normal during uncertainty.
-                        Your long-term plan is intact. No action needed."
-                    </div>
-                </div>
+                        <span style="
+                            font-family:var(--serif);
+                            font-size:2.2rem;
+                            color:var(--amber);
+                            line-height:1;
+                        ">
+                            6.4
+                        </span>
 
+                        <div>
+                            <div style="
+                                font-size:.7rem;
+                                letter-spacing:.07em;
+                                color:var(--amber);
+                                text-transform:uppercase;
+                            ">
+                                Moderate-High
+                            </div>
+
+                            <div style="font-size:.7rem;color:var(--ink-3);">
+                                ↑ from 5.1 yesterday
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FLAGS -->
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:.6rem;
+                        margin-bottom:1rem;
+                    ">
+
+                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
+                            <span style="color:var(--ink-2);flex:1;">
+                                FII outflows — 3rd week
+                            </span>
+                            <span class="pill pill-high">HIGH</span>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
+                            <span style="color:var(--ink-2);flex:1;">
+                                Rupee above 83.5 — import exposure
+                            </span>
+                            <span class="pill pill-high">HIGH</span>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
+                            <span style="color:var(--ink-2);flex:1;">
+                                Mid-cap valuations elevated
+                            </span>
+                            <span class="pill pill-med">MED</span>
+                        </div>
+                    </div> 
+
+                    <!-- SCRIPT -->
+                    <div style="
+                        background:var(--paper);
+                        border-left:3px solid var(--gold);
+                        padding:.8rem 1rem;
+                    ">
+                        <div class="eyebrow" style="margin-bottom:.35rem;">
+                            What to tell your client
+                        </div>
+
+                        <div style="
+                            font-size:.78rem;
+                            color:var(--ink-2);
+                            line-height:1.5;
+                            font-style:italic;
+                        ">
+                            "Foreign investors have been selling — this is normal during uncertainty.
+                            Your long-term plan is intact. No action needed."
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div> 
     </div> 
-</section> 
+</section>
 
-<section>
-  <div class="container text-center">
+<section style="display:flex; justify-content:center; text-align:center;">
+  
+  <div style="max-width:700px; width:100%; margin:0 auto; padding:0 1rem;">
 
     <h2>Clients leave during market falls</h2>
 
-    <p style="margin-top:.6rem;">
-      Not because of portfolios. Because of communication.
-    </p>
+    <div style="margin-top:1.5rem; font-size:.9rem; text-align:center;">
+    Not because of portfolios. Because of communication.
+    </div>
 
     <div style="margin-top:1.5rem;font-size:.9rem;">
       Panic → wrong advice → redemption → AUM loss
@@ -172,51 +200,78 @@
     </div>
 
   </div>
+
 </section>
 
 {{-- ── FOUNDER TRUST ────────────────────────────────── --}}
-<section>
+<section style="text-align:center; display:flex; justify-content:center;">
+    
     <div class="container reveal reveal-pop"
-         style="max-width:680px;margin-inline:auto;text-align:center;">
+         style="max-width:680px; margin:0 auto; text-align:center; display:flex; flex-direction:column; align-items:center;">
 
-        <div class="eyebrow" style="margin-bottom:1rem;">
+        <div class="eyebrow" style="margin-bottom:1rem; text-align:center;">
             Built by an IFA, for IFAs
         </div>
 
-        <h2>Why I built this</h2>
+        <h2 style="text-align:center;">Why I built this</h2>
 
-        <p style="margin-top:1rem;font-size:1rem;line-height:1.6;">
+        <p style="margin-top:1rem;font-size:1rem;line-height:1.6;text-align:center;">
             As an advisor, I’ve seen clients lost during market falls... not because portfolios were wrong,
             but because they didn’t know what to say when panic hit.
         </p>
 
-        <p style="margin-top:.6rem;font-size:1rem;line-height:1.6;">
+        <p style="margin-top:.6rem;font-size:1rem;line-height:1.6;text-align:center;">
             Most research is written for analysts. Not for the advisor who has 20 minutes before a client call.
         </p>
 
-        <p style="margin-top:.6rem;font-size:1rem;font-weight:500;">
+        <p style="margin-top:.6rem;font-size:1rem;font-weight:500;text-align:center;">
             RiskSignal gives you exactly what to say — when it matters most.
         </p>
 
         <div class="reveal reveal-pop reveal-delay-2"
-             style="margin-top:1.5rem;display:inline-flex;align-items:center;gap:.75rem;background:var(--paper-2);border:1px solid var(--paper-3);border-radius:var(--radius-lg);padding:.75rem 1.25rem;">
+             style="
+                margin-top:1.5rem;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                gap:.5rem;
+                background:var(--paper-2);
+                border:1px solid var(--paper-3);
+                border-radius:var(--radius-lg);
+                padding:1rem 1.25rem;
+                margin-inline:auto;
+                text-align:center;
+             ">
 
-            <div style="width:42px;height:42px;border-radius:50%;background:var(--gold-lt);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:.875rem;color:var(--gold);flex-shrink:0;">
+            <div style="
+                width:42px;
+                height:42px;
+                border-radius:50%;
+                background:var(--gold-lt);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-weight:500;
+                font-size:.875rem;
+                color:var(--gold);
+                margin:0 auto;
+            ">
                 DK
             </div>
 
-            <div style="text-align:left;">
-                <div style="font-size:.875rem;font-weight:500;color:var(--ink);">
+            <div style="text-align:center;">
+                <div style="font-size:.875rem;font-weight:500;color:var(--ink); text-align:center;">
                     Durgesh Kumar
                 </div>
-                <div style="font-size:.75rem;color:var(--ink-3);">
+                <div style="font-size:.75rem;color:var(--ink-3); text-align:center;">
                     Founder · Independent Financial Advisor
                 </div>
             </div>
 
         </div>
     </div>
-</section> 
+</section>
  
 {{-- ── HOW IT WORKS ─────────────────────────────────── --}}
 <div id="how-it-works"
@@ -257,23 +312,32 @@
 </div> 
 
 {{-- ── SAMPLE REPORT ────────────────────────────────── --}}
-<section id="sample-report" style="background:var(--paper-2);">
-    <div class="container reveal reveal-pop">
+<section id="sample-report" style="background:var(--paper-2); display:flex; justify-content:center;">
+    
+    <div class="container reveal reveal-pop"
+         style="max-width:900px; width:100%; margin:0 auto;">
 
-        <div class="text-center reveal reveal-pop" style="margin-bottom:2rem;">
-            <div class="eyebrow" style="margin-bottom:.8rem;">See the real thing</div>
-            <h2>Sample report — Week 12, 2026</h2>
-            <p style="margin-top:.6rem;font-size:.875rem;">
+        <!-- TOP (CENTERED MARKETING) -->
+        <div style="margin-bottom:2rem; text-align:center;">
+            <div class="eyebrow" style="margin-bottom:.8rem;">
+                See the real thing
+            </div>
+
+            <h2>
+                Sample report — Week 12, 2026
+            </h2>
+
+            <div style="margin-top:.6rem;font-size:.875rem;">
                 Mid-cap equity portfolios · Plain English edition
-            </p>
+            </div>
         </div>
-
+        
+        <!-- REPORT CARD (LEFT-ALIGNED) -->
         <div class="card reveal reveal-pop reveal-delay-1"
-             style="max-width:700px;margin-inline:auto;overflow:hidden;">
+             style="max-width:700px;margin-inline:auto;overflow:hidden;text-align:left;">
 
             <!-- HEADER -->
-            <div class="reveal reveal-pop reveal-delay-2"
-                 style="background:var(--ink);color:var(--paper);padding:1.5rem 2rem;">
+            <div style="background:var(--ink);color:var(--paper);padding:1.5rem 2rem;">
 
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;">
                     <span style="font-family:var(--serif);font-size:1.1rem;">
@@ -297,12 +361,10 @@
             </div>
 
             <!-- BODY -->
-            <div class="reveal reveal-pop reveal-delay-3"
-                 style="padding:1.75rem 2rem;">
+            <div style="padding:1.75rem 2rem;">
 
                 <!-- SCORE -->
-                <div class="reveal reveal-pop reveal-delay-4"
-                     style="background:var(--amber-lt);border:1px solid rgba(176,94,0,.2);border-radius:var(--radius-md);padding:1.1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;">
+                <div style="background:var(--amber-lt);border:1px solid rgba(176,94,0,.2);border-radius:var(--radius-md);padding:1.1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;">
 
                     <div style="font-family:var(--serif);font-size:3rem;color:var(--amber);line-height:1;flex-shrink:0;">
                         6.4
@@ -320,13 +382,14 @@
                 </div>
 
                 <!-- FLAGS -->
-                <div class="reveal reveal-pop reveal-delay-4" style="margin-bottom:1.5rem;">
+                <div style="margin-bottom:1.5rem;">
 
                     <div class="eyebrow"
                          style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
                         Risk flags this week
                     </div>
 
+                    <!-- ROW -->
                     <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
                         <div>
                             <div style="font-size:.875rem;font-weight:500;">FII outflows — 3rd consecutive week</div>
@@ -370,7 +433,7 @@
                 </div>
 
                 <!-- SCRIPT -->
-                <div class="reveal reveal-pop reveal-delay-4">
+                <div>
                     <div class="eyebrow"
                          style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
                         What to tell your client this week
@@ -386,8 +449,7 @@
                 </div>
 
                 <!-- FOOTER -->
-                <div class="reveal reveal-pop reveal-delay-4"
-                     style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--paper-3);display:flex;justify-content:space-between;align-items:center;">
+                <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--paper-3);display:flex;justify-content:space-between;align-items:center;">
 
                     <span style="font-family:var(--serif);font-size:.9rem;color:var(--ink-3);">
                         Risk<span style="color:var(--gold);">Signal</span>
@@ -401,12 +463,13 @@
             </div>
         </div>
 
-        <div class="text-center mt-xl reveal reveal-pop reveal-delay-2">
+        <!-- CTA (CENTERED) -->
+        <div style="text-align:center; margin-top:2rem;">
             <a href="#contact" class="btn-primary">Start getting this daily →</a>
 
-            <p style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
+            <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
                 Start free trial →
-            </p>
+            </div>
         </div>
 
     </div>
@@ -464,13 +527,13 @@
         <div class="text-center" style="margin-bottom:3rem;">
             <div class="eyebrow">Simple, honest pricing</div>
             <h2 style="margin-top:.4rem;">Flat monthly subscription</h2>
-            <p style="margin-top:.6rem;font-size:.9rem;color:var(--ink-3);">
+            <div style="margin-top:.6rem;font-size:.9rem;color:var(--ink-3);">
                 Daily delivery · No per-client limits
-            </p>
+            </div>
 
-            <p style="margin-top:.4rem;font-size:.8rem;color:var(--ink-2);">
+            <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-2);">
                 No login. No dashboards. Delivered on WhatsApp.
-            </p>
+            </div>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2rem;max-width:1000px;margin:auto;align-items:stretch;">
@@ -660,13 +723,13 @@
                 Start free trial
             </h2>
 
-            <p style="font-size:.9rem;color:var(--ink-2);line-height:1.5;">
+            <div style="font-size:.9rem;color:var(--ink-2);line-height:1.5;">
                 Get your first report on WhatsApp at 4:30 PM today.
-            </p>
+            </div>
 
-            <p style="margin-top:.4rem;font-size:.8rem;color:var(--ink-3);">
+            <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-3);">
                 No credit card · Takes 30 seconds
-            </p>
+            </div>
 
         </div>
 

@@ -13,18 +13,44 @@
 <body class="flex flex-col min-h-screen">
 
     <!-- NAVBAR -->
-    @include('navigation')
+    <div style="position:fixed; top:0; left:0; width:100%; z-index:1000;">
+        @include('navigation')
+    </div>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1">
-        @yield('content')
+    <main class="flex-1"
+          style="
+            margin-top:72px; /* matches navbar height */
+          ">
+        <div style="
+            max-width:1200px;
+            margin:0 auto;
+            width:100%;
+        ">
+            @yield('content')
+        </div>
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t" style="border-color: var(--paper-3);">
-        <div class="container text-center py-10">
+    <footer style="
+        border-top:1px solid var(--paper-3);
+        margin-top:3rem;
+    ">
+        <div style="
+            max-width:1200px;
+            margin:0 auto;
+            padding:2.5rem 1.5rem;
+            text-align:center;
+        ">
 
-            <div class="flex flex-wrap justify-center gap-6 text-sm mb-4">
+            <div style="
+                display:flex;
+                justify-content:center;
+                gap:1.2rem;
+                flex-wrap:wrap;
+                font-size:.875rem;
+                margin-bottom:1rem;
+            ">
                 <a href="{{ route('terms') ?? '#' }}">Terms</a>
                 <span>•</span>
                 <a href="{{ route('privacy') ?? '#' }}">Privacy</a>
@@ -32,15 +58,21 @@
                 <a href="{{ route('refund') ?? '#' }}">Refund</a>
             </div>
 
-            <div class="text-sm" style="color: var(--ink-3);">
+            <div style="font-size:.85rem; color:var(--ink-3);">
                 © {{ date('Y') }} RiskSignal. All rights reserved.
             </div>
 
         </div>
     </footer>
 
-    <!-- THEME TOGGLE (BOTTOM RIGHT FLOATING) -->
-    <button id="theme-toggle" aria-label="Toggle theme">
+    <!-- THEME TOGGLE -->
+    <button id="theme-toggle" aria-label="Toggle theme"
+            style="
+                position:fixed;
+                bottom:20px;
+                right:20px;
+                z-index:1000;
+            ">
         <span class="theme-icon"></span>
     </button>
 
