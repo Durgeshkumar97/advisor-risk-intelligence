@@ -1,50 +1,54 @@
 import './bootstrap';
 
-// ─────────────────────────────
-// APP INITIALIZATION
-// ─────────────────────────────
+/* ==========================================
+   APP START
+========================================== */
 document.addEventListener("DOMContentLoaded", () => {
     initScrollAnimations();
     initMobileMenu();
     initTheme();
-    initNavbarScroll(); 
+    initNavbarScroll();
+    initSmoothAnchorScroll();
 });
 
-// ─────────────────────────────
-// SCROLL ANIMATION ENGINE
-// ─────────────────────────────
+
+/* ==========================================
+   SCROLL ANIMATIONS
+========================================== */
 function initScrollAnimations() {
 
     const elements = document.querySelectorAll(".reveal");
 
     if (!elements.length) return;
 
+    /* fallback */
     if (!("IntersectionObserver" in window)) {
         elements.forEach(el => el.classList.add("active"));
         return;
     }
 
-    const observer = new IntersectionObserver((entries, observer) => {
+    const observer = new IntersectionObserver((entries) => {
+
         entries.forEach(entry => {
 
             if (entry.isIntersecting) {
                 entry.target.classList.add("active");
-                observer.unobserve(entry.target);
             }
 
         });
+
     }, {
-        threshold: 0.15,
-        rootMargin: "0px 0px -50px 0px"
+        threshold: 0.12,
+        rootMargin: "0px 0px -60px 0px"
     });
 
     elements.forEach(el => observer.observe(el));
 }
 
 
-// ─────────────────────────────
-// MOBILE MENU TOGGLE
-// ─────────────────────────────
+/* ==========================================
+   MOBILE MENU
+========================================== */
 function initMobileMenu() {
 
     const toggle = document.getElementById("menu-toggle");
@@ -57,113 +61,122 @@ function initMobileMenu() {
 
     toggle.addEventListener("click", () => {
 
-        // FIRST: toggle menu
-        menu.classList.toggle("hidden");
+        const isOpen = menu.classList.contains("open");
 
-        // handle theme toggle visibility
-        if (themeToggle) {
-            if (menu.classList.contains("hidden")) {
-                themeToggle.style.display = "block"; // menu closed
-            } else {
-                themeToggle.style.display = "none";  // menu open
-            }
-        }
-
-        // Toggle icons
-        if (openIcon && closeIcon) {
-            openIcon.classList.toggle("hidden");
-            closeIcon.classList.toggle("hidden");
-        }
-
-        // Accessibility
-        const expanded = toggle.getAttribute("aria-expanded") === "true";
-        toggle.setAttribute("aria-expanded", !expanded);
-
-        // Prevent background scroll
-        if (menu.classList.contains("hidden")) {
-            document.body.classList.remove("overflow-hidden");
+        if (isOpen) {
+            closeMenu();
         } else {
-            document.body.classList.add("overflow-hidden");
+            openMenu();
         }
+
     });
 
-    // CLOSE MENU ON LINK CLICK
-    const links = menu.querySelectorAll("a");
-
-    links.forEach(link => {
-        link.addEventListener("click", () => {
-
-            menu.classList.add("hidden");
-            document.body.classList.remove("overflow-hidden");
-
-            // Restore theme toggle
-            if (themeToggle) {
-                themeToggle.style.display = "block";
-            }
-
-            if (openIcon && closeIcon) {
-                openIcon.classList.remove("hidden");
-                closeIcon.classList.add("hidden");
-            }
-
-            toggle.setAttribute("aria-expanded", false);
-        });
+    /* close when link clicked */
+    menu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", closeMenu);
     });
+
+    /* close on outside click */
+    document.addEventListener("click", (e) => {
+
+        if (
+            menu.classList.contains("open") &&
+            !menu.contains(e.target) &&
+            !toggle.contains(e.target)
+        ) {
+            closeMenu();
+        }
+
+    });
+
+    function openMenu() {
+
+        menu.classList.add("open");
+        menu.classList.remove("hidden");
+
+        document.body.classList.add("overflow-hidden");
+
+        toggle.setAttribute("aria-expanded", "true");
+
+        if (openIcon) openIcon.classList.add("hidden");
+        if (closeIcon) closeIcon.classList.remove("hidden");
+
+        if (themeToggle) themeToggle.style.display = "none";
+    }
+
+    function closeMenu() {
+
+        menu.classList.remove("open");
+        menu.classList.add("hidden");
+
+        document.body.classList.remove("overflow-hidden");
+
+        toggle.setAttribute("aria-expanded", "false");
+
+        if (openIcon) openIcon.classList.remove("hidden");
+        if (closeIcon) closeIcon.classList.add("hidden");
+
+        if (themeToggle) themeToggle.style.display = "block";
+    }
 }
 
-// ─────────────────────────────
-// THEME TOGGLE SYSTEM (FIXED)
-// ─────────────────────────────
+
+/* ==========================================
+   THEME SYSTEM
+========================================== */
 function initTheme() {
 
     const html = document.documentElement;
-    const toggleBtn = document.getElementById("theme-toggle");
+    const btn = document.getElementById("theme-toggle");
 
-    // ✅ Load saved theme (default = dark recommended)
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    html.setAttribute("data-theme", savedTheme);
+    const saved = localStorage.getItem("theme") || "dark";
 
-    updateThemeIcon(savedTheme);
+    applyTheme(saved);
 
-    // ✅ Button click handler (if button exists)
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", toggleTheme);
+    if (btn) {
+        btn.addEventListener("click", toggleTheme);
     }
 
-    // ✅ Global fallback (optional use in HTML onclick)
     window.toggleTheme = toggleTheme;
 
     function toggleTheme() {
+
         const current = html.getAttribute("data-theme");
         const next = current === "light" ? "dark" : "light";
 
-        html.setAttribute("data-theme", next);
+        applyTheme(next);
         localStorage.setItem("theme", next);
+    }
 
-        updateThemeIcon(next);
+    function applyTheme(theme) {
+
+        html.setAttribute("data-theme", theme);
+        updateThemeIcon(theme);
     }
 }
 
 
-// ─────────────────────────────
-// UPDATE THEME ICON
-// ─────────────────────────────
+/* ==========================================
+   THEME ICON
+========================================== */
 function updateThemeIcon(theme) {
-
-    // Support BOTH:
-    // 1. .theme-icon (inside button)
-    // 2. #theme-toggle (direct button)
 
     const icon = document.querySelector(".theme-icon");
     const button = document.getElementById("theme-toggle");
 
+    const symbol = theme === "dark" ? "☀️" : "🌙";
+
     if (icon) {
-        icon.textContent = theme === "dark" ? "☀️" : "🌙";
+        icon.textContent = symbol;
     } else if (button) {
-        button.textContent = theme === "dark" ? "☀️" : "🌙";
+        button.textContent = symbol;
     }
 }
 
+
+/* ==========================================
+   NAVBAR SHRINK ON SCROLL
+========================================== */
 function initNavbarScroll() {
 
     const nav = document.querySelector("nav");
@@ -171,6 +184,7 @@ function initNavbarScroll() {
     if (!nav) return;
 
     function updateNav() {
+
         if (window.scrollY > 40) {
             nav.classList.add("nav-scrolled");
             nav.classList.remove("nav-default");
@@ -180,8 +194,44 @@ function initNavbarScroll() {
         }
     }
 
-    // initial state
     updateNav();
 
     window.addEventListener("scroll", updateNav);
+}
+
+
+/* ==========================================
+   SMOOTH ANCHOR SCROLL
+========================================== */
+function initSmoothAnchorScroll() {
+
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+
+        link.addEventListener("click", function (e) {
+
+            const targetId = this.getAttribute("href");
+
+            if (targetId === "#") return;
+
+            const target = document.querySelector(targetId);
+
+            if (!target) return;
+
+            e.preventDefault();
+
+            const navHeight = 70;
+
+            const top =
+                target.getBoundingClientRect().top +
+                window.pageYOffset -
+                navHeight;
+
+            window.scrollTo({
+                top,
+                behavior: "smooth"
+            });
+
+        });
+
+    });
 }

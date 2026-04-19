@@ -22,10 +22,10 @@
             </div>
 
             <h1 style="line-height:1.2;">
-                When markets fall,<br>
-                your clients call.<br>
+                When markets fall, clients panic.<br>
+                RiskSignal helps advisors retain trust and AUM.<br>
                 <em style="color:var(--gold);">
-                    We help you control client panic — before it costs you AUM.
+                    Daily WhatsApp risk summary + ready client script in plain English. Delivered before client calls.
                 </em>
             </h1>
 
@@ -49,7 +49,7 @@
                 align-items:center;
             ">
                 <a href="#contact" class="btn-primary">
-                    Start free trial →
+                    Get Report Now →
                 </a>
 
                 <a href="#sample-report" class="btn-outline">
@@ -60,15 +60,17 @@
 
         <!-- RIGHT SIDE CARD -->
         <div class="reveal reveal-right reveal-delay-2"
-             style="display:flex; justify-content:center;">
+            style="display:flex; justify-content:center; width:100%;">
 
             <div class="card card-hover"
-                 style="
+                style="
                     max-width:420px;
                     width:100%;
+                    min-width:0;
                     overflow:hidden;
                     transform:rotate(1.2deg);
-                 ">
+                    margin:auto;
+                ">
 
                 <!-- HEADER -->
                 <div style="
@@ -78,12 +80,22 @@
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
+                    gap:.6rem;
+                    flex-wrap:wrap;
                 ">
-                    <span style="font-family:var(--serif);font-size:1rem;">
+                    <span style="
+                        font-family:var(--serif);
+                        font-size:1rem;
+                        line-height:1.3;
+                    ">
                         Risk Intelligence
                     </span>
 
-                    <span class="pill pill-gold" style="font-size:.6rem;">
+                    <span class="pill pill-gold"
+                        style="
+                            font-size:.6rem;
+                            white-space:nowrap;
+                        ">
                         DAY 12 · 2026
                     </span>
                 </div>
@@ -99,10 +111,11 @@
                         padding-bottom:1rem;
                         margin-bottom:1rem;
                         border-bottom:1px solid var(--paper-3);
+                        flex-wrap:wrap;
                     ">
                         <span style="
                             font-family:var(--serif);
-                            font-size:2.2rem;
+                            font-size:clamp(1.8rem,8vw,2.2rem);
                             color:var(--amber);
                             line-height:1;
                         ">
@@ -119,7 +132,10 @@
                                 Moderate-High
                             </div>
 
-                            <div style="font-size:.7rem;color:var(--ink-3);">
+                            <div style="
+                                font-size:.7rem;
+                                color:var(--ink-3);
+                            ">
                                 ↑ from 5.1 yesterday
                             </div>
                         </div>
@@ -133,27 +149,57 @@
                         margin-bottom:1rem;
                     ">
 
-                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                            <span style="color:var(--ink-2);flex:1;">
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:flex-start;
+                            gap:.6rem;
+                            font-size:.82rem;
+                        ">
+                            <span style="
+                                color:var(--ink-2);
+                                flex:1;
+                                min-width:0;
+                            ">
                                 FII outflows — 3rd week
                             </span>
                             <span class="pill pill-high">HIGH</span>
                         </div>
 
-                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                            <span style="color:var(--ink-2);flex:1;">
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:flex-start;
+                            gap:.6rem;
+                            font-size:.82rem;
+                        ">
+                            <span style="
+                                color:var(--ink-2);
+                                flex:1;
+                                min-width:0;
+                            ">
                                 Rupee above 83.5 — import exposure
                             </span>
                             <span class="pill pill-high">HIGH</span>
                         </div>
 
-                        <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;">
-                            <span style="color:var(--ink-2);flex:1;">
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:flex-start;
+                            gap:.6rem;
+                            font-size:.82rem;
+                        ">
+                            <span style="
+                                color:var(--ink-2);
+                                flex:1;
+                                min-width:0;
+                            ">
                                 Mid-cap valuations elevated
                             </span>
                             <span class="pill pill-med">MED</span>
                         </div>
-                    </div> 
+                    </div>
 
                     <!-- SCRIPT -->
                     <div style="
@@ -170,6 +216,7 @@
                             color:var(--ink-2);
                             line-height:1.5;
                             font-style:italic;
+                            word-break:break-word;
                         ">
                             "Foreign investors have been selling — this is normal during uncertainty.
                             Your long-term plan is intact. No action needed."
@@ -178,10 +225,68 @@
 
                 </div>
             </div>
-        </div> 
+        </div>
     </div> 
 </section>
 
+<!-- BUILT FOR SECTION -->
+<section id="built-for" style="padding:2.5rem 0; background:var(--paper); border-top:1px solid var(--paper-3); border-bottom:1px solid var(--paper-3);">
+
+    <div class="container" style="max-width:1100px; margin:auto; padding:0 1rem;">
+
+        <!-- Heading -->
+        <div style="text-align:center; margin-bottom:1.4rem;">
+
+            <div class="eyebrow" style="margin-bottom:.55rem;">
+                Who this is for
+            </div>
+
+            <h2 style="margin-bottom:.55rem;">
+                Built for professionals who manage client trust
+            </h2>
+
+            <p style="
+                max-width:700px;
+                margin:auto;
+                font-size:.92rem;
+                color:var(--ink-3);
+                line-height:1.6;
+            ">
+                Designed for advisors who need calm, credible communication during volatile markets.
+            </p>
+
+        </div>
+
+        <!-- Grid -->
+        <div class="built-for-grid" style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+            gap:1rem;
+            text-align:center;
+        ">
+
+            <div class="built-for-card">
+                Independent Financial Advisors
+            </div>
+
+            <div class="built-for-card">
+                Mutual Fund Distributors
+            </div>
+
+            <div class="built-for-card">
+                Wealth Relationship Managers
+            </div>
+
+            <div class="built-for-card">
+                Small Advisory Teams
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{{-- ── PROBLEM STATEMENT ─────────────────────────────── --}}
 <section style="display:flex; justify-content:center; text-align:center;">
   
   <div style="max-width:700px; width:100%; margin:0 auto; padding:0 1rem;">
@@ -466,10 +571,14 @@
 
         <!-- CTA (CENTERED) -->
         <div style="text-align:center; margin-top:2rem;">
-            <a href="#contact" class="btn-primary">Start getting this daily →</a>
+            <a href="#contact" class="btn-primary">Get Today’s Free Sample Report →</a>
 
             <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
-                Get Today’s Client Panic Report Free
+                Delivered on WhatsApp today at 4:30 PM.
+            </div>
+
+            <div style="margin-top:1rem;">
+                <a href="#live-example" class="btn-secondary">See Live Example</a>
             </div>
         </div>
 
