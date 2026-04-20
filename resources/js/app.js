@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initSmoothAnchorScroll();
 });
 
-
 /* ==========================================
    SCROLL ANIMATIONS
 ========================================== */

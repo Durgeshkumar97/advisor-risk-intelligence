@@ -51,11 +51,19 @@
                 font-size:.875rem;
                 margin-bottom:1rem;
             ">
-                <a href="{{ route('terms') ?? '#' }}">Terms</a>
+
+                <a href="{{ route('terms') }}">Terms</a>
                 <span>•</span>
-                <a href="{{ route('privacy') ?? '#' }}">Privacy</a>
+
+                <a href="{{ route('privacy') }}">Privacy</a>
                 <span>•</span>
-                <a href="{{ route('refund') ?? '#' }}">Refund</a>
+
+                <a href="{{ route('refund') }}">Refund</a>
+                <span>•</span>
+
+                @auth
+                <a href="{{ route('admin.dashboard') }}">Admin</a>
+                @endauth
             </div>
 
             <div style="font-size:.85rem; color:var(--ink-3);">

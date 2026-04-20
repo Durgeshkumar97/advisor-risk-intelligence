@@ -689,7 +689,7 @@
                     </ul>
                 </div>
 
-                <a href="{{ route('checkout', ['plan' => 'starter']) }}"
+                <a href="{{ route('checkout.show', ['plan' => 'starter']) }}"
                    class="btn-outline"
                    style="margin-top:2rem;text-align:center;">
                     Start plan →
@@ -777,7 +777,7 @@
 
                 </div>
 
-                <a href="{{ route('checkout', ['plan' => 'pro']) }}"
+                <a href="{{ route('checkout.show', ['plan' => 'pro']) }}"
                 class="btn-primary"
                 style="margin-top:2rem;text-align:center;">
                     Start plan
@@ -807,7 +807,7 @@
                     </ul>
                 </div>
 
-                <a href="{{ route('checkout', ['plan' => 'team']) }}"
+                <a href="{{ route('checkout.show', ['plan' => 'team']) }}"
                    class="btn-outline"
                    style="margin-top:2rem;text-align:center;">
                     Start plan

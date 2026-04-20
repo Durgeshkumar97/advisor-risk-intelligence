@@ -1,141 +1,99 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| CONTROLLERS
-|--------------------------------------------------------------------------
-*/
-use App\Http\Controllers\PageController; 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\IntakeController;
-use App\Http\Controllers\Admin\AdminIntakeController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\AdminController;
 
 /*
 |--------------------------------------------------------------------------
-| SERVICES
+| Public Pages
 |--------------------------------------------------------------------------
 */
-use App\Services\ReportService;
-use App\Models\ClientIntake;
-use Illuminate\Support\Facades\Mail;
 
-/*
-|--------------------------------------------------------------------------
-| PUBLIC PAGES
-|--------------------------------------------------------------------------
-*/
 Route::get('/', [PageController::class, 'home'])->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| TEST ROUTE
-|--------------------------------------------------------------------------
-*/
-Route::get('/test', function () {
-    return view('test');
-})->name('test');
+Route::view('/terms', 'terms')->name('terms');
+Route::view('/privacy', 'privacy')->name('privacy');
+Route::view('/refund', 'refund')->name('refund');
 
 /*
 |--------------------------------------------------------------------------
-| TEST REPORT
+| Trial / Intake Forms
 |--------------------------------------------------------------------------
 */
-Route::get('/test-report', function () {
 
-    $user = ClientIntake::first();
-
-    if (!$user) {
-        return "No users found in database";
-    }
-
-    $service = new ReportService(); 
-    $report = $service->generate($user);
-
-    Mail::raw($report, function ($message) use ($user) {
-        $message->to($user->email ?? 'test@example.com')
-            ->subject('Test Weekly Report');
-    });
-
-    return "Report sent successfully!";
-});
+Route::post('/ifa-submit', [PageController::class, 'submit'])->name('ifa.submit');
 
 /*
 |--------------------------------------------------------------------------
-| INTAKE (TRIAL)
+| Pricing / Checkout
 |--------------------------------------------------------------------------
 */
-Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
-    ->name('ifa.submit');
 
-/*
-|--------------------------------------------------------------------------
-| PLAN UPGRADE
-|--------------------------------------------------------------------------
-*/
-Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
-    ->name('upgrade');
-
-/*
-|--------------------------------------------------------------------------
-| OPTIONAL CHECKOUT (FUTURE)
-|--------------------------------------------------------------------------
-*/
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
-    ->name('checkout');
+    ->name('checkout.show');
 
 Route::post('/checkout/process', [CheckoutController::class, 'process'])
     ->name('checkout.process');
 
-Route::get('/payment/success', [CheckoutController::class, 'success'])
+/*
+|--------------------------------------------------------------------------
+| Payment System
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/payment/verify', [PaymentController::class, 'verify'])
+    ->name('payment.verify');
+
+Route::get('/payment/success', [PaymentController::class, 'success'])
     ->name('payment.success');
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD
+| Upgrade Plans
 |--------------------------------------------------------------------------
 */
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+
+Route::post('/upgrade/{plan}', [PaymentController::class, 'upgrade'])
+    ->name('upgrade');
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN
+| File Access
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
 
-        Route::get('/intakes', [AdminIntakeController::class, 'index'])
-            ->name('intakes.index');
+Route::get('/file/{id}', [FileController::class, 'view'])
+    ->name('file.view');
 
-        Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])
-            ->name('intakes.show');
+/*
+|--------------------------------------------------------------------------
+| Admin Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/admin', [AdminController::class, 'index'])
+        ->name('admin.dashboard');
 
 });
 
 /*
 |--------------------------------------------------------------------------
-| File VIEW (PRIVATE)
+| Authenticated User Area
 |--------------------------------------------------------------------------
 */
-Route::get('/file/{id}', [FileController::class, 'view'])
-    ->middleware('auth')
-    ->name('file.view');
-/*
-|--------------------------------------------------------------------------
-| PROFILE
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -145,21 +103,12 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
-
 });
 
 /*
 |--------------------------------------------------------------------------
-| LEGAL
+| Laravel Auth Routes
 |--------------------------------------------------------------------------
 */
-Route::view('/terms', 'legal.terms')->name('terms');
-Route::view('/privacy', 'legal.privacy')->name('privacy');
-Route::view('/refund', 'legal.refund')->name('refund');
 
-/*
-|--------------------------------------------------------------------------
-| AUTH
-|--------------------------------------------------------------------------
-*/
-require __DIR__.'/auth.php'; 
+require __DIR__ . '/auth.php';

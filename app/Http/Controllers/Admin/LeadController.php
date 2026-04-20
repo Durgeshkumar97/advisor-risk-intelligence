@@ -27,10 +27,10 @@ class AdminIntakeController extends Controller
 
         // 🔍 Filter: email search
         if ($request->filled('email')) {
-            $query->where('email', 'ILIKE', '%' . $request->email . '%');
+            $query->where('email', 'LIKE', '%' . $request->email . '%');
         }
 
-        // 🔥 Sorting (IMPORTANT)
+        // Sorting (IMPORTANT)
         $intakes = $query
             ->orderByDesc('lead_score')   // highest priority first
             ->orderByDesc('created_at')   // newest next
