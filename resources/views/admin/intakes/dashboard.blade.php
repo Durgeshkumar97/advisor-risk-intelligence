@@ -71,13 +71,37 @@
             </p>
         </div>
 
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <a href="/" target="_blank" class="btnx">View Site</a>
-            <a href="/checkout/pro" target="_blank" class="btnx">Test Pro</a>
-            <a href="/admin" class="btnx">Refresh</a>
+        <div style="display:flex;gap:12px;align-items:center;">
+
+            <a href="/" style="
+                text-decoration:none;
+                color:#fff;
+                border:1px solid rgba(255,255,255,.14);
+                padding:12px 18px;
+                border-radius:12px;
+                font-weight:600;
+                display:inline-block;
+            ">
+                View Site
+            </a>
+
+            <form method="POST" action="{{ route('admin.logout') }}" style="margin:0;">
+                @csrf
+
+                <button type="submit" style="
+                    background:transparent;
+                    color:#fff;
+                    border:1px solid rgba(255,255,255,.14);
+                    padding:12px 18px;
+                    border-radius:12px;
+                    cursor:pointer;
+                    font-weight:600;
+                ">
+                    Logout
+                </button>
+            </form>
         </div>
     </div>
-
 
     {{-- TOP METRICS --}}
     <div class="grid6">

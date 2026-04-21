@@ -6,7 +6,9 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,11 +24,12 @@ Route::view('/refund', 'refund')->name('refund');
 
 /*
 |--------------------------------------------------------------------------
-| Trial / Intake Forms
+| Trial / Lead Capture
 |--------------------------------------------------------------------------
 */
 
-Route::post('/ifa-submit', [PageController::class, 'submit'])->name('ifa.submit');
+Route::post('/ifa-submit', [PageController::class, 'submit'])
+    ->name('ifa.submit');
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +45,7 @@ Route::post('/checkout/process', [CheckoutController::class, 'process'])
 
 /*
 |--------------------------------------------------------------------------
-| Payment System
+| Payments
 |--------------------------------------------------------------------------
 */
 
@@ -52,31 +55,31 @@ Route::post('/payment/verify', [PaymentController::class, 'verify'])
 Route::get('/payment/success', [PaymentController::class, 'success'])
     ->name('payment.success');
 
-/*
-|--------------------------------------------------------------------------
-| Upgrade Plans
-|--------------------------------------------------------------------------
-*/
-
 Route::post('/upgrade/{plan}', [PaymentController::class, 'upgrade'])
     ->name('upgrade');
 
 /*
 |--------------------------------------------------------------------------
-| File Access
+| Admin Login System
 |--------------------------------------------------------------------------
 */
 
-Route::get('/file/{id}', [FileController::class, 'view'])
-    ->name('file.view');
+Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
+    ->name('admin.login');
+
+Route::post('/admin/login', [AdminAuthController::class, 'login'])
+    ->name('admin.login.post');
+
+Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+    ->name('admin.logout');
 
 /*
 |--------------------------------------------------------------------------
-| Admin Dashboard
+| Protected Admin Dashboard
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['admin'])->group(function () {
 
     Route::get('/admin', [AdminController::class, 'index'])
         ->name('admin.dashboard');
@@ -85,7 +88,15 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated User Area
+| Admin Logout
+|--------------------------------------------------------------------------
+*/
+Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+    ->name('admin.logout');
+
+/*
+|--------------------------------------------------------------------------
+| Protected User Area
 |--------------------------------------------------------------------------
 */
 
@@ -107,8 +118,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Laravel Auth Routes
+| Files
 |--------------------------------------------------------------------------
 */
 
-require __DIR__ . '/auth.php';
+Route::get('/file/{id}', [FileController::class, 'view'])
+    ->name('file.view');
+
+/*
+|--------------------------------------------------------------------------
+| Laravel Auth
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__.'/auth.php';
