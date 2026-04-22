@@ -10,6 +10,34 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminAuthController;
 
+
+/****************************************************
+ * FORTRESS MODE - Hidden Admin Routes
+ ****************************************************/
+Route::get('/admin', function () {
+    \Log::warning('HONEYPOT HIT: /admin visited', [
+        'ip' => request()->ip(),
+        'agent' => request()->userAgent(),
+        'time' => now()
+    ]);
+
+    abort(404);
+});
+
+// Additional honeypot route to catch bots
+Route::get('/admin', function () {
+
+    \DB::table('security_events')->insert([
+        'type' => 'honeypot_hit',
+        'ip' => request()->ip(),
+        'agent' => request()->userAgent(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    abort(404);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Public Pages
@@ -68,6 +96,7 @@ Route::get('/founder-login-x91', [AdminAuthController::class, 'showLogin'])
     ->name('admin.login');
 
 Route::post('/founder-login-x91', [AdminAuthController::class, 'login'])
+    ->middleware('throttle:5,1')
     ->name('admin.login.post');
 
 Route::post('/founder-logout-x91', [AdminAuthController::class, 'logout'])

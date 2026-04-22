@@ -14,7 +14,8 @@ class AdminOnly
         }
 
         if (auth()->user()->is_admin != 1) {
-            abort(403, 'Unauthorized');
+            auth()->logout();
+            abort(403, 'Unauthorized.');
         }
 
         return $next($request);
