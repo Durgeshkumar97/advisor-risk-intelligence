@@ -60,39 +60,31 @@ Route::post('/upgrade/{plan}', [PaymentController::class, 'upgrade'])
 
 /*
 |--------------------------------------------------------------------------
-| Admin Login System
+| FORTRESS MODE - Hidden Admin Auth
 |--------------------------------------------------------------------------
 */
 
-Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
+Route::get('/founder-login-x91', [AdminAuthController::class, 'showLogin'])
     ->name('admin.login');
 
-Route::post('/admin/login', [AdminAuthController::class, 'login'])
+Route::post('/founder-login-x91', [AdminAuthController::class, 'login'])
     ->name('admin.login.post');
 
-Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+Route::post('/founder-logout-x91', [AdminAuthController::class, 'logout'])
     ->name('admin.logout');
 
 /*
 |--------------------------------------------------------------------------
-| Protected Admin Dashboard
+| FORTRESS MODE - Protected Admin Dashboard
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['admin'])->group(function () {
 
-    Route::get('/admin', [AdminController::class, 'index'])
+    Route::get('/founder-control-x91', [AdminController::class, 'index'])
         ->name('admin.dashboard');
 
 });
-
-/*
-|--------------------------------------------------------------------------
-| Admin Logout
-|--------------------------------------------------------------------------
-*/
-Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
-    ->name('admin.logout');
 
 /*
 |--------------------------------------------------------------------------
