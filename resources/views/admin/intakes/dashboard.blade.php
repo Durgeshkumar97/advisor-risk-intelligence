@@ -292,7 +292,7 @@
 
                         <div class="mini-box">
                             <small>Risk Level</small>
-                            <h2 style="color: {{ $riskColor ?? '#22c55e' }};">
+                            <h2 style="color:{{ $riskColor ?? '#22c55e' }};">
                                 {{ $riskLevel ?? 'LOW' }}
                             </h2>
                         </div>
