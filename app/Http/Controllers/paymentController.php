@@ -9,12 +9,7 @@ use App\Models\Subscription;
 
 class PaymentController extends Controller
 {
-    /**
-     * Upgrade user manually (MVP version before Razorpay)
-     *
-     * URL Example:
-     * /upgrade/pro?phone=9111111111
-     */
+
     public function upgrade($planSlug, Request $request)
     {
         // 1. Validate phone input

@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\CheckoutController;
@@ -10,29 +13,25 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminAuthController;
 
+/*
+|--------------------------------------------------------------------------
+| HONEYPOT ADMIN TRAP
+|--------------------------------------------------------------------------
+*/
 
-/****************************************************
- * FORTRESS MODE - Hidden Admin Routes
- ****************************************************/
-Route::get('/admin', function () {
-    \Log::warning('HONEYPOT HIT: /admin visited', [
-        'ip' => request()->ip(),
-        'agent' => request()->userAgent(),
-        'time' => now()
-    ]);
-
-    abort(404);
-});
-
-// Additional honeypot route to catch bots
 Route::get('/admin', function () {
 
-    \DB::table('security_events')->insert([
-        'type' => 'honeypot_hit',
-        'ip' => request()->ip(),
-        'agent' => request()->userAgent(),
+    DB::table('security_events')->insert([
+        'type'       => 'honeypot_hit',
+        'ip'         => request()->ip(),
+        'agent'      => request()->userAgent(),
         'created_at' => now(),
         'updated_at' => now(),
+    ]);
+
+    Log::warning('HONEYPOT HIT', [
+        'ip' => request()->ip(),
+        'agent' => request()->userAgent(),
     ]);
 
     abort(404);
@@ -40,7 +39,7 @@ Route::get('/admin', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Public Pages
+| PUBLIC PAGES
 |--------------------------------------------------------------------------
 */
 
@@ -52,7 +51,7 @@ Route::view('/refund', 'refund')->name('refund');
 
 /*
 |--------------------------------------------------------------------------
-| Trial / Lead Capture
+| LEAD CAPTURE
 |--------------------------------------------------------------------------
 */
 
@@ -61,21 +60,21 @@ Route::post('/ifa-submit', [PageController::class, 'submit'])
 
 /*
 |--------------------------------------------------------------------------
-| Pricing / Checkout
+| CHECKOUT
 |--------------------------------------------------------------------------
 */
 
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
     ->name('checkout.show');
 
-Route::post('/checkout/process', [CheckoutController::class, 'process'])
-    ->name('checkout.process');
-
 /*
 |--------------------------------------------------------------------------
-| Payments
+| PAYMENTS (RAZORPAY)
 |--------------------------------------------------------------------------
 */
+
+Route::post('/payment/create', [PaymentController::class, 'create'])
+    ->name('payment.create');
 
 Route::post('/payment/verify', [PaymentController::class, 'verify'])
     ->name('payment.verify');
@@ -83,12 +82,9 @@ Route::post('/payment/verify', [PaymentController::class, 'verify'])
 Route::get('/payment/success', [PaymentController::class, 'success'])
     ->name('payment.success');
 
-Route::post('/upgrade/{plan}', [PaymentController::class, 'upgrade'])
-    ->name('upgrade');
-
 /*
 |--------------------------------------------------------------------------
-| FORTRESS MODE - Hidden Admin Auth
+| HIDDEN ADMIN AUTH
 |--------------------------------------------------------------------------
 */
 
@@ -104,7 +100,7 @@ Route::post('/founder-logout-x91', [AdminAuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| FORTRESS MODE - Protected Admin Dashboard
+| ADMIN PANEL
 |--------------------------------------------------------------------------
 */
 
@@ -112,12 +108,11 @@ Route::middleware(['admin'])->group(function () {
 
     Route::get('/founder-control-x91', [AdminController::class, 'index'])
         ->name('admin.dashboard');
-
 });
 
 /*
 |--------------------------------------------------------------------------
-| Protected User Area
+| USER PANEL
 |--------------------------------------------------------------------------
 */
 
@@ -139,7 +134,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Files
+| FILE VIEWER
 |--------------------------------------------------------------------------
 */
 
@@ -148,7 +143,7 @@ Route::get('/file/{id}', [FileController::class, 'view'])
 
 /*
 |--------------------------------------------------------------------------
-| Laravel Auth
+| AUTH
 |--------------------------------------------------------------------------
 */
 

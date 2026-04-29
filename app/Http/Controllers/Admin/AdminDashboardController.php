@@ -6,10 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Lead;
 use App\Models\Subscription;
 
-class AdminController extends Controller
+class AdminDashboardController extends Controller
 {
     public function index()
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Core Dashboard Metrics
+        |--------------------------------------------------------------------------
+        */
+
         $totalLeads = Lead::count();
 
         $activeTrials = Subscription::where('status', 'trial')->count();
@@ -18,7 +24,15 @@ class AdminController extends Controller
 
         $expiredTrials = Subscription::where('status', 'expired')->count();
 
-        $recentLeads = Lead::latest()->take(20)->get();
+        $recentLeads = Lead::latest()
+            ->take(20)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Render Admin Dashboard
+        |--------------------------------------------------------------------------
+        */
 
         return view('admin.dashboard', compact(
             'totalLeads',
