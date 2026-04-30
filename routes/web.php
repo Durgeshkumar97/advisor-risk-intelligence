@@ -21,13 +21,17 @@ use App\Http\Controllers\Admin\AdminAuthController;
 
 Route::get('/admin', function () {
 
-    DB::table('security_events')->insert([
-        'type'       => 'honeypot_hit',
-        'ip'         => request()->ip(),
-        'agent'      => request()->userAgent(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    try {
+        DB::table('security_events')->insert([
+            'type'       => 'honeypot_hit',
+            'ip'         => request()->ip(),
+            'agent'      => request()->userAgent(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    } catch (\Exception $e) {
+        // fail silently
+    }
 
     Log::warning('HONEYPOT HIT', [
         'ip' => request()->ip(),
@@ -60,27 +64,33 @@ Route::post('/ifa-submit', [PageController::class, 'submit'])
 
 /*
 |--------------------------------------------------------------------------
-| CHECKOUT
+| CHECKOUT (PLAN LOCKED)
 |--------------------------------------------------------------------------
 */
 
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
+    ->whereIn('plan', ['starter', 'pro', 'team'])
     ->name('checkout.show');
 
 /*
 |--------------------------------------------------------------------------
-| PAYMENTS (RAZORPAY)
+| PAYMENTS (RAZORPAY - THROTTLED + GROUPED)
 |--------------------------------------------------------------------------
 */
 
-Route::post('/payment/create', [PaymentController::class, 'create'])
-    ->name('payment.create');
+Route::prefix('payment')->group(function () {
 
-Route::post('/payment/verify', [PaymentController::class, 'verify'])
-    ->name('payment.verify');
+    Route::post('/create', [PaymentController::class, 'create'])
+        ->middleware('throttle:15,1')
+        ->name('payment.create');
 
-Route::get('/payment/success', [PaymentController::class, 'success'])
-    ->name('payment.success');
+    Route::post('/verify', [PaymentController::class, 'verify'])
+        ->middleware('throttle:30,1')
+        ->name('payment.verify');
+
+    Route::get('/success', [PaymentController::class, 'success'])
+        ->name('payment.success');
+});
 
 /*
 |--------------------------------------------------------------------------

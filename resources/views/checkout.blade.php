@@ -269,7 +269,7 @@
             @endif
 
 
-            <form method="POST" action="{{ route('checkout.process') }}">
+            <form id="payment-form">
 
                 @csrf
 
@@ -340,7 +340,7 @@
                 </div>
 
 
-                <button type="submit" class="checkout-btn">
+                <button type="button" class="checkout-btn" onclick="startPayment()">
                     Complete Purchase
                 </button>
 
@@ -378,5 +378,94 @@
     </div>
 
 </div>
+
+
+<form id="payment-form">
+
+    @csrf
+
+    <input type="hidden" name="plan" value="{{ $plan }}">
+
+    <input id="name" name="name" required placeholder="Name">
+    <input id="phone" name="phone" required placeholder="Phone">
+    <input id="email" name="email" required placeholder="Email">
+
+    <button type="button" id="payBtn" onclick="startPayment()">
+        Complete Purchase
+    </button>
+
+</form>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+function startPayment() {
+
+    const btn = document.getElementById('payBtn');
+    const form = document.getElementById('payment-form');
+
+    // BASIC VALIDATION
+    if (!form.name.value || !form.phone.value || !form.email.value) {
+        alert("Fill all fields");
+        return;
+    }
+
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+
+    fetch("{{ route('payment.create') }}", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: new FormData(form)
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        const rzp = new Razorpay({
+            key: data.key,
+            amount: data.amount,
+            currency: "INR",
+            order_id: data.order_id,
+
+            handler: function (response) {
+
+                const verifyForm = document.createElement("form");
+                verifyForm.method = "POST";
+                verifyForm.action = "{{ route('payment.verify') }}";
+
+                verifyForm.innerHTML = `
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="razorpay_payment_id" value="${response.razorpay_payment_id}">
+                    <input type="hidden" name="razorpay_order_id" value="${response.razorpay_order_id}">
+                    <input type="hidden" name="razorpay_signature" value="${response.razorpay_signature}">
+                    <input type="hidden" name="name" value="${data.name}">
+                    <input type="hidden" name="email" value="${data.email}">
+                    <input type="hidden" name="phone" value="${data.phone}">
+                    <input type="hidden" name="plan" value="${data.plan}">
+                `;
+
+                document.body.appendChild(verifyForm);
+                verifyForm.submit();
+            }
+        });
+
+        rzp.on('payment.failed', function () {
+            alert("Payment failed");
+            btn.innerText = "Try Again";
+            btn.disabled = false;
+        });
+
+        rzp.open();
+
+    })
+    .catch(() => {
+        alert("Something went wrong");
+        btn.innerText = "Retry";
+        btn.disabled = false;
+    });
+}
+</script>
 
 @endsection

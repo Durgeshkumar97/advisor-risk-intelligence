@@ -11,9 +11,9 @@ class CheckoutController extends Controller
     public function show($plan)
     {
         $plans = [
-            'starter' => 799,
-            'pro' => 1499,
-            'team' => 3499,
+            'starter' => 999,
+            'pro' => 2499,
+            'team' => 4999,
         ];
 
         if (!array_key_exists($plan, $plans)) {
