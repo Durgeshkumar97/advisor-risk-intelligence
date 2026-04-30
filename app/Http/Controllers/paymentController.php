@@ -1,99 +1,83 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
 use Razorpay\Api\Api;
-use Illuminate\Support\Facades\DB;
-use App\Models\ClientIntake;
 
-public function verify(Request $request)
+class PaymentController extends Controller
 {
-    $api = new Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+    public function create(Request $request)
+    {
+        try {
 
-    try {
+            $validated = $request->validate([
+                'name'  => 'required|string',
+                'phone' => 'required',
+                'email' => 'required|email',
+                'plan'  => 'required|in:starter,pro,team',
+            ]);
 
-        // 1. Verify Razorpay signature
-        $attributes = [
-            'razorpay_order_id'   => $request->razorpay_order_id,
-            'razorpay_payment_id'=> $request->razorpay_payment_id,
-            'razorpay_signature' => $request->razorpay_signature,
-        ];
+            $plans = [
+                'starter' => 799,
+                'pro'     => 2499,
+                'team'    => 4999,
+            ];
 
-        $api->utility->verifyPaymentSignature($attributes);
+            $amount = $plans[$validated['plan']] * 100;
 
-        DB::beginTransaction();
+            $key = config('services.razorpay.key');
+            $secret = config('services.razorpay.secret');
 
-        // 2. Find latest intake (by phone)
-        $intake = ClientIntake::where('phone', $request->phone)
-            ->latest()
-            ->first();
+            if (!$key || !$secret) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Razorpay config missing'
+                ], 500);
+            }
 
-        if (!$intake) {
-            throw new \Exception('User not found');
+            $api = new Api($key, $secret);
+
+            $order = $api->order->create([
+                'receipt'         => 'rcpt_' . time(),
+                'amount'          => $amount,
+                'currency'        => 'INR',
+                'payment_capture' => 1,
+            ]);
+
+            return response()->json([
+                'success'  => true,
+                'order_id' => $order['id'],
+                'amount'   => $amount,
+                'key'      => $key,
+                'name'     => $validated['name'],
+                'email'    => $validated['email'],
+                'phone'    => $validated['phone'],
+            ]);
+
+        } catch (\Exception $e) {
+
+            \Log::error('RAZORPAY ERROR', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 500);
         }
+    }
 
-        // 3. Prevent duplicate payment (CRITICAL)
-        $existing = DB::table('payments')
-            ->where('razorpay_payment_id', $request->razorpay_payment_id)
-            ->first();
-
-        if ($existing) {
-            return redirect()->route('payment.success');
-        }
-
-        // 4. Update intake → ACTIVE
-        $intake->update([
-            'status' => 'active',
-            'plan'   => $request->plan,
-            'converted_at' => now(),
-            'ai_status' => 'active',
-        ]);
-
-        // 5. Store payment
-        DB::table('payments')->insert([
-            'client_intake_id'      => $intake->id,
-            'name'                  => $intake->name,
-            'email'                 => $intake->email,
-            'phone'                 => $intake->phone,
-            'plan'                  => $request->plan,
-            'amount'                => $request->amount,
-            'currency'              => 'INR',
-            'status'                => 'paid',
-            'provider'              => 'razorpay',
-            'razorpay_order_id'     => $request->razorpay_order_id,
-            'razorpay_payment_id'   => $request->razorpay_payment_id,
-            'razorpay_signature'    => $request->razorpay_signature,
-            'paid_at'               => now(),
-            'created_at'            => now(),
-            'updated_at'            => now(),
-        ]);
-
-        // 6. Create subscription (basic version)
-        DB::table('subscriptions')->insert([
-            'lead_id'   => null,
-            'user_id'   => null,
-            'plan_id'   => 1, // FIX later (dynamic)
-            'status'    => 'active',
-            'starts_at' => now(),
-            'ends_at'   => now()->addMonth(),
-            'provider'  => 'razorpay',
-            'created_at'=> now(),
-            'updated_at'=> now(),
-        ]);
-
-        DB::commit();
-
-        // 7. Pass data to success page
-        session([
-            'plan'   => $request->plan,
-            'amount' => $request->amount,
-        ]);
-
-        return redirect()->route('payment.success');
-
-    } catch (\Exception $e) {
-
-        DB::rollBack();
-
+    public function verify(Request $request)
+    {
         return response()->json([
-            'success' => false,
-            'error'   => $e->getMessage(),
-        ], 400);
+            'success' => true,
+            'message' => 'Verification pending'
+        ]);
+    }
+
+    public function success()
+    {
+        return view('payment-success');
     }
 }

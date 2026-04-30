@@ -460,10 +460,9 @@ function startPayment() {
         rzp.open();
 
     })
-    .catch(() => {
-        alert("Something went wrong");
-        btn.innerText = "Retry";
-        btn.disabled = false;
+    .catch((err) => {
+        console.error("PAYMENT ERROR:", err);
+        alert("Payment failed: " + (err?.message || 'Unknown error'));
     });
 }
 </script>
