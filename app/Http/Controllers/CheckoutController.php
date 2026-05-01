@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use App\Models\ClientIntake;
 
 class CheckoutController extends Controller
 {
@@ -12,8 +10,8 @@ class CheckoutController extends Controller
     {
         $plans = [
             'starter' => 999,
-            'pro' => 2499,
-            'team' => 4999,
+            'pro'     => 2499,
+            'team'    => 4999,
         ];
 
         if (!array_key_exists($plan, $plans)) {
@@ -21,35 +19,9 @@ class CheckoutController extends Controller
         }
 
         return view('checkout', [
-            'plan' => $plan,
+            'plan'  => $plan,
             'price' => $plans[$plan],
         ]);
-    }
-
-    public function process(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'phone' => 'required',
-            'email' => 'nullable|email',
-            'plan' => 'required',
-        ]);
-
-        ClientIntake::create([
-            'submission_uuid' => Str::uuid(),
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'portfolio_value' => 'NA',
-            'objective' => 'NA',
-            'horizon' => 'NA',
-            'archetype' => 'NA',
-            'concern' => 'NA',
-            'lead_score' => 'Paid',
-            'ai_status' => 'active',
-        ]);
-
-        return redirect()->route('payment.success');
     }
 
     public function success()
@@ -57,4 +29,3 @@ class CheckoutController extends Controller
         return view('payment-success');
     }
 }
- 

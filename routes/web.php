@@ -9,6 +9,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WebhookController;
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminAuthController;
@@ -90,6 +91,9 @@ Route::prefix('payment')->group(function () {
 
     Route::get('/success', [PaymentController::class, 'success'])
         ->name('payment.success');
+
+    Route::post('/webhook', [WebhookController::class, 'handle'])
+        ->name('payment.webhook');
 });
 
 /*

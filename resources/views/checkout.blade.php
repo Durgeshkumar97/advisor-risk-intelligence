@@ -379,77 +379,115 @@
 
 </div>
 
-
-<form id="payment-form">
-
-    @csrf
-
-    <input type="hidden" name="plan" value="{{ $plan }}">
-
-    <input id="name" name="name" required placeholder="Name">
-    <input id="phone" name="phone" required placeholder="Phone">
-    <input id="email" name="email" required placeholder="Email">
-
-    <button type="button" id="payBtn" onclick="startPayment()">
-        Complete Purchase
-    </button>
-
-</form>
-
+@push('scripts')
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-function startPayment() {
+console.log("SCRIPT LOADED");
+document.getElementById('payBtn').addEventListener('click', function () {
+    console.log("BUTTON CLICKED");
 
-    const btn = document.getElementById('payBtn');
-    const form = document.getElementById('payment-form');
-
-    // BASIC VALIDATION
-    if (!form.name.value || !form.phone.value || !form.email.value) {
-        alert("Fill all fields");
-        return;
-    }
-
+    const btn = this;
     btn.innerText = "Processing...";
     btn.disabled = true;
 
-    fetch("{{ route('payment.create') }}", {
-        method: "POST",
-        headers: {
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: new FormData(form)
-    })
-    .then(res => res.json())
-    .then(data => {
+    const name  = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const plan  = "{{ $plan }}";
 
-        const rzp = new Razorpay({
+    // Basic validation
+    if (!name || !phone || !email) {
+        alert("Please fill all fields");
+        btn.innerText = "Complete Purchase";
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+
+        const response = await fetch("/payment/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                name,
+                phone,
+                email,
+                plan
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.error || "Failed to create order");
+            btn.innerText = "Try Again";
+            btn.disabled = false;
+            return;
+        }
+
+        const options = {
             key: data.key,
             amount: data.amount,
             currency: "INR",
+            name: "RiskSignal",
+            description: "Subscription Payment",
             order_id: data.order_id,
 
-            handler: function (response) {
+            handler: async function (response) {
 
-                const verifyForm = document.createElement("form");
-                verifyForm.method = "POST";
-                verifyForm.action = "{{ route('payment.verify') }}";
+                try {
 
-                verifyForm.innerHTML = `
-                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="razorpay_payment_id" value="${response.razorpay_payment_id}">
-                    <input type="hidden" name="razorpay_order_id" value="${response.razorpay_order_id}">
-                    <input type="hidden" name="razorpay_signature" value="${response.razorpay_signature}">
-                    <input type="hidden" name="name" value="${data.name}">
-                    <input type="hidden" name="email" value="${data.email}">
-                    <input type="hidden" name="phone" value="${data.phone}">
-                    <input type="hidden" name="plan" value="${data.plan}">
-                `;
+                    const verify = await fetch("/payment/verify", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        },
+                        body: JSON.stringify({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            name,
+                            email,
+                            phone,
+                            plan,
+                            amount: data.amount
+                        })
+                    });
 
-                document.body.appendChild(verifyForm);
-                verifyForm.submit();
+                    const result = await verify.json();
+
+                    if (result.success) {
+                        window.location.href = result.redirect;
+                    } else {
+                        alert(result.error || "Verification failed");
+                        btn.innerText = "Try Again";
+                        btn.disabled = false;
+                    }
+
+                } catch (err) {
+                    alert("Verification failed");
+                    btn.innerText = "Retry";
+                    btn.disabled = false;
+                }
+            },
+
+            prefill: {
+                name,
+                email,
+                contact: phone
+            },
+
+            theme: {
+                color: "#0f172a"
             }
-        });
+        };
+
+        const rzp = new Razorpay(options);
 
         rzp.on('payment.failed', function () {
             alert("Payment failed");
@@ -459,12 +497,15 @@ function startPayment() {
 
         rzp.open();
 
-    })
-    .catch((err) => {
-        console.error("PAYMENT ERROR:", err);
-        alert("Payment failed: " + (err?.message || 'Unknown error'));
-    });
-}
+    } catch (error) {
+        console.error(error);
+        alert("Server error");
+        btn.innerText = "Retry";
+        btn.disabled = false;
+    }
+
+});
 </script>
 
+@endpush
 @endsection
