@@ -1,164 +1,122 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\FileController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WebhookController;
-
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminAuthController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
-| HONEYPOT ADMIN TRAP
+| PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
 
-Route::get('/admin', function () {
+// Landing
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
 
-    try {
-        DB::table('security_events')->insert([
-            'type'       => 'honeypot_hit',
-            'ip'         => request()->ip(),
-            'agent'      => request()->userAgent(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    } catch (\Exception $e) {
-        // fail silently
-    }
+// Pricing page
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
 
-    Log::warning('HONEYPOT HIT', [
-        'ip' => request()->ip(),
-        'agent' => request()->userAgent(),
-    ]);
-
-    abort(404);
-});
-
-/*
-|--------------------------------------------------------------------------
-| PUBLIC PAGES
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/', [PageController::class, 'home'])->name('home');
-
-Route::view('/terms', 'terms')->name('terms');
-Route::view('/privacy', 'privacy')->name('privacy');
-Route::view('/refund', 'refund')->name('refund');
-
-/*
-|--------------------------------------------------------------------------
-| LEAD CAPTURE
-|--------------------------------------------------------------------------
-*/
-
-Route::post('/ifa-submit', [PageController::class, 'submit'])
-    ->name('ifa.submit');
-
-/*
-|--------------------------------------------------------------------------
-| CHECKOUT (PLAN LOCKED)
-|--------------------------------------------------------------------------
-*/
-
+// Checkout
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
-    ->whereIn('plan', ['starter', 'pro', 'team'])
     ->name('checkout.show');
 
-/*
-|--------------------------------------------------------------------------
-| PAYMENTS (RAZORPAY - THROTTLED + GROUPED)
-|--------------------------------------------------------------------------
-*/
+// Payment success page (UI only)
+Route::get('/payment/success', [CheckoutController::class, 'success'])
+    ->name('payment.success');
 
-Route::prefix('payment')->group(function () {
-
-    Route::post('/create', [PaymentController::class, 'create'])
-        ->middleware('throttle:15,1')
-        ->name('payment.create');
-
-    Route::post('/verify', [PaymentController::class, 'verify'])
-        ->middleware('throttle:30,1')
-        ->name('payment.verify');
-
-    Route::get('/success', [PaymentController::class, 'success'])
-        ->name('payment.success');
-
-    Route::post('/webhook', [WebhookController::class, 'handle'])
-        ->name('payment.webhook');
-});
 
 /*
 |--------------------------------------------------------------------------
-| HIDDEN ADMIN AUTH
+| AUTH ROUTES (IMPORTANT)
 |--------------------------------------------------------------------------
 */
 
-Route::get('/founder-login-x91', [AdminAuthController::class, 'showLogin'])
-    ->name('admin.login');
+// If you are using Laravel UI / Breeze / Jetstream
+Auth::routes();
 
-Route::post('/founder-login-x91', [AdminAuthController::class, 'login'])
-    ->middleware('throttle:5,1')
-    ->name('admin.login.post');
+/*
+If you are NOT using Laravel auth scaffolding,
+then create your own routes like:
 
-Route::post('/founder-logout-x91', [AdminAuthController::class, 'logout'])
-    ->name('admin.logout');
+Route::get('/login', fn() => view('auth.login'))->name('login');
+Route::get('/register', fn() => view('auth.register'))->name('register');
+*/
+
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN PANEL
+| PAYMENT ROUTES (CRITICAL)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['admin'])->group(function () {
+// Create Razorpay order
+Route::post('/payment/create', [PaymentController::class, 'create'])
+    ->name('payment.create')
+    ->middleware('throttle:20,1');
 
-    Route::get('/founder-control-x91', [AdminController::class, 'index'])
-        ->name('admin.dashboard');
-});
+// Verify payment (UX only)
+Route::post('/payment/verify', [PaymentController::class, 'verify'])
+    ->name('payment.verify')
+    ->middleware('throttle:10,1');
+
 
 /*
 |--------------------------------------------------------------------------
-| USER PANEL
+| WEBHOOK (SERVER → SERVER)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// ⚠️ NO auth middleware here
+Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
+    ->name('webhook.razorpay');
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTH REQUIRED ROUTES
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
-
-    Route::patch('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
-
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
 });
 
-/*
-|--------------------------------------------------------------------------
-| FILE VIEWER
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/file/{id}', [FileController::class, 'view'])
-    ->name('file.view');
 
 /*
 |--------------------------------------------------------------------------
-| AUTH
+| PAID USER ROUTES (SaaS CORE)
 |--------------------------------------------------------------------------
 */
 
-require __DIR__.'/auth.php';
+Route::middleware(['auth', 'paid'])->group(function () {
+
+    Route::get('/reports', function () {
+        return view('reports');
+    })->name('reports');
+
+    Route::get('/analytics', function () {
+        return view('analytics');
+    })->name('analytics');
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| FALLBACK (OPTIONAL BUT IMPORTANT)
+|--------------------------------------------------------------------------
+*/
+
+Route::fallback(function () {
+    return redirect('/');
+});

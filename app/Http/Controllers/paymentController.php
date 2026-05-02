@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
+use App\Models\Payment;
+use App\Models\Plan;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use App\Models\User;
-use App\Models\Subscription;
 
 class PaymentController extends Controller
 {
@@ -20,44 +21,43 @@ class PaymentController extends Controller
         );
     }
 
-    //CREATE ORDER
+    // CREATE ORDER
     public function create(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required',
+        $data = $request->validate([
             'email' => 'required|email',
             'phone' => 'required',
-            'plan' => 'required'
+            'plan'  => 'required'
         ]);
 
-        // Plan pricing logic
-        $plans = [
-            'starter' => 99900,
-            'pro' => 249900,
-            'team' => 499900,
-        ];
-
-        if (!isset($plans[$validated['plan']])) {
-            return response()->json(['success' => false, 'error' => 'Invalid plan']);
-        }
-
-        $amount = $plans[$validated['plan']];
+        $plan = Plan::where('slug', $data['plan'])->firstOrFail();
 
         try {
+
             $order = $this->api->order->create([
-                'receipt' => uniqid(),
-                'amount' => $amount,
-                'currency' => 'INR',
+                'receipt' => Str::uuid(),
+                'amount' => $plan->price * 100, // paise
+                'currency' => 'INR'
+            ]);
+
+            Payment::create([
+                'order_id' => $order['id'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'plan' => $plan->slug,
+                'amount' => $plan->price * 100,
+                'status' => 'created'
             ]);
 
             return response()->json([
                 'success' => true,
                 'order_id' => $order['id'],
-                'amount' => $amount,
+                'amount' => $plan->price * 100,
                 'key' => config('services.razorpay.key')
             ]);
 
         } catch (\Exception $e) {
+
             Log::error($e->getMessage());
 
             return response()->json([
@@ -67,56 +67,28 @@ class PaymentController extends Controller
         }
     }
 
-    //VERIFY PAYMENT
+    // VERIFY (UX ONLY)
     public function verify(Request $request)
     {
         try {
 
-            $attributes = [
+            $this->api->utility->verifyPaymentSignature([
                 'razorpay_order_id' => $request->razorpay_order_id,
                 'razorpay_payment_id' => $request->razorpay_payment_id,
                 'razorpay_signature' => $request->razorpay_signature,
-            ];
-
-            $this->api->utility->verifyPaymentSignature($attributes);
-
-            //Fraud Check (basic)
-            if (!$request->email || !$request->phone) {
-                throw new \Exception("Fraud suspected");
-            }
-
-            // 👤 Create / fetch user
-            $user = User::firstOrCreate(
-                ['email' => $request->email],
-                [
-                    'name' => $request->name,
-                    'password' => bcrypt('password') // temp
-                ]
-            );
-
-            //Save subscription
-            Subscription::create([
-                'user_id' => $user->id,
-                'plan' => $request->plan,
-                'amount' => $request->amount,
-                'status' => 'active',
-                'started_at' => now(),
-                'ends_at' => now()->addMonth(),
-                'payment_id' => $request->razorpay_payment_id
             ]);
 
             return response()->json([
                 'success' => true,
-                'redirect' => '/dashboard'
+                'redirect' => '/processing'
             ]);
 
         } catch (\Exception $e) {
 
-            Log::error("Payment verification failed: " . $e->getMessage());
+            Log::error("Verify failed: ".$e->getMessage());
 
             return response()->json([
-                'success' => false,
-                'error' => 'Payment verification failed'
+                'success' => false
             ]);
         }
     }

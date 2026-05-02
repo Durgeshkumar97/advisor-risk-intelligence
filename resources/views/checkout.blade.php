@@ -340,7 +340,7 @@
                 </div>
 
 
-                <button type="button" class="checkout-btn" onclick="startPayment()">
+                <button type="button" id="payBtn" class="checkout-btn">
                     Complete Purchase
                 </button>
 
@@ -383,129 +383,168 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-console.log("SCRIPT LOADED");
-document.getElementById('payBtn').addEventListener('click', function () {
-    console.log("BUTTON CLICKED");
+document.addEventListener("DOMContentLoaded", function () {
 
-    const btn = this;
-    btn.innerText = "Processing...";
-    btn.disabled = true;
+    console.log("🚀 Payment script initialized");
 
-    const name  = document.getElementById('name').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const plan  = "{{ $plan }}";
+    const btn = document.getElementById('payBtn');
 
-    // Basic validation
-    if (!name || !phone || !email) {
-        alert("Please fill all fields");
-        btn.innerText = "Complete Purchase";
-        btn.disabled = false;
+    if (!btn) {
+        console.error("❌ payBtn not found");
         return;
     }
 
-    try {
+    let isProcessing = false; // 🔐 prevent double click
 
-        const response = await fetch("/payment/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                name,
-                phone,
-                email,
-                plan
-            })
-        });
+    btn.addEventListener('click', async function () {
 
-        const data = await response.json();
+        if (isProcessing) return; // prevent spam click
+        isProcessing = true;
 
-        if (!data.success) {
-            alert(data.error || "Failed to create order");
-            btn.innerText = "Try Again";
-            btn.disabled = false;
-            return;
+        const btnEl = this;
+        btnEl.innerText = "Processing...";
+        btnEl.disabled = true;
+
+        try {
+
+            // 🔹 Get inputs
+            const name  = document.getElementById('name')?.value.trim();
+            const phone = document.getElementById('phone')?.value.trim();
+            const email = document.getElementById('email')?.value.trim();
+            const plan  = "{{ $plan }}";
+
+            // 🔹 Validation
+            if (!name || !phone || !email) {
+                throw new Error("Please fill all fields");
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                throw new Error("Invalid phone number");
+            }
+
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                throw new Error("Invalid email");
+            }
+
+            // 🔹 Create order
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            const response = await fetch("/payment/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({ name, phone, email, plan }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+                throw new Error("Server error while creating order");
+            }
+
+            const data = await response.json();
+
+            if (!data.success || !data.order_id) {
+                throw new Error(data.error || "Invalid order response");
+            }
+
+            // 🔹 Razorpay instance
+            const rzp = new Razorpay({
+                key: data.key,
+                amount: data.amount,
+                currency: "INR",
+                name: "RiskSignal",
+                description: "Subscription Payment",
+                order_id: data.order_id,
+
+                handler: async function (response) {
+
+                    try {
+
+                        const verifyRes = await fetch("/payment/verify", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                name,
+                                email,
+                                phone,
+                                plan
+                            })
+                        });
+
+                        if (!verifyRes.ok) {
+                            throw new Error("Verification request failed");
+                        }
+
+                        const result = await verifyRes.json();
+
+                        if (!result.success) {
+                            throw new Error(result.error || "Payment verification failed");
+                        }
+
+                        // ✅ success redirect
+                        window.location.href = result.redirect || "/";
+
+                    } catch (err) {
+                        console.error("Verify error:", err);
+                        alert("Payment verification failed. Contact support.");
+                        resetButton();
+                    }
+                },
+
+                modal: {
+                    ondismiss: function () {
+                        console.log("User closed Razorpay modal");
+                        resetButton();
+                    }
+                },
+
+                prefill: {
+                    name: name,
+                    email: email,
+                    contact: phone
+                },
+
+                theme: {
+                    color: "#0f172a"
+                }
+            });
+
+            rzp.on('payment.failed', function (response) {
+                console.error("Payment failed:", response.error);
+                alert("Payment failed. Please try again.");
+                resetButton();
+            });
+
+            rzp.open();
+
+        } catch (error) {
+
+            console.error("🔥 Payment flow error:", error);
+            alert(error.message || "Something went wrong");
+
+            resetButton();
         }
 
-        const options = {
-            key: data.key,
-            amount: data.amount,
-            currency: "INR",
-            name: "RiskSignal",
-            description: "Subscription Payment",
-            order_id: data.order_id,
+        function resetButton() {
+            isProcessing = false;
+            btnEl.innerText = "Complete Purchase";
+            btnEl.disabled = false;
+        }
 
-            handler: async function (response) {
-
-                try {
-
-                    const verify = await fetch("/payment/verify", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                        },
-                        body: JSON.stringify({
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature,
-                            name,
-                            email,
-                            phone,
-                            plan,
-                            amount: data.amount
-                        })
-                    });
-
-                    const result = await verify.json();
-
-                    if (result.success) {
-                        window.location.href = result.redirect;
-                    } else {
-                        alert(result.error || "Verification failed");
-                        btn.innerText = "Try Again";
-                        btn.disabled = false;
-                    }
-
-                } catch (err) {
-                    alert("Verification failed");
-                    btn.innerText = "Retry";
-                    btn.disabled = false;
-                }
-            },
-
-            prefill: {
-                name,
-                email,
-                contact: phone
-            },
-
-            theme: {
-                color: "#0f172a"
-            }
-        };
-
-        const rzp = new Razorpay(options);
-
-        rzp.on('payment.failed', function () {
-            alert("Payment failed");
-            btn.innerText = "Try Again";
-            btn.disabled = false;
-        });
-
-        rzp.open();
-
-    } catch (error) {
-        console.error(error);
-        alert("Server error");
-        btn.innerText = "Retry";
-        btn.disabled = false;
-    }
+    });
 
 });
-</script>
-
+</script> 
 @endpush
 @endsection

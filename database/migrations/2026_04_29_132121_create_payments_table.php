@@ -4,48 +4,31 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    public function up(): void
-    {
+return new class extends Migration {
+    public function up(): void {
         Schema::create('payments', function (Blueprint $table) {
-
             $table->id();
 
-            $table->foreignId('client_intake_id')
-                ->nullable()
-                ->constrained('client_intakes')
-                ->nullOnDelete();
+            $table->string('order_id')->unique();
+            $table->string('payment_id')->nullable()->unique();
 
-            $table->string('name')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->string('email');
+            $table->string('phone');
 
             $table->string('plan');
-            $table->decimal('amount', 10, 2);
+            $table->integer('amount');
 
-            $table->string('currency')->default('INR');
+            $table->enum('status', ['created','paid','failed'])->default('created');
 
-            $table->string('status')->default('created');
-            // created / paid / failed
-
-            $table->string('provider')->default('razorpay');
-
-            $table->string('razorpay_order_id')->nullable();
-            $table->string('razorpay_payment_id')->nullable();
-            $table->text('razorpay_signature')->nullable();
-
-            $table->timestamp('paid_at')->nullable();
+            $table->json('meta')->nullable();
 
             $table->timestamps();
-
-            $table->index('status');
-            $table->index('plan');
         });
     }
 
-    public function down(): void
-    {
+    public function down(): void {
         Schema::dropIfExists('payments');
     }
 };
