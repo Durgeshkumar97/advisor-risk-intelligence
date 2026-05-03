@@ -3,120 +3,142 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\WebhookController;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\User\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
+Route::get('/', fn () => view('welcome'))->name('home');
 
-// Landing
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/pricing', fn () => view('pricing'))->name('pricing');
 
-// Pricing page
-Route::get('/pricing', function () {
-    return view('pricing');
-})->name('pricing');
-
-// Checkout
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
     ->name('checkout.show');
 
-// Payment success page (UI only)
 Route::get('/payment/success', [CheckoutController::class, 'success'])
     ->name('payment.success');
 
-
 /*
 |--------------------------------------------------------------------------
-| AUTH ROUTES (IMPORTANT)
+| USER AUTH (CUSTOMERS)
 |--------------------------------------------------------------------------
 */
 
-// If you are using Laravel UI / Breeze / Jetstream
-Auth::routes();
+Route::controller(AuthController::class)->group(function () {
 
-/*
-If you are NOT using Laravel auth scaffolding,
-then create your own routes like:
+    Route::get('/login', 'showLogin')->name('login');
+    Route::post('/login', 'login')->name('login.post');
 
-Route::get('/login', fn() => view('auth.login'))->name('login');
-Route::get('/register', fn() => view('auth.register'))->name('register');
-*/
+    Route::get('/register', 'showRegister')->name('register');
+    Route::post('/register', 'register')->name('register.post');
 
+    Route::post('/logout', 'logout')->name('logout');
 
-/*
-|--------------------------------------------------------------------------
-| PAYMENT ROUTES (CRITICAL)
-|--------------------------------------------------------------------------
-*/
-
-// Create Razorpay order
-Route::post('/payment/create', [PaymentController::class, 'create'])
-    ->name('payment.create')
-    ->middleware('throttle:20,1');
-
-// Verify payment (UX only)
-Route::post('/payment/verify', [PaymentController::class, 'verify'])
-    ->name('payment.verify')
-    ->middleware('throttle:10,1');
+});
 
 
 /*
 |--------------------------------------------------------------------------
-| WEBHOOK (SERVER → SERVER)
+| ADMIN AUTH (FOUNDER ONLY)
 |--------------------------------------------------------------------------
 */
 
-// ⚠️ NO auth middleware here
+Route::prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::controller(AdminAuthController::class)->group(function () {
+
+            Route::get('/login', 'showLogin')->name('login');
+            Route::post('/login', 'login')->name('login.post');
+            Route::post('/logout', 'logout')->name('logout');
+
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN PROTECTED
+        |--------------------------------------------------------------------------
+        */
+
+        Route::middleware(['auth:admin'])->group(function () {
+
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+                ->name('dashboard');
+
+        });
+
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT ROUTES
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('payment')->name('payment.')->group(function () {
+
+    Route::post('/create', [PaymentController::class, 'create'])
+        ->name('create')
+        ->middleware('throttle:20,1');
+
+    Route::post('/verify', [PaymentController::class, 'verify'])
+        ->name('verify')
+        ->middleware('throttle:10,1');
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK (SERVER TO SERVER)
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
     ->name('webhook.razorpay');
 
 
 /*
 |--------------------------------------------------------------------------
-| AUTH REQUIRED ROUTES
+| USER DASHBOARD
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| PAID USER ROUTES (SaaS CORE)
+| PAID USER ROUTES
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['auth', 'paid'])->group(function () {
 
-    Route::get('/reports', function () {
-        return view('reports');
-    })->name('reports');
+    Route::get('/reports', fn () => view('reports'))->name('reports');
 
-    Route::get('/analytics', function () {
-        return view('analytics');
-    })->name('analytics');
+    Route::get('/analytics', fn () => view('analytics'))->name('analytics');
 
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| FALLBACK (OPTIONAL BUT IMPORTANT)
+| FALLBACK
 |--------------------------------------------------------------------------
 */
 
-Route::fallback(function () {
-    return redirect('/');
-});
+Route::fallback(fn () => redirect('/'));

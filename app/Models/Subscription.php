@@ -1,7 +1,12 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use App\Models\User;
+use App\Models\Plan;
+use App\Models\Lead;
 
 class Subscription extends Model
 {
@@ -21,13 +26,18 @@ class Subscription extends Model
 
     protected $casts = [
         'trial_started_at' => 'datetime',
-        'trial_ends_at' => 'datetime',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
-        'renewal_at' => 'datetime',
+        'trial_ends_at'   => 'datetime',
+        'starts_at'       => 'datetime',
+        'ends_at'         => 'datetime',
+        'renewal_at'      => 'datetime',
     ];
 
-    // Relationships
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -43,19 +53,68 @@ class Subscription extends Model
         return $this->belongsTo(Lead::class);
     }
 
-    // Helpers
-    public function isActive()
+    /*
+    |--------------------------------------------------------------------------
+    | State Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isActive(): bool
     {
-        return $this->status === 'active' && $this->ends_at && $this->ends_at->isFuture();
+        return $this->status === 'active'
+            && $this->ends_at instanceof Carbon
+            && $this->ends_at->isFuture();
     }
 
-    public function isTrial()
+    public function isTrial(): bool
     {
-        return $this->status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isFuture();
+        return $this->status === 'trial'
+            && $this->trial_ends_at instanceof Carbon
+            && $this->trial_ends_at->isFuture();
     }
 
-    public function isExpired()
+    public function isExpired(): bool
     {
-        return $this->ends_at && $this->ends_at->isPast();
+        return $this->ends_at instanceof Carbon
+            && $this->ends_at->isPast();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes (VERY IMPORTANT)
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active')
+            ->where('ends_at', '>', now());
+    }
+
+    public function scopeTrial($query)
+    {
+        return $query->where('status', 'trial')
+            ->where('trial_ends_at', '>', now());
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->whereNotNull('ends_at')
+            ->where('ends_at', '<', now());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Utility
+    |--------------------------------------------------------------------------
+    */
+
+    public function daysRemaining(): int
+    {
+        if (!$this->ends_at) {
+            return 0;
+        }
+
+        return now()->diffInDays($this->ends_at, false);
     }
 }

@@ -3,54 +3,9 @@
 @section('content')
 
 @php
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard Calculations
-    |--------------------------------------------------------------------------
-    */
-
-    $starterPrice   = 999;
-    $proPrice       = 2499;
-    $teamPrice      = 4999;
-
-    $totalLeads     = $totalLeads ?? 0;
-    $paidUsers      = $paidUsers ?? 0;
-    $activeTrials   = $activeTrials ?? 0;
-    $recentLeads    = $recentLeads ?? collect();
-    $recentSecurityEvents = $recentSecurityEvents ?? collect();
-
-    $threatScore            = $threatScore ?? 12;
-    $riskLevel              = $riskLevel ?? 'LOW';
-    $topAttacker            = $topAttacker ?? null;
-    $aiRecommendation       = $aiRecommendation ?? 'All systems stable.';
-    $threatAttemptsToday    = $threatAttemptsToday ?? 0;
-    $unknownIpAlerts        = $unknownIpAlerts ?? 0;
-    $lastLogin              = $lastLogin ?? null;
-
-    $conversion = $totalLeads > 0
-        ? round(($paidUsers / $totalLeads) * 100)
-        : 0;
-
-    $mrr = $paidUsers * $proPrice;
-    $arr = $mrr * 12;
-
-    $pipelineMRR = $totalLeads * $starterPrice;
-
-    $expiringSoon = max($activeTrials - 1, 0);
-    $renewalValue = $expiringSoon * $starterPrice;
-
-    $cac = 320;
-    $ltv = 19992;
-    $ltvCac = round($ltv / $cac, 1);
-
-    $runwayMonths = 17;
-
-    $riskColor = match($riskLevel) {
-        'LOW'       => '#22c55e',
-        'MEDIUM'    => '#facc15',
-        'HIGH'      => '#f97316',
-        default     => '#ef4444',
-    };
+    $mrr = $mrr ?? 0;
+    $arr = $arr ?? 0;
+    $conversion = $conversion ?? 0;
 @endphp
 
 <div class="dashboard-shell">
@@ -107,7 +62,7 @@
 
             <div class="card metric">
                 <small>Pipeline MRR</small>
-                <h2 class="green">₹{{ number_format($pipelineMRR) }}</h2>
+                <h2 class="green">₹{{ number_format($pipelineMRR ?? 0) }}</h2>
                 <span>Potential from leads</span>
             </div>
 
@@ -177,7 +132,7 @@
 
                     <div class="head">
                         <h3>Revenue Pipeline</h3>
-                        <span>{{ $recentLeads->count() }} active leads</span>
+                        <span>{{ $recentLeads?->count() ?? 0 }} active leads</span>
                     </div>
 
                     <div class="table-wrap">
@@ -194,7 +149,7 @@
                             </thead>
 
                             <tbody>
-                            @forelse($recentLeads as $lead)
+                            @forelse($recentLeads ?? [] as $lead)
                                 <tr>
                                     <td>
                                         <strong>{{ $lead->name }}</strong><br>
@@ -231,7 +186,7 @@
                         <span>High intent leads</span>
                     </div>
 
-                    @forelse($recentLeads as $lead)
+                    @forelse($recentLeads ?? [] as $lead)
                         <div class="list-row">
 
                             <div>
@@ -271,13 +226,12 @@
                 </div>
 
             </div>
-
+            
             {{-- RIGHT SIDE --}}
             <div class="stack">
 
                 {{-- THREAT RADAR --}}
                 <div class="card">
-
                     <div class="head">
                         <h3>AI Threat Radar V2</h3>
                         <span>{{ now()->format('h:i A') }}</span>
@@ -292,7 +246,7 @@
 
                         <div class="mini-box">
                             <small>Risk Level</small>
-                            <h2 style="color:{{ $riskColor ?? '#22c55e' }};">
+                            <h2 style="color:{{ $riskColor ?? '#22c55e' }}">
                                 {{ $riskLevel ?? 'LOW' }}
                             </h2>
                         </div>
@@ -300,13 +254,13 @@
                         <div class="mini-box">
                             <small>Top Attacker IP</small>
                             <h2 class="small-title">
-                                {{ $topAttacker->ip ?? 'None' }}
+                                {{ optional($topAttacker)->ip ?? 'None' }}
                             </h2>
                         </div>
 
                         <div class="mini-box">
                             <small>Attempts</small>
-                            <h2>{{ $topAttacker->total ?? 0 }}</h2>
+                            <h2>{{ optional($topAttacker)->total ?? 0 }}</h2>
                         </div>
 
                         <div class="mini-box full">
@@ -317,150 +271,108 @@
                         </div>
 
                     </div>
-
                 </div>
-
-            </div>
 
                 {{-- SECURITY EVENTS --}}
                 <div class="card">
-
                     <div class="head">
                         <h3>Recent Security Events</h3>
-                        <span>{{ $recentSecurityEvents->count() }}</span>
+                        <span>{{ $recentSecurityEvents?->count() ?? 0 }}</span>
                     </div>
 
                     <div class="stack-sm">
 
-                        @forelse($recentSecurityEvents as $event)
-
+                        @forelse($recentSecurityEvents ?? [] as $event)
                             <div class="event-box">
-
                                 <div class="strong small">
-                                    {{ strtoupper($event->type) }}
+                                    {{ strtoupper($event->type ?? 'UNKNOWN') }}
                                 </div>
 
                                 <div class="mini-muted">
-                                    {{ $event->ip ?? 'N/A' }}
-                                    •
-                                    {{ $event->created_at }}
+                                    {{ $event->ip ?? 'N/A' }} • {{ $event->created_at ?? '' }}
                                 </div>
-
                             </div>
-
                         @empty
                             <div class="muted">No recent events.</div>
                         @endforelse
 
                     </div>
-
                 </div>
 
                 {{-- QUICK SECURITY STATS --}}
                 <div class="card">
-
                     <div class="mini-grid">
 
                         <div class="mini-box">
                             <small>Threat Attempts Today</small>
-                            <h2>{{ $threatAttemptsToday }}</h2>
+                            <h2>{{ $threatAttemptsToday ?? 0 }}</h2>
                         </div>
 
                         <div class="mini-box">
                             <small>Unknown IP Alerts</small>
-                            <h2>{{ $unknownIpAlerts }}</h2>
+                            <h2>{{ $unknownIpAlerts ?? 0 }}</h2>
                         </div>
 
                         <div class="mini-box">
                             <small>Last Login Time</small>
                             <h2 class="small-title">
-                                {{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->format('d M h:i A') : 'N/A' }}
+                                {{ $lastLogin ? \Illuminate\Support\Carbon::parse($lastLogin)->format('d M h:i A') : 'N/A' }}
                             </h2>
                         </div>
 
                         <div class="mini-box">
                             <small>Status</small>
-                            <h2 class="green">LOW</h2>
+                            <h2 class="green">{{ $riskLevel ?? 'LOW' }}</h2>
                         </div>
 
                     </div>
-
                 </div>
 
                 {{-- RENEWALS --}}
                 <div class="card">
-
                     <div class="head">
                         <h3>Renewals At Risk</h3>
                         <span>7 days</span>
                     </div>
 
                     <h2 class="orange big-number">
-                        ₹{{ number_format($renewalValue) }}
+                        ₹{{ number_format($renewalValue ?? 0) }}
                     </h2>
 
                     <p class="subtitle-sm">
-                        {{ $expiringSoon }} accounts need conversion push
+                        {{ $expiringSoon ?? 0 }} accounts need conversion push
                     </p>
-
                 </div>
 
                 {{-- FOUNDER PRIORITIES --}}
                 <div class="card">
-
                     <div class="head">
                         <h3>Founder Priorities</h3>
                         <span>Today stack</span>
                     </div>
 
                     <div class="stack-sm">
-
-                        <label class="task p1">
-                            <input type="checkbox">
-                            <span><strong>1.</strong> Close first Pro user</span>
-                        </label>
-
-                        <label class="task p2">
-                            <input type="checkbox">
-                            <span><strong>2.</strong> Improve landing conversion copy</span>
-                        </label>
-
-                        <label class="task p2">
-                            <input type="checkbox">
-                            <span><strong>3.</strong> Enable Razorpay auto capture</span>
-                        </label>
-
-                        <label class="task p3">
-                            <input type="checkbox">
-                            <span><strong>4.</strong> Polish dashboard styling</span>
-                        </label>
-
+                        <label class="task p1"><input type="checkbox"><span><strong>1.</strong> Close first Pro user</span></label>
+                        <label class="task p2"><input type="checkbox"><span><strong>2.</strong> Improve landing conversion copy</span></label>
+                        <label class="task p2"><input type="checkbox"><span><strong>3.</strong> Enable Razorpay auto capture</span></label>
+                        <label class="task p3"><input type="checkbox"><span><strong>4.</strong> Polish dashboard styling</span></label>
                     </div>
-
                 </div>
-  
+
                 {{-- NOTES --}}
                 <div class="card">
-
                     <div class="head">
                         <h3>Strategic Notes</h3>
                         <span>{{ now()->format('h:i A') }}</span>
                     </div>
 
                     <textarea class="note">- Push yearly plan
-- Build referral engine
-- Add case studies
-- Improve onboarding</textarea>
- 
-                </div>  
- 
+            - Build referral engine
+            - Add case studies
+            - Improve onboarding</textarea>
+                </div>
+
             </div>
-
-        </div>
-
-    </div>
-
-</div>
   
 <style>
 :root{

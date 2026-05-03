@@ -290,6 +290,17 @@
 </head>
 
 <body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Founder Access | RiskSignal</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+
+<body>
 
 <div class="wrapper">
 
@@ -307,52 +318,59 @@
             All access attempts are monitored and logged.
         </div>
 
+        {{-- GLOBAL ERROR --}}
         @if ($errors->any())
             <div class="error">
                 {{ $errors->first() }}
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.login.post') }}">
+        <form method="POST" action="{{ route('admin.login') }}">
             @csrf
 
+            {{-- EMAIL --}}
             <div class="form-group">
                 <label class="label">Founder Email</label>
 
                 <input
                     type="email"
                     name="email"
-                    class="input"
+                    class="input @error('email') error-border @enderror"
                     placeholder="you@company.com"
                     value="{{ old('email') }}"
                     required
                     autofocus
+                    autocomplete="email"
                 >
+
+                @error('email')
+                    <div class="error">{{ $message }}</div>
+                @enderror
             </div>
 
+            {{-- PASSWORD --}}
             <div class="form-group">
                 <label class="label">Password</label>
 
                 <input
                     type="password"
                     name="password"
-                    class="input"
+                    class="input @error('password') error-border @enderror"
                     placeholder="Enter password"
                     required
+                    autocomplete="current-password"
                 >
+
+                @error('password')
+                    <div class="error">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="row">
-
                 <label class="remember">
                     <input type="checkbox" name="remember">
                     Keep me signed in
                 </label>
-
-                <a href="#" class="mini-link">
-                    Protected Access
-                </a>
-
             </div>
 
             <button type="submit" class="btn">
