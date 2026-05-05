@@ -3,10 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
-use App\Models\User;
-use App\Models\Plan;
-use App\Models\Lead;
 
 class Subscription extends Model
 {
@@ -26,15 +22,15 @@ class Subscription extends Model
 
     protected $casts = [
         'trial_started_at' => 'datetime',
-        'trial_ends_at'   => 'datetime',
-        'starts_at'       => 'datetime',
-        'ends_at'         => 'datetime',
-        'renewal_at'      => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'renewal_at' => 'datetime',
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | Relationships
+    | RELATIONS
     |--------------------------------------------------------------------------
     */
 
@@ -55,66 +51,26 @@ class Subscription extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | State Helpers
+    | HELPERS (CORE SAAS LOGIC)
     |--------------------------------------------------------------------------
     */
 
-    public function isActive(): bool
+    public function isActive()
     {
         return $this->status === 'active'
-            && $this->ends_at instanceof Carbon
+            && $this->ends_at
             && $this->ends_at->isFuture();
     }
 
-    public function isTrial(): bool
+    public function isTrial()
     {
         return $this->status === 'trial'
-            && $this->trial_ends_at instanceof Carbon
+            && $this->trial_ends_at
             && $this->trial_ends_at->isFuture();
     }
 
-    public function isExpired(): bool
+    public function isExpired()
     {
-        return $this->ends_at instanceof Carbon
-            && $this->ends_at->isPast();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Scopes (VERY IMPORTANT)
-    |--------------------------------------------------------------------------
-    */
-
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active')
-            ->where('ends_at', '>', now());
-    }
-
-    public function scopeTrial($query)
-    {
-        return $query->where('status', 'trial')
-            ->where('trial_ends_at', '>', now());
-    }
-
-    public function scopeExpired($query)
-    {
-        return $query->whereNotNull('ends_at')
-            ->where('ends_at', '<', now());
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Utility
-    |--------------------------------------------------------------------------
-    */
-
-    public function daysRemaining(): int
-    {
-        if (!$this->ends_at) {
-            return 0;
-        }
-
-        return now()->diffInDays($this->ends_at, false);
+        return $this->ends_at && $this->ends_at->isPast();
     }
 }

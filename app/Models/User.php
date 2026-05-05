@@ -38,7 +38,7 @@ class User extends Authenticatable
 
     public function subscription()
     {
-        return $this->hasOne(Subscription::class);
+        return $this->hasOne(\App\Models\Subscription::class)->latestOfMany();
     }
 
     /*

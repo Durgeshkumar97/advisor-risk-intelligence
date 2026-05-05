@@ -1,9 +1,10 @@
 <?php
 
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;

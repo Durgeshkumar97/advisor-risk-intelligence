@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Subscription;
@@ -37,47 +39,48 @@ class WebhookController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (!$payment) {
-                    Log::error("Payment not found");
+                if (!$payment || $payment->status === 'paid') {
                     return;
-                }
-
-                if ($payment->status === 'paid') {
-                    return; // idempotent
                 }
 
                 $user = User::firstOrCreate(
                     ['email' => $payment->email],
-                    ['password' => bcrypt(\Str::random(12))]
+                    [
+                        'password' => bcrypt(Str::random(12)),
+                        'login_token' => Str::random(60)
+                    ]
                 );
+
+                // regenerate token every payment
+                $user->update([
+                    'login_token' => Str::random(60)
+                ]);
 
                 $plan = Plan::where('slug', $payment->plan)->first();
 
                 if (!$plan) {
-                    throw new \Exception("Plan not found");
+                    Log::error("Plan not found");
+                    return;
                 }
 
-                // update payment
                 $payment->update([
                     'payment_id' => $entity['id'],
                     'user_id' => $user->id,
                     'status' => 'paid'
                 ]);
 
-                // create/update subscription
                 Subscription::updateOrCreate(
                     ['user_id' => $user->id],
                     [
                         'plan_id' => $plan->id,
                         'status' => 'active',
                         'starts_at' => now(),
-                        'ends_at' => now()->addDays($plan->duration_days),
-                        'renewal_at' => now()->addDays($plan->duration_days),
+                        'ends_at' => now()->addDays($plan->duration_days ?? 30),
+                        'renewal_at' => now()->addDays($plan->duration_days ?? 30),
                         'provider' => 'razorpay',
                         'provider_subscription_id' => $entity['id']
                     ]
                 );
-
             });
 
             return response()->json(['status' => 'ok']);

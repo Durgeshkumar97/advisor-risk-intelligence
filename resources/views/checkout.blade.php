@@ -5,7 +5,7 @@
 <style>
 
 /* ==========================================
-   CHECKOUT PAGE — PREMIUM CONVERSION MODE
+   CHECKOUT PAGE 
 ========================================== */
 
 .checkout-wrap{
@@ -385,20 +385,20 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    console.log("🚀 Payment script initialized");
+    console.log("Payment script initialized");
 
     const btn = document.getElementById('payBtn');
 
     if (!btn) {
-        console.error("❌ payBtn not found");
+        console.error("payBtn not found");
         return;
     }
 
-    let isProcessing = false; // 🔐 prevent double click
+    let isProcessing = false;
 
     btn.addEventListener('click', async function () {
 
-        if (isProcessing) return; // prevent spam click
+        if (isProcessing) return;
         isProcessing = true;
 
         const btnEl = this;
@@ -407,13 +407,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
 
-            // 🔹 Get inputs
             const name  = document.getElementById('name')?.value.trim();
             const phone = document.getElementById('phone')?.value.trim();
             const email = document.getElementById('email')?.value.trim();
             const plan  = "{{ $plan }}";
 
-            // 🔹 Validation
+            /*
+            |--------------------------------------------------------------------------
+            | VALIDATION
+            |--------------------------------------------------------------------------
+            */
+
             if (!name || !phone || !email) {
                 throw new Error("Please fill all fields");
             }
@@ -426,7 +430,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 throw new Error("Invalid email");
             }
 
-            // 🔹 Create order
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE ORDER
+            |--------------------------------------------------------------------------
+            */
+
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -452,7 +461,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 throw new Error(data.error || "Invalid order response");
             }
 
-            // 🔹 Razorpay instance
+            /*
+            |--------------------------------------------------------------------------
+            | RAZORPAY
+            |--------------------------------------------------------------------------
+            */
+
             const rzp = new Razorpay({
                 key: data.key,
                 amount: data.amount,
@@ -464,6 +478,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 handler: async function (response) {
 
                     try {
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | VERIFY (OPTIONAL BUT SAFE)
+                        |--------------------------------------------------------------------------
+                        */
 
                         const verifyRes = await fetch("/payment/verify", {
                             method: "POST",
@@ -483,7 +503,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
 
                         if (!verifyRes.ok) {
-                            throw new Error("Verification request failed");
+                            throw new Error("Verification failed");
                         }
 
                         const result = await verifyRes.json();
@@ -492,8 +512,14 @@ document.addEventListener("DOMContentLoaded", function () {
                             throw new Error(result.error || "Payment verification failed");
                         }
 
-                        // ✅ success redirect
-                        window.location.href = result.redirect || "/";
+                        /*
+                        |--------------------------------------------------------------------------
+                        | AUTO LOGIN REDIRECT (FINAL)
+                        |--------------------------------------------------------------------------
+                        */
+
+                        window.location.href =
+                            "/payment/success?order_id=" + response.razorpay_order_id;
 
                     } catch (err) {
                         console.error("Verify error:", err);
@@ -530,7 +556,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         } catch (error) {
 
-            console.error("🔥 Payment flow error:", error);
+            console.error("Payment flow error:", error);
             alert(error.message || "Something went wrong");
 
             resetButton();
@@ -545,6 +571,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
-</script> 
+</script>
 @endpush
 @endsection
