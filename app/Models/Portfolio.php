@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Portfolio extends Model
+{
+    use HasFactory;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mass Assignable
+    |--------------------------------------------------------------------------
+    */
+
+    protected $fillable = [
+
+        'user_id',
+
+        'name',
+
+        'total_value',
+
+        'risk_score',
+
+        'risk_level',
+
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attribute Casting
+    |--------------------------------------------------------------------------
+    */
+
+    protected $casts = [
+
+        'total_value' => 'decimal:2',
+
+        'risk_score' => 'decimal:2',
+
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Portfolio owner
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Portfolio assets
+     */
+    public function assets()
+    {
+        return $this->hasMany(PortfolioAsset::class);
+    }
+
+    /**
+     * Uploaded files
+     */
+    public function uploadedFiles()
+    {
+        return $this->hasMany(UploadedFile::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Total asset count
+     */
+    public function totalAssets()
+    {
+        return $this->assets()->count();
+    }
+
+    /**
+     * Active risk label
+     */
+    public function riskBadgeColor()
+    {
+        return match ($this->risk_level) {
+
+            'LOW' => 'success',
+
+            'MEDIUM' => 'warning',
+
+            'HIGH' => 'danger',
+
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Recalculate portfolio totals
+     */
+    public function recalculateMetrics()
+    {
+        $assets = $this->assets;
+
+        $totalValue = $assets->sum('current_value');
+
+        $averageRisk = $assets->avg('risk_score') ?? 0;
+
+        $riskLevel = 'LOW';
+
+        if ($averageRisk >= 70) {
+
+            $riskLevel = 'HIGH';
+
+        } elseif ($averageRisk >= 40) {
+
+            $riskLevel = 'MEDIUM';
+        }
+
+        $this->update([
+
+            'total_value' => $totalValue,
+
+            'risk_score' => round($averageRisk, 2),
+
+            'risk_level' => $riskLevel,
+
+        ]);
+    }
+}

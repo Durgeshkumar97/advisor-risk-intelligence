@@ -1,82 +1,82 @@
 <?php
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+
+/*
+|--------------------------------------------------------------------------
+| CONTROLLERS
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WebhookController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AdminAuthController;
-use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\FileController;
+use App\Http\Controllers\IntakeController;
+
 use App\Http\Controllers\User\DashboardController;
+
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminIntakeController;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ROUTES
+| SERVICES & MODELS
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => view('welcome'))->name('home');
 
-Route::get('/pricing', fn () => view('pricing'))->name('pricing');
+use App\Services\ReportService;
+use App\Models\ClientIntake;
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PAGES
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', [PageController::class, 'home'])
+    ->name('home');
+
+Route::view('/pricing', 'pricing')
+    ->name('pricing');
+
+/*
+|--------------------------------------------------------------------------
+| LEGAL PAGES
+|--------------------------------------------------------------------------
+*/
+
+Route::view('/terms', 'legal.terms')
+    ->name('terms');
+
+Route::view('/privacy', 'legal.privacy')
+    ->name('privacy');
+
+Route::view('/refund', 'legal.refund')
+    ->name('refund');
+
+/*
+|--------------------------------------------------------------------------
+| IFA LEAD SUBMISSION
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
+    ->middleware('throttle:20,1')
+    ->name('ifa.submit');
+
+/*
+|--------------------------------------------------------------------------
+| CHECKOUT
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
     ->name('checkout.show');
-
-Route::get('/payment/success', [CheckoutController::class, 'success'])
-    ->name('payment.success');
-
-/*
-|--------------------------------------------------------------------------
-| USER AUTH (CUSTOMERS)
-|--------------------------------------------------------------------------
-*/
-
-Route::controller(AuthController::class)->group(function () {
-
-    Route::get('/login', 'showLogin')->name('login');
-    Route::post('/login', 'login')->name('login.post');
-
-    Route::get('/register', 'showRegister')->name('register');
-    Route::post('/register', 'register')->name('register.post');
-
-    Route::post('/logout', 'logout')->name('logout');
-
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN AUTH (FOUNDER ONLY)
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-
-        Route::controller(AdminAuthController::class)->group(function () {
-
-            Route::get('/login', 'showLogin')->name('login');
-            Route::post('/login', 'login')->name('login.post');
-            Route::post('/logout', 'logout')->name('logout');
-
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | ADMIN PROTECTED
-        |--------------------------------------------------------------------------
-        */
-
-        Route::middleware(['auth:admin'])->group(function () {
-
-            Route::get('/dashboard', [AdminDashboardController::class, 'index'])
-                ->name('dashboard');
-
-        });
-
-    });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -84,28 +84,146 @@ Route::prefix('admin')
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('payment')->name('payment.')->group(function () {
+Route::post('/payment/create', [PaymentController::class, 'create'])
+    ->middleware('throttle:20,1')
+    ->name('payment.create');
 
-    Route::post('/create', [PaymentController::class, 'create'])
-        ->name('create')
-        ->middleware('throttle:20,1');
+Route::post('/payment/verify', [PaymentController::class, 'verify'])
+    ->middleware('throttle:10,1')
+    ->name('payment.verify');
 
-    Route::post('/verify', [PaymentController::class, 'verify'])
-        ->name('verify')
-        ->middleware('throttle:10,1');
-
-});
-
+Route::get('/payment/success', [CheckoutController::class, 'success'])
+    ->name('payment.success');
 
 /*
 |--------------------------------------------------------------------------
-| WEBHOOK (SERVER TO SERVER)
+| WEBHOOK
 |--------------------------------------------------------------------------
 */
 
 Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
     ->name('webhook.razorpay');
 
+/*
+|--------------------------------------------------------------------------
+| AUTO LOGIN
+|--------------------------------------------------------------------------
+*/
+/*
+|--------------------------------------------------------------------------
+| AUTO LOGIN
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/auto-login/{token}', function ($token) {
+
+    $user = \App\Models\User::where('login_token', $token)->first();
+
+    if (!$user) {
+        return redirect()->route('login');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN USER
+    |--------------------------------------------------------------------------
+    */
+
+    \Illuminate\Support\Facades\Auth::login($user);
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE LOGIN STATE
+    |--------------------------------------------------------------------------
+    */
+
+    $user->update([
+        'login_token' => null,
+        'last_login_at' => now(),
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | ONBOARDING CHECK
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$user->onboarding_completed) {
+        return redirect()->route('onboarding');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FINAL REDIRECT
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()->route('dashboard');
+
+})->name('auto.login');
+
+/*
+|--------------------------------------------------------------------------
+| ONBOARDING
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW ONBOARDING
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/onboarding', function () {
+
+        return view('onboarding');
+
+    })->name('onboarding');
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE ONBOARDING
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/onboarding', function (\Illuminate\Http\Request $request) {
+
+        $request->validate([
+            'access_type' => 'required|in:email,whatsapp',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET AUTH USER
+        |--------------------------------------------------------------------------
+        */
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE USER SETTINGS
+        |--------------------------------------------------------------------------
+        */
+
+        $user->update([
+            'access_type' => $request->access_type,
+            'onboarding_completed' => true,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT TO DASHBOARD
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()->route('dashboard');
+
+    })->name('onboarding.store');
+
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -113,28 +231,94 @@ Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-});
+    Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
+        ->name('upgrade');
 
+    Route::get('/file/{id}', [FileController::class, 'view'])
+        ->name('file.view');
+
+});
 
 /*
 |--------------------------------------------------------------------------
-| PAID USER ROUTES
+| PROFILE
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'paid'])->group(function () {
+Route::middleware('auth')->group(function () {
 
-    Route::get('/reports', fn () => view('reports'))->name('reports');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-    Route::get('/analytics', fn () => view('analytics'))->name('analytics');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN PANEL
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+            ->name('dashboard');
+
+        Route::get('/intakes', [AdminIntakeController::class, 'index'])
+            ->name('intakes.index');
+
+        Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])
+            ->name('intakes.show');
+
+    });
+
+/*
+|--------------------------------------------------------------------------
+| TEST ROUTES (DEV ONLY)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/test', function () {
+
+    return view('test');
+
+})->name('test');
+
+Route::get('/test-report', function () {
+
+    $user = ClientIntake::first();
+
+    if (!$user) {
+        return 'No users found in database';
+    }
+
+    $service = new ReportService();
+
+    $report = $service->generate($user);
+
+    Mail::raw($report, function ($message) use ($user) {
+
+        $message->to($user->email ?? 'test@example.com')
+            ->subject('Test Weekly Report');
+
+    });
+
+    return 'Report sent successfully!';
+
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -142,4 +326,16 @@ Route::middleware(['auth', 'paid'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::fallback(fn () => redirect('/'));
+Route::fallback(function () {
+
+    return redirect()->route('home');
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| AUTH ROUTES
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__.'/auth.php';

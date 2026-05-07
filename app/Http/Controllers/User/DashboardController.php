@@ -15,78 +15,109 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        |BLOCK IF NOT ONBOARDED
+        | SUBSCRIPTION
         |--------------------------------------------------------------------------
         */
-        if (!$user->onboarding_completed) {
-            return redirect()->route('onboarding');
-        }
 
-        /*
-        |--------------------------------------------------------------------------
-        |SUBSCRIPTION
-        |--------------------------------------------------------------------------
-        */
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
             ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SAFETY FALLBACK
-        |--------------------------------------------------------------------------
-        */
         if (!$subscription) {
-            return redirect()->route('pricing')
+            return redirect('/pricing')
                 ->with('error', 'No active subscription found.');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PLAN
+        |--------------------------------------------------------------------------
+        */
+
+        $planName = $subscription->plan->name ?? 'No Plan';
 
         /*
         |--------------------------------------------------------------------------
         | EXPIRY
         |--------------------------------------------------------------------------
         */
-        $daysLeft = $subscription->ends_at
-            ? now()->diffInDays($subscription->ends_at, false)
-            : 0;
+
+        $expiryDate = $subscription->ends_at;
+
+        $daysLeft = 0;
+
+        if ($expiryDate) {
+            $daysLeft = now()->diffInDays(
+                $expiryDate,
+                false
+            );
+        }
 
         /*
         |--------------------------------------------------------------------------
-        |RISK SCORE (VALUE DELIVERY)
+        | RISK SCORE
         |--------------------------------------------------------------------------
         */
+
         $risk = RiskScore::where('user_id', $user->id)
             ->latest()
             ->first();
 
-        $riskScore = $risk->score ?? 42;
+        $riskScore = $risk->score ?? 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | RISK LEVEL
+        |--------------------------------------------------------------------------
+        */
 
         $riskLevel = match (true) {
             $riskScore < 30 => 'LOW',
             $riskScore < 70 => 'MEDIUM',
-            default => 'HIGH'
+            default => 'HIGH',
         };
 
         /*
         |--------------------------------------------------------------------------
-        | NEXT ACTION ENGINE
+        | RECOMMENDATION
         |--------------------------------------------------------------------------
         */
-        $nextAction = match (true) {
-            $riskScore > 70 => 'Reduce equity exposure',
-            $daysLeft < 3 => 'Renew your plan',
-            default => 'Review today’s report'
+
+        $recommendation = match ($riskLevel) {
+            'LOW' => 'Portfolio stable. Continue monitoring.',
+            'MEDIUM' => 'Review exposure and rebalance selectively.',
+            'HIGH' => 'Immediate portfolio review recommended.',
         };
+
+        /*
+        |--------------------------------------------------------------------------
+        | NEXT ACTION
+        |--------------------------------------------------------------------------
+        */
+
+        $nextAction = match ($riskLevel) {
+            'LOW' => 'Monitor market movement weekly.',
+            'MEDIUM' => 'Reduce concentration risk.',
+            'HIGH' => 'Schedule immediate portfolio review.',
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | VIEW
+        |--------------------------------------------------------------------------
+        */
 
         return view('user.dashboard', [
             'user' => $user,
             'subscription' => $subscription,
-            'plan' => $subscription->plan,
+            'planName' => $planName,
+            'expiryDate' => $expiryDate,
             'daysLeft' => $daysLeft,
             'riskScore' => $riskScore,
             'riskLevel' => $riskLevel,
-            'nextAction' => $nextAction
+            'recommendation' => $recommendation,
+            'nextAction' => $nextAction,
         ]);
     }
 }

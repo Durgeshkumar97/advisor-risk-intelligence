@@ -13,6 +13,7 @@ const App = {
   init() {
     this.cache();
     this.theme();
+    this.legalPageFix(); // ← must run before revealAnimations
     this.mobileMenu();
     this.revealAnimations();
     this.navbarScroll();
@@ -30,9 +31,39 @@ const App = {
     this.themeBtn = document.getElementById("theme-toggle");
     this.openIcon = document.getElementById("icon-open");
     this.closeIcon = document.getElementById("icon-close");
-    this.reveals = [...document.querySelectorAll(".reveal")];
+
+    // Exclude anything inside .legal-shell from reveal
+    this.reveals = [...document.querySelectorAll(".reveal")].filter(
+      (el) => !el.closest(".legal-shell")
+    );
+
     this.anchorLinks = [...document.querySelectorAll('a[href^="#"]')];
     this.sections = [...document.querySelectorAll("section[id]")];
+  },
+
+  /* ==================================================
+     LEGAL PAGE FIX
+     Forces all elements inside .legal-shell fully
+     visible — bypasses reveal animation entirely.
+  ================================================== */
+  legalPageFix() {
+    const shell = document.querySelector(".legal-shell");
+    if (!shell) return; // not a legal page, skip
+
+    // Force every descendant visible via inline style
+    // (inline style beats any CSS rule including !important from classes)
+    const all = [shell, ...shell.querySelectorAll("*")];
+
+    all.forEach((el) => {
+      el.style.setProperty("opacity",    "1",       "important");
+      el.style.setProperty("transform",  "none",    "important");
+      el.style.setProperty("visibility", "visible", "important");
+      el.style.setProperty("animation",  "none",    "important");
+      el.style.setProperty("transition", "none",    "important");
+
+      // Also add .active so any JS that checks for it is satisfied
+      el.classList.add("active");
+    });
   },
 
   /* ==================================================
@@ -202,13 +233,10 @@ const App = {
 
         e.preventDefault();
 
-        const navHeight =
-          this.nav?.offsetHeight || 70;
+        const navHeight = this.nav?.offsetHeight || 70;
 
         const top =
-          target.getBoundingClientRect().top +
-          window.scrollY -
-          navHeight;
+          target.getBoundingClientRect().top + window.scrollY - navHeight;
 
         window.scrollTo({
           top,

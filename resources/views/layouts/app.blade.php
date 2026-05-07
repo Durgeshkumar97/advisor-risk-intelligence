@@ -18,17 +18,8 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1"
-          style="
-            margin-top:72px; /* matches navbar height */
-          ">
-        <div style="
-            max-width:1200px;
-            margin:0 auto;
-            width:100%;
-        ">
-            @yield('content')
-        </div>
+    <main class="flex-1" style="margin-top: var(--nav-height);">
+        @yield('content')
     </main>
 
     <!-- FOOTER -->

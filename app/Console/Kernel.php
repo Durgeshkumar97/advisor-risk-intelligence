@@ -1,27 +1,30 @@
-use App\Models\ClientIntake;
-use App\Services\ReportService;
-use Illuminate\Support\Facades\Mail;
+<?php
 
-protected function schedule(Schedule $schedule): void
+namespace App\Console;
+
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+
+class Kernel extends ConsoleKernel
 {
-    $schedule->call(function () {
+    protected $commands = [
+        \App\Console\Commands\GenerateRiskScore::class,
+    ];
 
-        $reportService = new ReportService();
+    protected function schedule(Schedule $schedule): void
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | DAILY RISK DELIVERY
+        |--------------------------------------------------------------------------
+        */
 
-        $users = ClientIntake::whereIn('status', ['trial', 'active'])->get();
+        $schedule->command('risk:generate')
+            ->dailyAt('08:00');
+    }
 
-        foreach ($users as $user) {
-
-            if (!$user->email) continue;
-
-            $report = $reportService->generate($user);
-
-            Mail::raw($report, function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Your Weekly Risk Report');
-            });
-
-        }
-
-    })->weeklyOn(1, '09:00');
-} 
+    protected function commands(): void
+    {
+        $this->load(__DIR__.'/Commands');
+    }
+}

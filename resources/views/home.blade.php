@@ -255,7 +255,7 @@
                 Designed for advisors who need calm, credible communication during volatile markets.
             </p>
 
-        </div>
+        </div>                         
 
         <!-- Grid -->
         <div class="built-for-grid" style="
@@ -929,5 +929,6 @@
             </div>
 
         </form> 
+
     </div> 
 </section>
