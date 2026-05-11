@@ -5,9 +5,6 @@
 /* =====================================
    ROOT VARIABLES
 ===================================== */
-/* =====================================
-   ROOT VARIABLES
-===================================== */
 :root {
   --nav-height: 64px;
 
@@ -242,15 +239,6 @@ nav {
   transition: var(--transition-base);
 }
 
-nav.nav-default {
-  padding: 0.95rem 0;
-}
-
-nav.nav-scrolled {
-  padding: 0.55rem 0;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
 .nav-link {
   position: relative;
   font-size: 0.9rem;
@@ -280,32 +268,6 @@ nav.nav-scrolled {
   width: 100%;
 }
 
-/* =====================================
-   MOBILE MENU
-===================================== */
-#mobile-menu {
-  position: absolute;
-  top: var(--nav-height);
-  left: 0;
-  width: 100%;
-
-  background: var(--nav-bg);
-  border-bottom: 1px solid var(--paper-3);
-
-  padding: 1rem;
-
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-8px);
-
-  transition: var(--transition-fast);
-}
-
-#mobile-menu.open {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
 
 /* =====================================
    BUTTONS
@@ -416,9 +378,16 @@ select:focus {
 /* =====================================
    REVEAL ANIMATION
 ===================================== */
+
 .reveal {
   opacity: 0;
-  transition: opacity 0.8s ease, transform 0.8s ease;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+
   will-change: transform, opacity;
 }
 
@@ -440,6 +409,9 @@ select:focus {
 
 .reveal.active {
   opacity: 1;
+
+  pointer-events: auto;
+
   transform: translate(0, 0) scale(1);
 }
 
@@ -462,6 +434,7 @@ select:focus {
 /* =====================================
    GRIDS
 ===================================== */
+
 .hero-grid,
 .how-grid,
 .built-for-grid,
@@ -481,6 +454,7 @@ select:focus {
 }
 
 @media (min-width: 768px) {
+
   .hero-grid {
     grid-template-columns: 1.15fr 1fr;
     gap: 3rem;
@@ -553,6 +527,7 @@ select:focus {
 /* =====================================
    PRICING
 ===================================== */
+
 .pricing-card {
   padding: 1.5rem;
 
@@ -570,121 +545,291 @@ select:focus {
 }
 
 /* =====================================
+   CHECKOUT
+===================================== */
+
+.checkout-wrap {
+  padding: 4rem 1rem;
+}
+
+.checkout-shell {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.checkout-eyebrow {
+  margin-bottom: 0.8rem;
+
+  color: var(--gold);
+
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.checkout-title {
+  margin: 0 0 0.8rem;
+
+  color: var(--ink);
+
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.08;
+}
+
+.checkout-sub {
+  margin-bottom: 2rem;
+
+  color: var(--ink-3);
+
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.checkout-card {
+  padding: 2rem;
+
+  background: var(--paper);
+  border: 1px solid var(--paper-3);
+  border-radius: 20px;
+
+  box-shadow: var(--shadow-hover);
+}
+
+.plan-chip {
+  display: inline-block;
+
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.8rem;
+
+  background: rgba(250, 204, 21, 0.1);
+  border-radius: 999px;
+
+  color: var(--gold);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.plan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+
+  margin-bottom: 1.8rem;
+  padding-bottom: 1.3rem;
+
+  border-bottom: 1px solid var(--paper-3);
+}
+
+.plan-name {
+  color: var(--ink);
+
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.plan-price {
+  color: var(--ink);
+
+  font-size: 2.1rem;
+  font-weight: 900;
+}
+
+.plan-price small {
+  color: var(--ink-3);
+
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form-label {
+  display: block;
+
+  margin-bottom: 0.5rem;
+
+  color: var(--ink);
+
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px 16px;
+
+  background: var(--paper);
+  border: 1px solid var(--paper-3);
+  border-radius: 12px;
+
+  color: var(--ink);
+
+  font-size: 1rem;
+
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.form-input::placeholder {
+  color: var(--ink-3);
+}
+
+.form-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.08);
+}
+
+/* =====================================
+   AUTOFILL FIX
+===================================== */
+
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+
+  caret-color: var(--ink);
+
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* =====================================
+   CHECKOUT BUTTON
+===================================== */
+
+.checkout-btn {
+  width: 100%;
+
+  margin-top: 1rem;
+  padding: 16px;
+
+  background: var(--gold);
+  border: none;
+  border-radius: 14px;
+
+  color: #0b1220;
+
+  cursor: pointer;
+
+  font-size: 1rem;
+  font-weight: 800;
+
+  transition: var(--transition-fast);
+}
+
+.checkout-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* =====================================
+   TRUST + FEATURES
+===================================== */
+
+.trust-box {
+  margin-top: 1.2rem;
+
+  color: var(--ink-3);
+
+  text-align: center;
+
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.mini-points {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  margin-top: 1.4rem;
+}
+
+.mini-item {
+  padding: 0.8rem;
+
+  background: var(--paper);
+  border: 1px solid var(--paper-3);
+  border-radius: 12px;
+
+  color: var(--ink);
+
+  text-align: center;
+
+  font-size: 0.82rem;
+}
+
+/* =====================================
+   ALERTS
+===================================== */
+
+.alert-box {
+  margin-bottom: 1rem;
+  padding: 1rem;
+
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: 12px;
+
+  color: #fecaca;
+}
+
+.alert-box ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+/* =====================================
+   CHECKOUT RESPONSIVE
+===================================== */
+
+@media (max-width: 640px) {
+
+  .checkout-wrap {
+    padding: 2rem 0.8rem;
+  }
+
+  .checkout-title {
+    font-size: 2rem;
+  }
+
+  .checkout-card {
+    padding: 1.4rem;
+    border-radius: 18px;
+  }
+
+  .plan-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mini-points {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================
    THEME TOGGLE
 ===================================== */
+
 #theme-toggle {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 100;
+  z-index: 900;
 
   padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--paper-3);
 
   background: var(--paper);
+  border: 1px solid var(--paper-3);
+  border-radius: 10px;
+
   color: var(--ink);
 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* =====================================
-   LEGAL PAGES
-===================================== */
-
-.legal-shell {
-  min-height: 100vh;
-  margin-top: calc(-1 * var(--nav-height));
-  padding-top: calc(var(--nav-height) + 2rem);
-  background: var(--paper-2);
-  color: var(--ink);
-}
-
-.legal-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
-}
-
-.legal-header {
-  margin-bottom: 4rem;
-}
-
-.legal-title {
-  font-size: clamp(2.4rem, 5vw, 4rem);
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--ink);
-  margin-bottom: 1rem;
-}
-
-.legal-updated {
-  color: var(--ink-3);
-  font-size: 0.95rem;
-}
-
-.legal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.legal-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.legal-section h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 0.5rem;
-}
-
-.legal-section p {
-  color: var(--ink-2);
-  line-height: 1.9;
-}
-
-.legal-section ul {
-  padding-left: 1.4rem;
-  margin: 0;
-}
-
-.legal-section li {
-  margin-bottom: 0.8rem;
-  color: var(--ink-2);
-  line-height: 1.8;
-}
-
-.legal-highlight {
-  padding: 1.25rem;
-  border-radius: var(--radius-lg);
-  background: var(--gold-lt);
-  border: 1px solid var(--paper-3);
-  border-left: 3px solid var(--gold);
-  color: var(--ink);
-}
-
-.legal-card {
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-  border: 1px solid var(--paper-3);
-  box-shadow: var(--shadow);
-}
-
-.legal-contact-title {
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.legal-divider {
-  height: 1px;
-  width: 100%;
-  background: var(--paper-3);
-  margin: 1rem 0;
 }
 
 /* =====================================
@@ -743,7 +888,6 @@ select:focus {
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
-    transform: none;
     padding: 1rem;
   }
 
@@ -765,21 +909,28 @@ select:focus {
     top: var(--nav-height);
     left: 0;
     right: 0;
+
+    z-index: 1100;
+
     background: var(--nav-bg);
-    padding: 14px 16px;
-    z-index: 9999;
 
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+
     transform: translateY(-10px);
-    transition: .25s ease;
+
+    transition:
+      opacity .25s ease,
+      transform .25s ease,
+      visibility .25s ease;
   }
 
   #mobile-menu.open {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+
     transform: translateY(0);
   }
 
@@ -958,13 +1109,15 @@ select:focus {
 [data-theme="dark"] .legal-divider        { background: #2a3a52; }
 
 /* ── REVEAL KILL — absolute last rule ── */
-.legal-shell,
-.legal-shell * {
-  opacity:    1         !important;
-  transform:  none      !important;
-  visibility: visible   !important;
-  animation:  none      !important;
-  transition: none      !important;
+.legal-shell .reveal,
+.legal-shell .reveal-left,
+.legal-shell .reveal-right,
+.legal-shell .reveal-up,
+.legal-shell .reveal-pop {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+  animation: none !important;
 }
 
 /* ── LEGAL MOBILE ── */
@@ -973,3 +1126,4 @@ select:focus {
   .legal-title              { font-size: 2.3rem; }
   .legal-section h2         { font-size: 1.3rem; }
 }
+

@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Console\Commands;
 
@@ -29,4 +29,4 @@ class ExpireSubscriptions extends Command
 
         return Command::SUCCESS;
     }
-}
+}             

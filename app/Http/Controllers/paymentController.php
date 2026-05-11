@@ -2,94 +2,103 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Razorpay\Api\Api;
-use App\Models\Payment;
+use App\Actions\Payments\CompletePaymentAction;
+use App\Actions\Payments\CreateRazorpayOrderAction;
+use App\Actions\Payments\VerifyRazorpayPaymentAction;
 use App\Models\Plan;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
-    protected $api;
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE ORDER
+    |--------------------------------------------------------------------------
+    */
 
-    public function __construct()
-    {
-        $this->api = new Api(
-            config('services.razorpay.key'),
-            config('services.razorpay.secret')
-        );
-    }
-
-    // CREATE ORDER
     public function create(Request $request)
     {
-        $data = $request->validate([
-            'email' => 'required|email',
-            'phone' => 'required',
-            'plan'  => 'required'
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'plan'  => 'required|string|exists:plans,slug',
         ]);
-
-        $plan = Plan::where('slug', $data['plan'])->firstOrFail();
 
         try {
 
-            $order = $this->api->order->create([
-                'receipt' => Str::uuid(),
-                'amount' => $plan->price * 100, // paise
-                'currency' => 'INR'
-            ]);
+            $plan = Plan::where('slug', $validated['plan'])
+                ->firstOrFail();
 
-            Payment::create([
-                'order_id' => $order['id'],
-                'email' => $data['email'],
-                'phone' => $data['phone'],
-                'plan' => $plan->slug,
-                'amount' => $plan->price * 100,
-                'status' => 'created'
-            ]);
+            $payment = app(CreateRazorpayOrderAction::class)
+                ->execute($plan, $validated);
 
             return response()->json([
                 'success' => true,
-                'order_id' => $order['id'],
-                'amount' => $plan->price * 100,
-                'key' => config('services.razorpay.key')
+                'order_id' => $payment->order_id,
+                'amount' => (int) $payment->amount * 100,
+                'currency' => 'INR',
+                'key' => config('services.razorpay.key'),
             ]);
+        } catch (\Throwable $e) {
 
-        } catch (\Exception $e) {
-
-            Log::error($e->getMessage());
+            Log::error('Payment order creation failed', [
+                'message' => $e->getMessage(),
+                'ip' => $request->ip(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Order creation failed'
-            ]);
+                'message' => 'Unable to create payment order.',
+            ], 500);
         }
     }
 
-    // VERIFY (UX ONLY)
+    /*
+    |--------------------------------------------------------------------------
+    | VERIFY PAYMENT
+    |--------------------------------------------------------------------------
+    */
+
     public function verify(Request $request)
     {
+        $validated = $request->validate([
+            'razorpay_order_id' => 'required|string',
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_signature' => 'required|string',
+        ]);
+
         try {
 
-            $this->api->utility->verifyPaymentSignature([
-                'razorpay_order_id' => $request->razorpay_order_id,
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'razorpay_signature' => $request->razorpay_signature,
-            ]);
+            $payment = app(VerifyRazorpayPaymentAction::class)
+                ->execute($validated);
+
+            app(CompletePaymentAction::class)
+                ->execute($payment);
 
             return response()->json([
                 'success' => true,
-                'redirect' => '/processing'
+                'redirect' => route('dashboard'),
             ]);
-
-        } catch (\Exception $e) {
-
-            Log::error("Verify failed: ".$e->getMessage());
+        } catch (ValidationException $e) {
 
             return response()->json([
-                'success' => false
+                'success' => false,
+                'message' => 'Payment verification failed.',
+            ], 422);
+        } catch (\Throwable $e) {
+
+            Log::error('Payment verification failed', [
+                'message' => $e->getMessage(),
+                'ip' => $request->ip(),
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification error.',
+            ], 500);
         }
     }
 }

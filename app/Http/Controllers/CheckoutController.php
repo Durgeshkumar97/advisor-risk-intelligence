@@ -2,93 +2,236 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Payments\ActivateUserSubscription;
+use App\Actions\Payments\VerifyRazorpayPayment;
+use App\Jobs\ProcessSuccessfulPayment;
+use App\Models\Payment;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Payment;
-use App\Models\User;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckoutController extends Controller
 {
-    public function success(Request $request)
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW CHECKOUT PAGE
+    |--------------------------------------------------------------------------
+    */
+
+    public function show(string $slug)
     {
-        $orderId = $request->get('order_id');
+        $plan = Plan::query()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
 
-        if (!$orderId) {
-            return redirect()->route('pricing')
-                ->with('error', 'Invalid payment session.');
-        }
+        return view('checkout', [
+            'plan' => $plan,
+            'razorpayKey' => config('services.razorpay.key'),
+        ]);
+    }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT SUCCESS
+    |--------------------------------------------------------------------------
+    |
+    | Production-grade implementation:
+    |
+    | - Signature verification
+    | - Rate limiting
+    | - Idempotency
+    | - Queue-safe architecture
+    | - Transaction-safe operations
+    | - Structured logging
+    | - Fraud protection basics
+    | - Safe authentication flow
+    |
+    */
+
+    public function success(Request $request)
+    { 
         /*
         |--------------------------------------------------------------------------
-        |WAIT FOR WEBHOOK (HANDLE RACE CONDITION)
+        | RATE LIMITING
         |--------------------------------------------------------------------------
         */
 
-        $payment = null;
+        $rateKey = sprintf(
+            'checkout-success:%s',
+            $request->ip()
+        );
 
-        for ($i = 0; $i < 5; $i++) {
-            $payment = Payment::where('order_id', $orderId)
-                ->where('status', 'paid')
-                ->first();
+        if (RateLimiter::tooManyAttempts($rateKey, 15)) {
 
-            if ($payment) break;
+            Log::warning('Checkout rate limit exceeded', [
+                'ip' => $request->ip(),
+            ]);
 
-            sleep(1); // wait for webhook
+            abort(Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        if (!$payment) {
-            Log::warning("Payment not confirmed yet", ['order_id' => $orderId]);
-
-            return redirect()->route('pricing')
-                ->with('error', 'Payment is being processed. Please try again.');
-        }
-
-        if (!$payment->user_id) {
-            Log::error("Payment has no user_id", ['order_id' => $orderId]);
-
-            return redirect()->route('login')
-                ->with('error', 'Account setup issue. Contact support.');
-        }
-
-        $user = User::find($payment->user_id);
-
-        if (!$user) {
-            Log::error("User not found for payment", ['order_id' => $orderId]);
-
-            return redirect()->route('login');
-        }
+        RateLimiter::hit($rateKey, 60);
 
         /*
         |--------------------------------------------------------------------------
-        |AUTO LOGIN
+        | VALIDATION
         |--------------------------------------------------------------------------
         */
 
-        Auth::login($user);
-        $request->session()->regenerate();
+        $validated = $request->validate([
+            'razorpay_payment_id' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        $user->update([
-            'last_login_at' => now()
+            'razorpay_order_id' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'razorpay_signature' => [
+                'required',
+                'string',
+                'max:500',
+            ],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        |ONBOARDING FLOW
-        |--------------------------------------------------------------------------
-        */
+        try {
 
-        if (!$user->onboarding_completed) {
-            return redirect()->route('onboarding');
+            /*
+            |--------------------------------------------------------------------------
+            | VERIFY PAYMENT
+            |--------------------------------------------------------------------------
+            */
+
+            $payment = app(VerifyRazorpayPayment::class)
+                ->execute($validated);
+
+            /*
+            |--------------------------------------------------------------------------
+            | LOCK PAYMENT ROW
+            |--------------------------------------------------------------------------
+            */
+
+            DB::transaction(function () use ($payment) {
+
+                $lockedPayment = Payment::query()
+                    ->whereKey($payment->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$lockedPayment) {
+
+                    throw ValidationException::withMessages([
+                        'payment' => 'Payment record missing.',
+                    ]);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | IDEMPOTENCY PROTECTION
+                |--------------------------------------------------------------------------
+                */
+
+                if ($lockedPayment->processed_at) {
+                    return;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | DISPATCH BACKGROUND JOB
+                |--------------------------------------------------------------------------
+                */
+
+                CompletePaymentAction::dispatch(
+                    $lockedPayment
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | MARK PROCESSING
+                |--------------------------------------------------------------------------
+                */
+
+                $lockedPayment->update([
+                    'processed_at' => now(),
+                ]);
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | SAFE USER LOGIN
+            |--------------------------------------------------------------------------
+            */
+
+            $payment->refresh();
+
+            if ($payment->user) {
+
+                Auth::login($payment->user);
+
+                $request->session()->regenerate();
+
+                $payment->user->update([
+                    'last_login_at' => now(),
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | SUCCESS RESPONSE
+            |--------------------------------------------------------------------------
+            */
+
+            return response()->json([
+                'success' => true,
+
+                'redirect' => $payment->user &&
+                    !$payment->user->onboarding_completed
+                    ? route('onboarding')
+                    : route('dashboard'),
+            ]);
+        } catch (ValidationException $e) {
+
+            Log::warning('Payment validation failed', [
+                'message' => $e->getMessage(),
+                'ip' => $request->ip(),
+                'order_id' => $request->input('razorpay_order_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification failed.',
+            ], 422);
+        } catch (\Throwable $e) {
+
+            Log::critical('Checkout success failure', [
+
+                'message' => $e->getMessage(),
+
+                'file' => $e->getFile(),
+
+                'line' => $e->getLine(),
+
+                'ip' => $request->ip(),
+
+                'user_agent' => $request->userAgent(),
+
+                'order_id' => $request->input('razorpay_order_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process payment.',
+            ], 500);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        |FINAL DESTINATION
-        |--------------------------------------------------------------------------
-        */
-
-        return redirect()->route('dashboard')
-            ->with('success', 'Welcome! Your subscription is active.');
     }
 }

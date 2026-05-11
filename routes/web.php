@@ -76,6 +76,7 @@ Route::post('/ifa-submit', [IntakeController::class, 'ifaSubmit'])
 */
 
 Route::get('/checkout/{plan}', [CheckoutController::class, 'show'])
+    ->whereIn('plan', ['starter', 'pro', 'team'])
     ->name('checkout.show');
 
 /*
@@ -159,8 +160,7 @@ Route::get('/auto-login/{token}', function ($token) {
     */
 
     return redirect()->route('dashboard');
-
-})->name('auto.login');
+})->name('auto.login');         
 
 /*
 |--------------------------------------------------------------------------
@@ -179,7 +179,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/onboarding', function () {
 
         return view('onboarding');
-
     })->name('onboarding');
 
     /*
@@ -220,9 +219,7 @@ Route::middleware('auth')->group(function () {
         */
 
         return redirect()->route('dashboard');
-
     })->name('onboarding.store');
-
 });
 
 /*
@@ -241,7 +238,6 @@ Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/file/{id}', [FileController::class, 'view'])
         ->name('file.view');
-
 });
 
 /*
@@ -260,7 +256,6 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
-
 });
 
 /*
@@ -282,7 +277,6 @@ Route::middleware(['auth'])
 
         Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])
             ->name('intakes.show');
-
     });
 
 /*
@@ -294,7 +288,6 @@ Route::middleware(['auth'])
 Route::get('/test', function () {
 
     return view('test');
-
 })->name('test');
 
 Route::get('/test-report', function () {
@@ -313,11 +306,9 @@ Route::get('/test-report', function () {
 
         $message->to($user->email ?? 'test@example.com')
             ->subject('Test Weekly Report');
-
     });
 
     return 'Report sent successfully!';
-
 });
 
 /*
@@ -329,7 +320,6 @@ Route::get('/test-report', function () {
 Route::fallback(function () {
 
     return redirect()->route('home');
-
 });
 
 /*
@@ -338,4 +328,4 @@ Route::fallback(function () {
 |--------------------------------------------------------------------------
 */
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
