@@ -31,11 +31,12 @@ class AppServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | FORCE HTTPS IN PRODUCTION
+        | FORCE HTTPS ONLY IN PRODUCTION
         |--------------------------------------------------------------------------
         */
 
         if ($this->app->environment('production')) {
+
             URL::forceScheme('https');
         }
     }

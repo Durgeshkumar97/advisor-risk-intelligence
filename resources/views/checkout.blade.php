@@ -37,6 +37,7 @@
                 </div>
 
             </div>
+
         </div>
 
         @if ($errors->any())
@@ -53,8 +54,7 @@
 
         @endif
 
-
-        <form id="payment-form">
+        <form id="payment-form" novalidate>
 
             @csrf
 
@@ -62,6 +62,8 @@
                 type="hidden"
                 name="plan"
                 value="{{ $plan->slug }}">
+
+            {{-- NAME --}}
             <div class="form-group">
 
                 <label for="name" class="form-label">
@@ -76,11 +78,12 @@
                     class="form-input"
                     placeholder="Enter your full name"
                     autocomplete="name"
+                    maxlength="120"
                     required>
 
             </div>
 
-
+            {{-- PHONE --}}
             <div class="form-group">
 
                 <label for="phone" class="form-label">
@@ -96,11 +99,12 @@
                     placeholder="Enter active WhatsApp number"
                     autocomplete="tel"
                     inputmode="numeric"
+                    maxlength="15"
                     required>
 
             </div>
 
-
+            {{-- EMAIL --}}
             <div class="form-group">
 
                 <label for="email" class="form-label">
@@ -115,17 +119,22 @@
                     class="form-input"
                     placeholder="Enter email address"
                     autocomplete="email"
+                    maxlength="255"
                     required>
 
             </div>
 
+            <button
+                type="button"
+                id="payBtn"
+                class="checkout-btn"
+                aria-label="Complete secure payment">
 
-            <button type="button" id="payBtn" class="checkout-btn">
                 Complete Purchase
+
             </button>
 
         </form>
-
 
         <div class="mini-points">
 
@@ -147,7 +156,6 @@
 
         </div>
 
-
         <div class="trust-box">
             Cancel anytime. No hidden fees. <br>
             Your data stays private and secure.
@@ -157,108 +165,293 @@
 
 </div>
 
-</div>
-
 @push('scripts')
+
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('DOMContentLoaded', () => {
 
-        console.log("Payment script initialized");
+        console.info('[Checkout] Initialized');
 
-        const btn = document.getElementById('payBtn');
+        /*
+        |--------------------------------------------------------------------------
+        | ELEMENTS
+        |--------------------------------------------------------------------------
+        */
 
-        if (!btn) {
-            console.error("payBtn not found");
+        const form = document.getElementById('payment-form');
+        const payBtn = document.getElementById('payBtn');
+
+        if (!form || !payBtn) {
+
+            console.error('[Checkout] Required elements missing');
+
             return;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | STATE
+        |--------------------------------------------------------------------------
+        */
+
         let isProcessing = false;
 
-        btn.addEventListener('click', async function() {
+        /*
+        |--------------------------------------------------------------------------
+        | HELPERS
+        |--------------------------------------------------------------------------
+        */
 
-            if (isProcessing) return;
-            isProcessing = true;
+        const csrfToken = document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.getAttribute('content');
 
-            const btnEl = this;
-            btnEl.innerText = "Processing...";
-            btnEl.disabled = true;
+        const setButtonState = (loading = false) => {
+
+            isProcessing = loading;
+
+            payBtn.disabled = loading;
+
+            payBtn.innerText = loading ?
+                'Processing...' :
+                'Complete Purchase';
+        };
+
+        const sanitizePhone = (value) => {
+            return value.replace(/\D/g, '');
+        };
+
+        const showError = (message) => {
+
+            console.error('[Checkout]', message);
+
+            alert(message);
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
+        const validateForm = ({
+            name,
+            phone,
+            email
+        }) => {
+
+            if (!name || !phone || !email) {
+                throw new Error('Please fill all fields.');
+            }
+
+            if (name.length < 2) {
+                throw new Error('Please enter valid full name.');
+            }
+
+            if (!/^[6-9]\d{9}$/.test(phone)) {
+                throw new Error('Enter valid Indian mobile number.');
+            }
+
+            const emailRegex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+                throw new Error('Enter valid email address.');
+            }
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT CLICK
+        |--------------------------------------------------------------------------
+        */
+
+        payBtn.addEventListener('click', async () => {
+
+            if (isProcessing) {
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | RAZORPAY SDK CHECK
+            |--------------------------------------------------------------------------
+            */
+
+            if (typeof Razorpay === 'undefined') {
+
+                showError(
+                    'Payment gateway failed to load. Refresh page.'
+                );
+
+                return;
+            }
+
+            setButtonState(true);
 
             try {
 
-                const name = document.getElementById('name')?.value.trim();
-                const phone = document.getElementById('phone')?.value.trim();
-                const email = document.getElementById('email')?.value.trim();
-                const plan = "{{ $plan->slug }}";
-
                 /*
                 |--------------------------------------------------------------------------
-                | VALIDATION
+                | FORM DATA
                 |--------------------------------------------------------------------------
                 */
 
-                if (!name || !phone || !email) {
-                    throw new Error("Please fill all fields");
-                }
+                const name =
+                    document.getElementById('name')
+                    ?.value
+                    .trim();
 
-                if (!/^\d{10}$/.test(phone)) {
-                    throw new Error("Invalid phone number");
-                }
+                const email =
+                    document.getElementById('email')
+                    ?.value
+                    .trim()
+                    .toLowerCase();
 
-                if (!/^\S+@\S+\.\S+$/.test(email)) {
-                    throw new Error("Invalid email");
-                }
+                const phone =
+                    sanitizePhone(
+                        document.getElementById('phone')
+                        ?.value
+                        .trim()
+                    );
+
+                const plan = "{{ $plan->slug }}";
+
+                validateForm({
+                    name,
+                    phone,
+                    email
+                });
 
                 /*
                 |--------------------------------------------------------------------------
-                | CREATE ORDER
+                | CREATE ORDER REQUEST
                 |--------------------------------------------------------------------------
                 */
 
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 15000);
 
-                const response = await fetch("/payment/create", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({
-                        name,
-                        phone,
-                        email,
-                        plan
-                    }),
-                    signal: controller.signal
-                });
+                const timeout = setTimeout(() => {
+                    controller.abort();
+                }, 15000);
+
+                const orderResponse = await fetch(
+                    "{{ url('/payment/create') }}", {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+
+                        credentials: 'same-origin',
+
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            phone,
+                            plan,
+                        }),
+
+                        signal: controller.signal,
+                    }
+                );
 
                 clearTimeout(timeout);
 
-                if (!response.ok) {
-                    throw new Error("Server error while creating order");
+                /*
+                |--------------------------------------------------------------------------
+                | RESPONSE CHECK
+                |--------------------------------------------------------------------------
+                */
+
+                if (!orderResponse.ok) {
+
+                    let errorMessage =
+                        'Unable to create payment order.';
+
+                    try {
+
+                        const errorData =
+                            await orderResponse.json();
+
+                        errorMessage =
+                            errorData.message ||
+                            errorMessage;
+
+                    } catch (_) {}
+
+                    throw new Error(errorMessage);
                 }
 
-                const data = await response.json();
+                const orderData =
+                    await orderResponse.json();
 
-                if (!data.success || !data.order_id) {
-                    throw new Error(data.error || "Invalid order response");
+                if (
+                    !orderData.success ||
+                    !orderData.order_id ||
+                    !orderData.amount
+                ) {
+                    throw new Error(
+                        'Invalid payment gateway response.'
+                    );
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | RAZORPAY
+                | RAZORPAY INSTANCE
                 |--------------------------------------------------------------------------
                 */
 
-                const rzp = new Razorpay({
-                    key: data.key,
-                    amount: data.amount,
-                    currency: "INR",
-                    name: "RiskSignal",
-                    description: "Subscription Payment",
-                    order_id: data.order_id,
+                const razorpay = new Razorpay({
+
+                    key: orderData.key,
+
+                    amount: orderData.amount,
+
+                    currency: 'INR',
+
+                    order_id: orderData.order_id,
+
+                    name: 'RiskSignal',
+
+                    description: 'RiskSignal Subscription',
+
+                    image: "{{ asset('favicon.ico') }}",
+
+                    prefill: {
+                        name,
+                        email,
+                        contact: phone,
+                    },
+
+                    notes: {
+                        plan,
+                        source: 'RiskSignal Checkout',
+                    },
+
+                    theme: {
+                        color: '#0f172a',
+                    },
+
+                    modal: {
+
+                        escape: false,
+
+                        backdropclose: false,
+
+                        ondismiss: function() {
+
+                            console.warn(
+                                '[Checkout] Razorpay modal dismissed'
+                            );
+
+                            setButtonState(false);
+                        }
+                    },
 
                     handler: async function(response) {
 
@@ -266,96 +459,133 @@
 
                             /*
                             |--------------------------------------------------------------------------
-                            | VERIFY (OPTIONAL BUT SAFE)
+                            | VERIFY PAYMENT
                             |--------------------------------------------------------------------------
                             */
 
-                            const verifyRes = await fetch("/payment/verify", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                                },
-                                body: JSON.stringify({
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                    name,
-                                    email,
-                                    phone,
-                                    plan
-                                })
-                            });
+                            const verifyResponse = await fetch(
+                                "{{ url('/payment/verify') }}", {
+                                    method: 'POST',
 
-                            if (!verifyRes.ok) {
-                                throw new Error("Verification failed");
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken,
+                                    },
+
+                                    credentials: 'same-origin',
+
+                                    body: JSON.stringify({
+
+                                        razorpay_payment_id: response.razorpay_payment_id,
+
+                                        razorpay_order_id: response.razorpay_order_id,
+
+                                        razorpay_signature: response.razorpay_signature,
+                                    }),
+                                }
+                            );
+
+                            if (!verifyResponse.ok) {
+
+                                throw new Error(
+                                    'Payment verification failed.'
+                                );
                             }
 
-                            const result = await verifyRes.json();
+                            const verifyData =
+                                await verifyResponse.json();
 
-                            if (!result.success) {
-                                throw new Error(result.error || "Payment verification failed");
+                            if (!verifyData.success) {
+
+                                throw new Error(
+                                    verifyData.message ||
+                                    'Unable to verify payment.'
+                                );
                             }
 
                             /*
                             |--------------------------------------------------------------------------
-                            | AUTO LOGIN REDIRECT (FINAL)
+                            | SUCCESS REDIRECT
                             |--------------------------------------------------------------------------
                             */
 
                             window.location.href =
-                                "/payment/success?order_id=" + response.razorpay_order_id;
+                                verifyData.redirect ||
+                                '/dashboard';
 
-                        } catch (err) {
-                            console.error("Verify error:", err);
-                            alert("Payment verification failed. Contact support.");
-                            resetButton();
+                        } catch (error) {
+
+                            console.error(
+                                '[Checkout Verify Error]',
+                                error
+                            );
+
+                            showError(
+                                'Payment verification failed. Contact support.'
+                            );
+
+                            setButtonState(false);
                         }
-                    },
-
-                    modal: {
-                        ondismiss: function() {
-                            console.log("User closed Razorpay modal");
-                            resetButton();
-                        }
-                    },
-
-                    prefill: {
-                        name: name,
-                        email: email,
-                        contact: phone
-                    },
-
-                    theme: {
-                        color: "#0f172a"
                     }
                 });
 
-                rzp.on('payment.failed', function(response) {
-                    console.error("Payment failed:", response.error);
-                    alert("Payment failed. Please try again.");
-                    resetButton();
+                /*
+                |--------------------------------------------------------------------------
+                | PAYMENT FAILED EVENT
+                |--------------------------------------------------------------------------
+                */
+
+                razorpay.on('payment.failed', function(response) {
+
+                    console.error(
+                        '[Razorpay Failure]',
+                        response.error
+                    );
+
+                    showError(
+                        response.error?.description ||
+                        'Payment failed. Please try again.'
+                    );
+
+                    setButtonState(false);
                 });
 
-                rzp.open();
+                /*
+                |--------------------------------------------------------------------------
+                | OPEN CHECKOUT
+                |--------------------------------------------------------------------------
+                */
+
+                razorpay.open();
 
             } catch (error) {
 
-                console.error("Payment flow error:", error);
-                alert(error.message || "Something went wrong");
+                console.error(
+                    '[Checkout Flow Error]',
+                    error
+                );
 
-                resetButton();
+                if (error.name === 'AbortError') {
+
+                    showError(
+                        'Request timeout. Please try again.'
+                    );
+
+                } else {
+
+                    showError(
+                        error.message ||
+                        'Something went wrong.'
+                    );
+                }
+
+                setButtonState(false);
             }
-
-            function resetButton() {
-                isProcessing = false;
-                btnEl.innerText = "Complete Purchase";
-                btnEl.disabled = false;
-            }
-
         });
-
     });
 </script>
+
 @endpush
+
 @endsection
