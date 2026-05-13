@@ -170,9 +170,7 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-        console.info('[Checkout] Initialized');
+    document.addEventListener("DOMContentLoaded", () => {
 
         /*
         |--------------------------------------------------------------------------
@@ -180,13 +178,10 @@
         |--------------------------------------------------------------------------
         */
 
-        const form = document.getElementById('payment-form');
-        const payBtn = document.getElementById('payBtn');
+        const payBtn = document.getElementById("payBtn");
 
-        if (!form || !payBtn) {
-
-            console.error('[Checkout] Required elements missing');
-
+        if (!payBtn) {
+            console.error("Pay button not found");
             return;
         }
 
@@ -196,7 +191,7 @@
         |--------------------------------------------------------------------------
         */
 
-        let isProcessing = false;
+        let processing = false;
 
         /*
         |--------------------------------------------------------------------------
@@ -204,94 +199,85 @@
         |--------------------------------------------------------------------------
         */
 
-        const csrfToken = document.querySelector(
-            'meta[name="csrf-token"]'
-        )?.getAttribute('content');
+        const csrfToken = document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
 
-        const setButtonState = (loading = false) => {
+        function setButtonLoading() {
+            processing = true;
+            payBtn.disabled = true;
+            payBtn.innerText = "Processing...";
+            payBtn.style.opacity = "0.7";
+            payBtn.style.cursor = "not-allowed";
+        }
 
-            isProcessing = loading;
+        function resetButton() {
+            processing = false;
+            payBtn.disabled = false;
+            payBtn.innerText = "Complete Purchase";
+            payBtn.style.opacity = "1";
+            payBtn.style.cursor = "pointer";
+        }
 
-            payBtn.disabled = loading;
+        function showError(message) {
+            alert(message || "Something went wrong.");
+        }
 
-            payBtn.innerText = loading ?
-                'Processing...' :
-                'Complete Purchase';
-        };
+        function validateInput(name, phone, email) {
 
-        const sanitizePhone = (value) => {
-            return value.replace(/\D/g, '');
-        };
-
-        const showError = (message) => {
-
-            console.error('[Checkout]', message);
-
-            alert(message);
-        };
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
-
-        const validateForm = ({
-            name,
-            phone,
-            email
-        }) => {
-
-            if (!name || !phone || !email) {
-                throw new Error('Please fill all fields.');
+            if (name.length === 0 || phone.length === 0 || email.length === 0) {
+                throw new Error("Please fill all fields.");
             }
 
             if (name.length < 2) {
-                throw new Error('Please enter valid full name.');
+                throw new Error("Please enter valid full name.");
             }
 
             if (!/^[6-9]\d{9}$/.test(phone)) {
-                throw new Error('Enter valid Indian mobile number.');
+                throw new Error("Please enter valid Indian mobile number.");
             }
 
-            const emailRegex =
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (!emailRegex.test(email)) {
-                throw new Error('Enter valid email address.');
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                throw new Error("Please enter valid email address.");
             }
-        };
+        }
+
+        async function safeJson(response) {
+
+            const text = await response.text();
+
+            try {
+                return JSON.parse(text);
+            } catch {
+                throw new Error("Invalid server response.");
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
-        | PAYMENT CLICK
+        | PAYMENT FLOW
         |--------------------------------------------------------------------------
         */
 
-        payBtn.addEventListener('click', async () => {
+        payBtn.addEventListener("click", async () => {
 
-            if (isProcessing) {
-                return;
-            }
+            if (processing) return;
 
-            /*
-            |--------------------------------------------------------------------------
-            | RAZORPAY SDK CHECK
-            |--------------------------------------------------------------------------
-            */
-
-            if (typeof Razorpay === 'undefined') {
-
-                showError(
-                    'Payment gateway failed to load. Refresh page.'
-                );
-
-                return;
-            }
-
-            setButtonState(true);
+            setButtonLoading();
 
             try {
+
+                /*
+                |--------------------------------------------------------------------------
+                | CHECK RAZORPAY SDK
+                |--------------------------------------------------------------------------
+                */
+
+                if (typeof Razorpay === "undefined") {
+                    throw new Error(
+                        "Payment SDK failed to load. Refresh and try again."
+                    );
+                }
 
                 /*
                 |--------------------------------------------------------------------------
@@ -299,35 +285,15 @@
                 |--------------------------------------------------------------------------
                 */
 
-                const name =
-                    document.getElementById('name')
-                    ?.value
-                    .trim();
+                const name = document.getElementById("name")?.value?.trim() || "";
+                const phone = document.getElementById("phone")?.value?.trim() || "";
+                const email = document.getElementById("email")?.value?.trim() || "";
 
-                const email =
-                    document.getElementById('email')
-                    ?.value
-                    .trim()
-                    .toLowerCase();
-
-                const phone =
-                    sanitizePhone(
-                        document.getElementById('phone')
-                        ?.value
-                        .trim()
-                    );
-
-                const plan = "{{ $plan->slug }}";
-
-                validateForm({
-                    name,
-                    phone,
-                    email
-                });
+                validateInput(name, phone, email);
 
                 /*
                 |--------------------------------------------------------------------------
-                | CREATE ORDER REQUEST
+                | CREATE ORDER
                 |--------------------------------------------------------------------------
                 */
 
@@ -337,123 +303,109 @@
                     controller.abort();
                 }, 15000);
 
-                const orderResponse = await fetch(
-                    "{{ url('/payment/create') }}", {
-                        method: 'POST',
+                const orderResponse = await fetch("/payment/create", {
+                    method: "POST",
 
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": csrfToken
+                    },
 
-                        credentials: 'same-origin',
+                    credentials: "same-origin",
 
-                        body: JSON.stringify({
-                            name,
-                            email,
-                            phone,
-                            plan,
-                        }),
+                    signal: controller.signal,
 
-                        signal: controller.signal,
-                    }
-                );
+                    body: JSON.stringify({
+                        name,
+                        phone,
+                        email,
+                        plan: "{{ $plan->slug }}"
+                    })
+                });
 
                 clearTimeout(timeout);
 
-                /*
-                |--------------------------------------------------------------------------
-                | RESPONSE CHECK
-                |--------------------------------------------------------------------------
-                */
-
                 if (!orderResponse.ok) {
 
-                    let errorMessage =
-                        'Unable to create payment order.';
+                    if (orderResponse.status === 419) {
+                        throw new Error("Session expired. Refresh page.");
+                    }
 
-                    try {
+                    if (orderResponse.status === 422) {
+                        throw new Error("Validation failed.");
+                    }
 
-                        const errorData =
-                            await orderResponse.json();
-
-                        errorMessage =
-                            errorData.message ||
-                            errorMessage;
-
-                    } catch (_) {}
-
-                    throw new Error(errorMessage);
+                    throw new Error("Unable to create payment order.");
                 }
 
-                const orderData =
-                    await orderResponse.json();
+                const orderData = await safeJson(orderResponse);
 
                 if (
                     !orderData.success ||
                     !orderData.order_id ||
-                    !orderData.amount
+                    !orderData.amount ||
+                    !orderData.key
                 ) {
                     throw new Error(
-                        'Invalid payment gateway response.'
+                        orderData.message || "Invalid payment response."
                     );
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | RAZORPAY INSTANCE
+                | RAZORPAY OPTIONS
                 |--------------------------------------------------------------------------
                 */
 
-                const razorpay = new Razorpay({
+                const options = {
 
                     key: orderData.key,
 
                     amount: orderData.amount,
 
-                    currency: 'INR',
+                    currency: orderData.currency || "INR",
 
                     order_id: orderData.order_id,
 
-                    name: 'RiskSignal',
+                    name: "RiskSignal",
 
-                    description: 'RiskSignal Subscription',
+                    description: "RiskSignal Subscription",
 
-                    image: "{{ asset('favicon.ico') }}",
+                    image: "/favicon.ico",
 
                     prefill: {
                         name,
                         email,
-                        contact: phone,
+                        contact: phone
                     },
 
                     notes: {
-                        plan,
-                        source: 'RiskSignal Checkout',
+                        platform: "RiskSignal",
+                        plan: "{{ $plan->slug }}"
                     },
 
                     theme: {
-                        color: '#0f172a',
+                        color: "#eab308"
                     },
 
                     modal: {
 
                         escape: false,
 
-                        backdropclose: false,
-
                         ondismiss: function() {
 
-                            console.warn(
-                                '[Checkout] Razorpay modal dismissed'
-                            );
+                            console.warn("Checkout dismissed");
 
-                            setButtonState(false);
+                            resetButton();
                         }
                     },
 
-                    handler: async function(response) {
+                    retry: {
+                        enabled: false
+                    },
+
+                    handler: async function(paymentResponse) {
 
                         try {
 
@@ -463,44 +415,57 @@
                             |--------------------------------------------------------------------------
                             */
 
-                            const verifyResponse = await fetch(
-                                "{{ url('/payment/verify') }}", {
-                                    method: 'POST',
+                            const verifyController = new AbortController();
 
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': csrfToken,
-                                    },
+                            const verifyTimeout = setTimeout(() => {
+                                verifyController.abort();
+                            }, 15000);
 
-                                    credentials: 'same-origin',
+                            const verifyResponse = await fetch("/payment/verify", {
 
-                                    body: JSON.stringify({
+                                method: "POST",
 
-                                        razorpay_payment_id: response.razorpay_payment_id,
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                    "X-CSRF-TOKEN": csrfToken
+                                },
 
-                                        razorpay_order_id: response.razorpay_order_id,
+                                credentials: "same-origin",
 
-                                        razorpay_signature: response.razorpay_signature,
-                                    }),
-                                }
-                            );
+                                signal: verifyController.signal,
+
+                                body: JSON.stringify({
+                                    razorpay_order_id: paymentResponse.razorpay_order_id,
+
+                                    razorpay_payment_id: paymentResponse.razorpay_payment_id,
+
+                                    razorpay_signature: paymentResponse.razorpay_signature
+                                })
+                            });
+
+                            clearTimeout(verifyTimeout);
 
                             if (!verifyResponse.ok) {
 
+                                if (verifyResponse.status === 419) {
+                                    throw new Error(
+                                        "Session expired after payment."
+                                    );
+                                }
+
                                 throw new Error(
-                                    'Payment verification failed.'
+                                    "Payment verification failed."
                                 );
                             }
 
                             const verifyData =
-                                await verifyResponse.json();
+                                await safeJson(verifyResponse);
 
                             if (!verifyData.success) {
-
                                 throw new Error(
                                     verifyData.message ||
-                                    'Unable to verify payment.'
+                                    "Payment verification failed."
                                 );
                             }
 
@@ -512,44 +477,24 @@
 
                             window.location.href =
                                 verifyData.redirect ||
-                                '/dashboard';
+                                "/dashboard";
 
                         } catch (error) {
 
                             console.error(
-                                '[Checkout Verify Error]',
+                                "Verification error:",
                                 error
                             );
 
                             showError(
-                                'Payment verification failed. Contact support.'
+                                error.message ||
+                                "Payment verification failed."
                             );
 
-                            setButtonState(false);
+                            resetButton();
                         }
                     }
-                });
-
-                /*
-                |--------------------------------------------------------------------------
-                | PAYMENT FAILED EVENT
-                |--------------------------------------------------------------------------
-                */
-
-                razorpay.on('payment.failed', function(response) {
-
-                    console.error(
-                        '[Razorpay Failure]',
-                        response.error
-                    );
-
-                    showError(
-                        response.error?.description ||
-                        'Payment failed. Please try again.'
-                    );
-
-                    setButtonState(false);
-                });
+                };
 
                 /*
                 |--------------------------------------------------------------------------
@@ -557,30 +502,41 @@
                 |--------------------------------------------------------------------------
                 */
 
-                razorpay.open();
+                const rzp = new Razorpay(options);
+
+                rzp.on("payment.failed", function(response) {
+
+                    console.error(
+                        "Payment failed:",
+                        response.error
+                    );
+
+                    showError(
+                        response?.error?.description ||
+                        "Payment failed."
+                    );
+
+                    resetButton();
+                });
+
+                rzp.open();
 
             } catch (error) {
 
-                console.error(
-                    '[Checkout Flow Error]',
-                    error
-                );
+                console.error("Checkout error:", error);
 
-                if (error.name === 'AbortError') {
-
+                if (error.name === "AbortError") {
                     showError(
-                        'Request timeout. Please try again.'
+                        "Request timed out. Please try again."
                     );
-
                 } else {
-
                     showError(
                         error.message ||
-                        'Something went wrong.'
+                        "Something went wrong."
                     );
                 }
 
-                setButtonState(false);
+                resetButton();
             }
         });
     });

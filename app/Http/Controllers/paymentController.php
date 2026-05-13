@@ -38,7 +38,7 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'order_id' => $payment->order_id,
-                'amount' => (int) $payment->amount * 100,
+                'amount' => (int) round($payment->amount * 100),
                 'currency' => 'INR',
                 'key' => config('services.razorpay.key'),
             ]);
@@ -46,12 +46,12 @@ class PaymentController extends Controller
 
             Log::error('Payment order creation failed', [
                 'message' => $e->getMessage(),
-                'ip' => $request->ip(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to create payment order.',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

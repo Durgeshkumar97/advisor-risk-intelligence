@@ -3,7 +3,10 @@
 
 <head>
 
+    {{-- ========================================================================= --}}
     {{-- META --}}
+    {{-- ========================================================================= --}}
+
     <meta charset="UTF-8">
 
     <meta
@@ -11,14 +14,25 @@
         content="width=device-width, initial-scale=1.0">
 
     <meta
+        http-equiv="X-UA-Compatible"
+        content="IE=edge">
+
+    <meta
         name="csrf-token"
         content="{{ csrf_token() }}">
 
     <meta
-        http-equiv="X-UA-Compatible"
-        content="IE=edge">
+        name="robots"
+        content="index, follow">
 
+    <meta
+        name="referrer"
+        content="strict-origin-when-cross-origin">
+
+    {{-- ========================================================================= --}}
     {{-- SEO --}}
+    {{-- ========================================================================= --}}
+
     <title>
         @yield('title', 'RiskSignal')
     </title>
@@ -27,52 +41,161 @@
         name="description"
         content="RiskSignal helps advisors monitor portfolio risks and improve client trust using AI-powered risk intelligence.">
 
-    {{-- PERFORMANCE --}}
+    <meta
+        name="keywords"
+        content="RiskSignal, portfolio risk, advisor tools, wealth management, risk intelligence, financial advisor SaaS">
+
+    <meta
+        name="author"
+        content="RiskSignal">
+
+    {{-- ========================================================================= --}}
+    {{-- SOCIAL --}}
+    {{-- ========================================================================= --}}
+
+    <meta
+        property="og:type"
+        content="website">
+
+    <meta
+        property="og:title"
+        content="@yield('title', 'RiskSignal')">
+
+    <meta
+        property="og:description"
+        content="AI-powered portfolio risk intelligence for financial advisors.">
+
+    <meta
+        property="og:url"
+        content="{{ url()->current() }}">
+
+    <meta
+        property="og:site_name"
+        content="RiskSignal">
+
+    {{-- ========================================================================= --}}
+    {{-- PERFORMANCE / PWA --}}
+    {{-- ========================================================================= --}}
+
     <meta
         name="theme-color"
         content="#0f172a">
 
+    <meta
+        name="color-scheme"
+        content="dark light">
+
+    {{-- ========================================================================= --}}
+    {{-- FAVICON --}}
+    {{-- ========================================================================= --}}
+
+    <link
+        rel="icon"
+        type="image/x-icon"
+        href="{{ asset('favicon.ico') }}">
+
+    <link
+        rel="shortcut icon"
+        href="{{ asset('favicon.ico') }}">
+
+    {{-- ========================================================================= --}}
+    {{-- PRECONNECT --}}
+    {{-- ========================================================================= --}}
+
+    <link
+        rel="preconnect"
+        href="https://checkout.razorpay.com">
+
+    <link
+        rel="dns-prefetch"
+        href="//checkout.razorpay.com">
+
+    {{-- ========================================================================= --}}
     {{-- VITE --}}
+    {{-- ========================================================================= --}}
+
     @vite([
     'resources/css/app.css',
     'resources/js/app.js'
     ])
 
+    {{-- ========================================================================= --}}
     {{-- PAGE HEAD EXTENSIONS --}}
+    {{-- ========================================================================= --}}
+
     @stack('head')
 
 </head>
 
-<body class="flex flex-col min-h-screen antialiased">
+<body
+    class="flex flex-col min-h-screen antialiased">
 
+    {{-- ========================================================================= --}}
+    {{-- NOSCRIPT --}}
+    {{-- ========================================================================= --}}
+
+    <noscript>
+
+        <div
+            style="
+                background:#dc2626;
+                color:white;
+                text-align:center;
+                padding:1rem;
+                font-weight:600;
+            ">
+
+            JavaScript is required to use RiskSignal.
+
+        </div>
+
+    </noscript>
+
+    {{-- ========================================================================= --}}
     {{-- NAVBAR --}}
-    <div
+    {{-- ========================================================================= --}}
+
+    <header
         style="
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             z-index: 1000;
+            backdrop-filter: blur(10px);
         ">
 
         @include('navigation')
 
-    </div>
+    </header>
 
+    {{-- ========================================================================= --}}
     {{-- MAIN CONTENT --}}
+    {{-- ========================================================================= --}}
+
     <main
+        id="main-content"
         class="flex-1"
-        style="margin-top: var(--nav-height);">
+        style="
+            margin-top: var(--nav-height);
+            min-height: 100vh;
+        ">
 
         @yield('content')
 
     </main>
 
+    {{-- ========================================================================= --}}
     {{-- FOOTER --}}
+    {{-- ========================================================================= --}}
+
     <footer
+        role="contentinfo"
+
         style="
             border-top: 1px solid var(--paper-3);
             margin-top: 3rem;
+            background: var(--paper-1);
         ">
 
         <div
@@ -83,7 +206,11 @@
                 text-align: center;
             ">
 
-            <div
+            {{-- LINKS --}}
+
+            <nav
+                aria-label="Footer Navigation"
+
                 style="
                     display: flex;
                     justify-content: center;
@@ -119,7 +246,9 @@
 
                 @endauth
 
-            </div>
+            </nav>
+
+            {{-- COPYRIGHT --}}
 
             <div
                 style="
@@ -136,9 +265,15 @@
 
     </footer>
 
+    {{-- ========================================================================= --}}
     {{-- THEME TOGGLE --}}
+    {{-- ========================================================================= --}}
+
     <button
         id="theme-toggle"
+
+        type="button"
+
         aria-label="Toggle theme"
 
         style="
@@ -152,7 +287,10 @@
 
     </button>
 
+    {{-- ========================================================================= --}}
     {{-- GLOBAL SCRIPTS --}}
+    {{-- ========================================================================= --}}
+
     @stack('scripts')
 
 </body>
