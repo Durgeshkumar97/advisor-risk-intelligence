@@ -325,18 +325,25 @@
                 });
 
                 clearTimeout(timeout);
-
                 if (!orderResponse.ok) {
 
+                    const errorData = await safeJson(orderResponse);
+
                     if (orderResponse.status === 419) {
-                        throw new Error("Session expired. Refresh page.");
+                        throw new Error(
+                            errorData.message || "Session expired."
+                        );
                     }
 
                     if (orderResponse.status === 422) {
-                        throw new Error("Validation failed.");
+                        throw new Error(
+                            errorData.message || "Validation failed."
+                        );
                     }
 
-                    throw new Error("Unable to create payment order.");
+                    throw new Error(
+                        errorData.message || "Unable to create payment order."
+                    );
                 }
 
                 const orderData = await safeJson(orderResponse);
@@ -504,12 +511,42 @@
 
                 const rzp = new Razorpay(options);
 
-                rzp.on("payment.failed", function(response) {
+                /*
+                |--------------------------------------------------------------------------
+                | PAYMENT FAILED
+                |--------------------------------------------------------------------------
+                */
 
-                    console.error(
-                        "Payment failed:",
-                        response.error
-                    );
+                rzp.on("payment.failed", async function(response) {
+
+                    console.error("Payment failed:", response.error);
+
+                    try {
+
+                        await fetch("/payment/failure", {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type": "application/json",
+
+                                "X-CSRF-TOKEN": csrfToken
+                            },
+
+                            credentials: "same-origin",
+
+                            body: JSON.stringify({
+                                order_id: orderData.order_id
+                            })
+                        });
+
+                    } catch (e) {
+
+                        console.error(
+                            "Failure tracking error:",
+                            e
+                        );
+                    }
 
                     showError(
                         response?.error?.description ||
@@ -519,27 +556,40 @@
                     resetButton();
                 });
 
+                /*
+                |--------------------------------------------------------------------------
+                | OPEN RAZORPAY
+                |--------------------------------------------------------------------------
+                */
+
                 rzp.open();
 
-            } catch (error) {
+                } catch (error) {
 
-                console.error("Checkout error:", error);
+                    console.error(
+                        "Checkout error:",
+                        error
+                    );
 
-                if (error.name === "AbortError") {
-                    showError(
-                        "Request timed out. Please try again."
-                    );
-                } else {
-                    showError(
-                        error.message ||
-                        "Something went wrong."
-                    );
+                    if (error.name === "AbortError") {
+
+                        showError(
+                            "Request timed out. Please try again."
+                        );
+
+                    } else {
+
+                        showError(
+                            error.message ||
+                            "Something went wrong."
+                        );
+                    }
+
+                    resetButton();
                 }
 
-                resetButton();
-            }
-        });
-    });
+            });
+});
 </script>
 
 @endpush

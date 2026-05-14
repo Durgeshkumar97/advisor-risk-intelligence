@@ -95,7 +95,9 @@ Route::post('/payment/verify', [PaymentController::class, 'verify'])
 
 Route::get('/payment/success', [CheckoutController::class, 'success'])
     ->name('payment.success');
-
+    
+Route::post('/payment/failure',[PaymentController::class, 'failure'])
+    ->name('payment.failure');
 /*
 |--------------------------------------------------------------------------
 | WEBHOOK
@@ -105,11 +107,6 @@ Route::get('/payment/success', [CheckoutController::class, 'success'])
 Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
     ->name('webhook.razorpay');
 
-/*
-|--------------------------------------------------------------------------
-| AUTO LOGIN
-|--------------------------------------------------------------------------
-*/
 /*
 |--------------------------------------------------------------------------
 | AUTO LOGIN
@@ -160,7 +157,7 @@ Route::get('/auto-login/{token}', function ($token) {
     */
 
     return redirect()->route('dashboard');
-})->name('auto.login');         
+})->name('auto.login');
 
 /*
 |--------------------------------------------------------------------------
@@ -285,30 +282,21 @@ Route::middleware(['auth'])
 |--------------------------------------------------------------------------
 */
 
-Route::get('/test', function () {
+Route::middleware(['web'])->group(function () {
 
-    return view('test');
-})->name('test');
+    Route::get('/checkout/test', function () {
 
-Route::get('/test-report', function () {
+        if (!app()->environment('local')) {
+            abort(404);
+        }
 
-    $user = ClientIntake::first();
+        $plan = \App\Models\Plan::where(
+            'slug',
+            'test-plan'
+        )->firstOrFail();
 
-    if (!$user) {
-        return 'No users found in database';
-    }
-
-    $service = new ReportService();
-
-    $report = $service->generate($user);
-
-    Mail::raw($report, function ($message) use ($user) {
-
-        $message->to($user->email ?? 'test@example.com')
-            ->subject('Test Weekly Report');
+        return view('checkout', compact('plan'));
     });
-
-    return 'Report sent successfully!';
 });
 
 /*

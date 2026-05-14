@@ -157,16 +157,14 @@
 
     <header
         style="
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            width: 100%;
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            width: 100%;
+            background: var(--paper-1);
+            border-bottom: 1px solid var(--paper-3);
         ">
-
         @include('navigation')
-
     </header>
 
     {{-- ========================================================================= --}}

@@ -16,9 +16,18 @@ class CreateSubscriptionFromPaymentAction
         */
 
         $exists = Subscription::where(
-            'payment_id',
-            $payment->id
-        )->exists();
+            'user_id',
+            $payment->user_id
+        )
+        ->where(
+            'plan_id',
+            $payment->plan_id
+        )
+        ->where(
+            'status',
+            'active'
+        )
+        ->exists();
 
         if ($exists) {
             return;
@@ -36,13 +45,15 @@ class CreateSubscriptionFromPaymentAction
 
             'plan_id' => $payment->plan_id,
 
-            'payment_id' => $payment->id,
+            'status' => 'active',
 
             'starts_at' => now(),
 
             'ends_at' => now()->addDays(30),
 
-            'status' => 'active',
+            'renewal_at' => now()->addDays(30),
+
+            'provider' => 'razorpay',
         ]);
     }
 }

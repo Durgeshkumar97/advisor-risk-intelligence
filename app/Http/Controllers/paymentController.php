@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Actions\Payments\CompletePaymentAction;
 use App\Actions\Payments\CreateRazorpayOrderAction;
 use App\Actions\Payments\VerifyRazorpayPaymentAction;
+
+use App\Models\Payment;
 use App\Models\Plan;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -29,8 +32,10 @@ class PaymentController extends Controller
 
         try {
 
-            $plan = Plan::where('slug', $validated['plan'])
-                ->firstOrFail();
+            $plan = Plan::where(
+                'slug',
+                $validated['plan']
+            )->firstOrFail();
 
             $payment = app(CreateRazorpayOrderAction::class)
                 ->execute($plan, $validated);
@@ -42,11 +47,13 @@ class PaymentController extends Controller
                 'currency' => 'INR',
                 'key' => config('services.razorpay.key'),
             ]);
+
         } catch (\Throwable $e) {
 
             Log::error('Payment order creation failed', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip(),
             ]);
 
             return response()->json([
@@ -82,22 +89,68 @@ class PaymentController extends Controller
                 'success' => true,
                 'redirect' => route('dashboard'),
             ]);
+
         } catch (ValidationException $e) {
 
             return response()->json([
                 'success' => false,
                 'message' => 'Payment verification failed.',
             ], 422);
+
         } catch (\Throwable $e) {
 
             Log::error('Payment verification failed', [
                 'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'ip' => $request->ip(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Payment verification error.',
+            ], 500);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT FAILED
+    |--------------------------------------------------------------------------
+    */
+
+    public function failure(Request $request)
+    {
+        $validated = $request->validate([
+            'order_id' => 'required|string',
+        ]);
+
+        try {
+
+            $payment = Payment::where(
+                'order_id',
+                $validated['order_id']
+            )->first();
+
+            if ($payment && $payment->status === 'pending') {
+
+                $payment->update([
+                    'status' => 'failed',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+            ]);
+
+        } catch (\Throwable $e) {
+
+            Log::error('Payment failure update failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
             ], 500);
         }
     }
