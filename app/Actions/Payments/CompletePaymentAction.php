@@ -2,10 +2,11 @@
 
 namespace App\Actions\Payments;
 
-use App\Models\User;
 use App\Models\Payment;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CompletePaymentAction
 {
@@ -21,70 +22,89 @@ class CompletePaymentAction
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FIND OR CREATE USER
-        |--------------------------------------------------------------------------
-        */
+        DB::transaction(function () use ($payment) {
 
-        $user = User::where(
-            'email',
-            $payment->email
-        )->first();
+            /*
+            |--------------------------------------------------------------------------
+            | REFRESH PAYMENT
+            |--------------------------------------------------------------------------
+            */
 
-        if (!$user) {
+            $payment->refresh();
 
-            $temporaryPassword = Str::random(12);
+            /*
+            |--------------------------------------------------------------------------
+            | ENSURE PAYMENT IS PAID
+            |--------------------------------------------------------------------------
+            */
 
-            $user = User::create([
+            if ($payment->status !== 'paid') {
 
-                'name' => $payment->name,
+                throw new \Exception(
+                    'Cannot complete unpaid payment.'
+                );
+            }
 
-                'email' => $payment->email,
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE / FIND USER
+            |--------------------------------------------------------------------------
+            */
 
-                'password' => Hash::make($temporaryPassword),
+            $user = app(
+                CreateUserFromPaymentAction::class
+            )->execute($payment);
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE SUBSCRIPTION
+            |--------------------------------------------------------------------------
+            */
+
+            app(
+                CreateSubscriptionFromPaymentAction::class
+            )->execute($payment);
+
+            /*
+            |--------------------------------------------------------------------------
+            | AUTO LOGIN USER
+            |--------------------------------------------------------------------------
+            */
+
+            Auth::login($user);
+
+            /*
+            |--------------------------------------------------------------------------
+            | REGENERATE SESSION
+            |--------------------------------------------------------------------------
+            */
+
+            request()->session()->regenerate();
+
+            /*
+            |--------------------------------------------------------------------------
+            | MARK PAYMENT PROCESSED
+            |--------------------------------------------------------------------------
+            */
+
+            $payment->update([
+                'processed_at' => now(),
             ]);
 
             /*
             |--------------------------------------------------------------------------
-            | TODO:
-            | SEND EMAIL HERE
+            | LOG SUCCESS
             |--------------------------------------------------------------------------
-            |
-            | Send:
-            | - temporary password
-            | - password setup link
-            |
             */
-        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | ATTACH USER TO PAYMENT
-        |--------------------------------------------------------------------------
-        */
+            Log::info('Payment completed successfully', [
 
-        $payment->update([
-            'user_id' => $user->id,
-        ]);
+                'payment_id' => $payment->id,
 
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE SUBSCRIPTION
-        |--------------------------------------------------------------------------
-        */
+                'user_id' => $user->id,
 
-        app(CreateSubscriptionFromPaymentAction::class)
-            ->execute($payment);
-
-        /*
-        |--------------------------------------------------------------------------
-        | MARK PAYMENT PROCESSED
-        |--------------------------------------------------------------------------
-        */
-
-        $payment->update([
-            'processed_at' => now(),
-        ]);
+                'order_id' => $payment->order_id,
+            ]);
+        });
     }
 }

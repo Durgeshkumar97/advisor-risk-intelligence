@@ -48,9 +48,9 @@ class DashboardController extends Controller
         $daysLeft = 0;
 
         if ($expiryDate) {
-            $daysLeft = now()->diffInDays(
-                $expiryDate,
-                false
+            $daysLeft = max(
+                0,
+                now()->diffInDays($expiryDate)
             );
         }
 

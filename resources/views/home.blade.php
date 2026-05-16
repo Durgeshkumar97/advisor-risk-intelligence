@@ -6,8 +6,8 @@
 <section id="home" style="padding-top:96px;">
 
     <div class="container hero-grid"
-    
-         style="
+
+        style="
             display:grid;
             grid-template-columns:1.1fr 1fr;
             align-items:center;
@@ -56,7 +56,7 @@
                     See a sample report
                 </a>
             </div>
-        </div> 
+        </div>
 
         <!-- RIGHT SIDE CARD -->
         <div class="reveal reveal-right reveal-delay-2"
@@ -226,11 +226,11 @@
                 </div>
             </div>
         </div>
-    </div> 
+    </div>
 </section>
 
 <!-- BUILT FOR SECTION -->
-<section id="built-for" style="padding:2.5rem 0; background:var(--paper); border-top:1px solid var(--paper-3); border-bottom:1px solid var(--paper-3);">
+<section id="services" style="padding:2.5rem 0; background:var(--paper); border-top:1px solid var(--paper-3); border-bottom:1px solid var(--paper-3);">
 
     <div class="container" style="max-width:1100px; margin:auto; padding:0 1rem;">
 
@@ -255,7 +255,7 @@
                 Designed for advisors who need calm, credible communication during volatile markets.
             </p>
 
-        </div>                         
+        </div>
 
         <!-- Grid -->
         <div class="built-for-grid" style="
@@ -288,32 +288,32 @@
 
 {{-- ── PROBLEM STATEMENT ─────────────────────────────── --}}
 <section style="display:flex; justify-content:center; text-align:center;">
-  
-  <div style="max-width:700px; width:100%; margin:0 auto; padding:0 1rem;">
 
-    <h2>Clients leave during market falls</h2>
+    <div style="max-width:700px; width:100%; margin:0 auto; padding:0 1rem;">
 
-    <div style="margin-top:1.5rem; font-size:.9rem; text-align:center;">
-    Not because of portfolios. Because of communication.
+        <h2>Clients leave during market falls</h2>
+
+        <div style="margin-top:1.5rem; font-size:.9rem; text-align:center;">
+            Not because of portfolios. Because of communication.
+        </div>
+
+        <div style="margin-top:1.5rem;font-size:.9rem;">
+            Panic → wrong advice → redemption → AUM loss
+        </div>
+
+        <div style="margin-top:.6rem;font-size:.9rem;">
+            Calm response → trust → retained AUM
+        </div>
+
     </div>
-
-    <div style="margin-top:1.5rem;font-size:.9rem;">
-      Panic → wrong advice → redemption → AUM loss
-    </div>
-
-    <div style="margin-top:.6rem;font-size:.9rem;">
-      Calm response → trust → retained AUM
-    </div>
-
-  </div>
 
 </section>
 
 {{-- ── FOUNDER TRUST ────────────────────────────────── --}}
 <section style="text-align:center; display:flex; justify-content:center;">
-    
+
     <div class="container reveal reveal-pop"
-         style="max-width:680px; margin:0 auto; text-align:center; display:flex; flex-direction:column; align-items:center;">
+        style="max-width:680px; margin:0 auto; text-align:center; display:flex; flex-direction:column; align-items:center;">
 
         <div class="eyebrow" style="margin-bottom:1rem; text-align:center;">
             Built by an IFA, for IFAs
@@ -335,7 +335,7 @@
         </p>
 
         <div class="reveal reveal-pop reveal-delay-2"
-             style="
+            style="
                 margin-top:1.5rem;
                 display:flex;
                 flex-direction:column;
@@ -378,10 +378,10 @@
         </div>
     </div>
 </section>
- 
+
 {{-- ── HOW IT WORKS ─────────────────────────────────── --}}
 <div id="how-it-works"
-     style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;max-width:900px;margin-inline:auto;">
+    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;max-width:900px;margin-inline:auto;">
 
     {{-- STEP 1 --}}
     <div class="reveal reveal-pop reveal-delay-1" style="text-align:center;padding:1.25rem;">
@@ -415,13 +415,13 @@
             WhatsApp report + client script. Ready to use instantly.
         </p>
     </div>
-</div> 
+</div>
 
 {{-- ── SAMPLE REPORT ────────────────────────────────── --}}
 <section id="sample-report" style="background:var(--paper-2); display:flex; justify-content:center;">
-    
+
     <div class="container reveal reveal-pop"
-         style="max-width:900px; width:100%; margin:0 auto;">
+        style="max-width:900px; width:100%; margin:0 auto;">
 
         <!-- TOP (CENTERED MARKETING) -->
         <div style="margin-bottom:2rem; text-align:center;">
@@ -437,10 +437,10 @@
                 Mid-cap equity portfolios · Plain English edition
             </div>
         </div>
-        
+
         <!-- REPORT CARD (LEFT-ALIGNED) -->
         <div class="card reveal reveal-pop reveal-delay-1"
-             style="max-width:700px;margin-inline:auto;overflow:hidden;text-align:left;">
+            style="max-width:700px;margin-inline:auto;overflow:hidden;text-align:left;">
 
             <!-- HEADER -->
             <div style="background:var(--ink);color:var(--paper);padding:1.5rem 2rem;">
@@ -491,7 +491,7 @@
                 <div style="margin-bottom:1.5rem;">
 
                     <div class="eyebrow"
-                         style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
+                        style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
                         Risk flags this week
                     </div>
 
@@ -541,7 +541,7 @@
                 <!-- SCRIPT -->
                 <div>
                     <div class="eyebrow"
-                         style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
+                        style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
                         What to tell your client this week
                     </div>
 
@@ -650,7 +650,7 @@
 
             {{-- STARTER --}}
             <div class="card card-hover" style="padding:2rem;display:flex;flex-direction:column;justify-content:space-between;">
-                
+
                 <div>
                     <div class="eyebrow">Starter</div>
 
@@ -690,8 +690,8 @@
                 </div>
 
                 <a href="{{ route('checkout.show', ['plan' => 'starter']) }}"
-                   class="btn-outline"
-                   style="margin-top:2rem;text-align:center;">
+                    class="btn-outline"
+                    style="margin-top:2rem;text-align:center;">
                     Start plan →
                 </a>
             </div>
@@ -727,7 +727,7 @@
                 </div>
 
                 <div style="margin-top:.5rem;">
-                    
+
                     <h3 style="margin-bottom:.2rem;text-align:center;">PRO</h3>
 
                     <h2 style="font-size:2.6rem;margin:.3rem 0;text-align:center;">₹2,499</h2>
@@ -778,15 +778,15 @@
                 </div>
 
                 <a href="{{ route('checkout.show', ['plan' => 'pro']) }}"
-                class="btn-primary"
-                style="margin-top:2rem;text-align:center;">
+                    class="btn-primary"
+                    style="margin-top:2rem;text-align:center;">
                     Start plan
                 </a>
-            </div> 
+            </div>
 
             {{-- TEAM --}}
             <div class="card card-hover" style="padding:2rem;display:flex;flex-direction:column;justify-content:space-between;">
-                
+
                 <div>
                     <div class="eyebrow">Team</div>
 
@@ -800,31 +800,31 @@
                     <hr style="margin:1rem 0;opacity:.2;">
 
                     <ul style="line-height:2;font-size:.9rem;">
-                        <li>•  Everything in Pro</li>
-                        <li>•  Multiple advisors</li>
-                        <li>•  Custom thresholds</li>
-                        <li>•  Strategy support</li>
+                        <li>• Everything in Pro</li>
+                        <li>• Multiple advisors</li>
+                        <li>• Custom thresholds</li>
+                        <li>• Strategy support</li>
                     </ul>
                 </div>
 
                 <a href="{{ route('checkout.show', ['plan' => 'team']) }}"
-                   class="btn-outline"
-                   style="margin-top:2rem;text-align:center;">
+                    class="btn-outline"
+                    style="margin-top:2rem;text-align:center;">
                     Start plan
                 </a>
             </div>
 
         </div>
 
-    </div> 
-</section> 
+    </div>
+</section>
 
 {{-- ── CONTACT / SUBSCRIBE ──────────────────────────── --}}
-<section id="contact" style="background:var(--paper-2);padding:4rem 0;">
+<section id="free-trial" style="background:var(--paper-2);padding:4rem 0;">
     <div class="container reveal reveal-pop">
 
         <div class="text-center" style="margin-bottom:2.2rem;max-width:520px;margin-inline:auto;">
-            
+
             <div class="eyebrow" style="margin-bottom:.8rem;">
                 Get started
             </div>
@@ -845,20 +845,20 @@
 
         {{-- SUCCESS --}}
         @if(session('success'))
-            <div class="alert-success" style="max-width:420px;margin:0 auto 1rem;">
-                {{ session('success') }}
-            </div>
+        <div class="alert-success" style="max-width:420px;margin:0 auto 1rem;">
+            {{ session('success') }}
+        </div>
         @endif
 
         {{-- ERRORS --}}
         @if ($errors->any())
-            <div class="alert-warning" style="max-width:420px;margin:0 auto 1rem;">
-                <ul style="padding-left:1rem;">
-                    @foreach ($errors->all() as $error)
-                        <li style="font-size:.8rem;">{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <div class="alert-warning" style="max-width:420px;margin:0 auto 1rem;">
+            <ul style="padding-left:1rem;">
+                @foreach ($errors->all() as $error)
+                <li style="font-size:.8rem;">{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
         @endif
 
         <form method="POST" action="{{ route('ifa.submit') }}">
@@ -872,9 +872,9 @@
                 margin:auto;
             ">
 
-                <input 
-                    type="text" 
-                    name="advisor_name" 
+                <input
+                    type="text"
+                    name="advisor_name"
                     placeholder="Your name"
                     required
                     style="
@@ -885,12 +885,11 @@
                         color:var(--ink);
                         font-size:.9rem;
                         outline:none;
-                    "
-                >
+                    ">
 
-                <input 
-                    type="tel" 
-                    name="whatsapp" 
+                <input
+                    type="tel"
+                    name="whatsapp"
                     placeholder="WhatsApp number"
                     required
                     style="
@@ -901,11 +900,10 @@
                         color:var(--ink);
                         font-size:.9rem;
                         outline:none;
-                    "
-                >
+                    ">
 
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     class="btn-primary"
                     style="
                         width:100%;
@@ -928,7 +926,7 @@
 
             </div>
 
-        </form> 
+        </form>
 
-    </div> 
+    </div>
 </section>

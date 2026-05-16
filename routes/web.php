@@ -19,7 +19,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\IntakeController;
 
 use App\Http\Controllers\User\DashboardController;
-
+use App\Http\Controllers\PortfolioUploadController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminIntakeController;
 
@@ -95,9 +95,20 @@ Route::post('/payment/verify', [PaymentController::class, 'verify'])
 
 Route::get('/payment/success', [CheckoutController::class, 'success'])
     ->name('payment.success');
-    
-Route::post('/payment/failure',[PaymentController::class, 'failure'])
+
+Route::post('/payment/failure', [PaymentController::class, 'failure'])
     ->name('payment.failure');
+
+/*--------------------------------------------------------------------------
+| PORTFOLIO UPLOAD
+|-------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+    Route::get(
+        '/portfolio/upload',
+        [PortfolioUploadController::class, 'index']
+    )->name('portfolio.upload');
+});
 /*
 |--------------------------------------------------------------------------
 | WEBHOOK
@@ -225,7 +236,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'paid'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');

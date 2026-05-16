@@ -11,7 +11,7 @@ class CreateSubscriptionFromPaymentAction
     {
         /*
         |--------------------------------------------------------------------------
-        | PREVENT DUPLICATES
+        | PREVENT DUPLICATE SUBSCRIPTIONS
         |--------------------------------------------------------------------------
         */
 
@@ -19,15 +19,15 @@ class CreateSubscriptionFromPaymentAction
             'user_id',
             $payment->user_id
         )
-        ->where(
-            'plan_id',
-            $payment->plan_id
-        )
-        ->where(
-            'status',
-            'active'
-        )
-        ->exists();
+            ->where(
+                'plan_id',
+                $payment->plan_id
+            )
+            ->where(
+                'status',
+                'active'
+            )
+            ->exists();
 
         if ($exists) {
             return;

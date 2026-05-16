@@ -1,68 +1,135 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard')
+
 @section('content')
 
-<div class="dashboard-shell">
+<div
+    style="
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    ">
 
-    <div class="container-xl">
+    {{-- HEADER --}}
 
-        <h1 class="page-title">Your Risk Dashboard</h1>
+    <div
+        style="
+            margin-bottom: 2rem;
+        ">
 
-        {{-- PLAN INFO --}}
-        <div class="grid metrics-grid">
+        <h1
+            style="
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: .5rem;
+            ">
+            Welcome,
+            {{ $user->name }}
+        </h1>
 
-            <div class="card">
-                <small>Current Plan</small>
-                <h2>{{ $planName }}</h2>
-            </div>
+        <p
+            style="
+                color: var(--ink-3);
+            ">
+            Your RiskSignal advisor dashboard.
+        </p>
 
-            <div class="card">
-                <small>Expiry Date</small>
-                <h2>
-                    {{ $expiryDate ? \Carbon\Carbon::parse($expiryDate)->format('d M Y') : 'N/A' }}
-                </h2>
-            </div>
+    </div>
 
-            <div class="card">
-                <small>Days Remaining</small>
-                <h2>{{ $daysLeft }}</h2>
-            </div>
+    {{-- GRID --}}
+
+    <div
+        style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:1.5rem;
+        ">
+
+        {{-- PLAN --}}
+
+        <div class="card">
+
+            <h3>Subscription</h3>
+
+            <p>
+                {{ $planName }}
+            </p>
+
+            <p>
+                Days Left:
+                {{ $daysLeft }}
+            </p>
 
         </div>
 
-        {{-- VALUE BLOCK (CORE PRODUCT) --}}
-        <div class="card mt-18">
+        {{-- RISK SCORE --}}
 
-            <h3>Market Risk Signal</h3>
+        <div class="card">
 
-            <h2 class="big-number">
+            <h3>Risk Score</h3>
+
+            <p
+                style="
+                    font-size:2rem;
+                    font-weight:700;
+                ">
                 {{ $riskScore }}
-            </h2>
+            </p>
 
-            <p>Risk Level: <strong>{{ $riskLevel }}</strong></p>
+            <p>
+                {{ $riskLevel }} RISK
+            </p>
 
-            <p class="subtitle-sm">
+        </div>
+
+        {{-- RECOMMENDATION --}}
+
+        <div class="card">
+
+            <h3>Recommendation</h3>
+
+            <p>
                 {{ $recommendation }}
             </p>
 
         </div>
 
         {{-- NEXT ACTION --}}
-        <div class="card mt-18">
+
+        <div class="card">
 
             <h3>Next Action</h3>
 
-            <p class="subtitle-sm">
+            <p>
                 {{ $nextAction }}
             </p>
 
-            @if($daysLeft <= 3)
-                <a href="/pricing" class="btn btn-outline mt-10">
-                    Renew Now
-                </a>
-            @endif
-
         </div>
+
+    </div>
+
+    {{-- CTA SECTION --}}
+
+    <div
+        style="
+            margin-top:3rem;
+            display:flex;
+            gap:1rem;
+            flex-wrap:wrap;
+        ">
+
+        <a
+            href="{{ route('portfolio.upload') }}"
+            class="btn btn-dark">
+            Upload Portfolio
+        </a>
+
+        <a
+            href="#"
+            class="btn btn-outline-dark">
+            View Risk Reports
+        </a>
 
     </div>
 

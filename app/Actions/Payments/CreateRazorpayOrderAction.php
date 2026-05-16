@@ -3,46 +3,77 @@
 namespace App\Actions\Payments;
 
 use App\Models\Payment;
-use App\Models\Subscription;
+use App\Models\Plan;
+use Razorpay\Api\Api;
 
-class CreateSubscriptionFromPaymentAction
+class CreateRazorpayOrderAction
 {
-    public function execute(Payment $payment): void
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | PREVENT DUPLICATES
-        |--------------------------------------------------------------------------
-        */
-
-        $exists = Subscription::where(
-            'payment_id',
-            $payment->id
-        )->exists();
-
-        if ($exists) {
-            return;
-        }
+    public function execute(
+        Plan $plan,
+        array $data
+    ): Payment {
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE SUBSCRIPTION
+        | RAZORPAY API
         |--------------------------------------------------------------------------
         */
 
-        Subscription::create([
+        $api = new Api(
+            config('services.razorpay.key'),
+            config('services.razorpay.secret')
+        );
 
-            'user_id' => $payment->user_id,
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE ORDER
+        |--------------------------------------------------------------------------
+        */
 
-            'plan_id' => $payment->plan_id,
+        $order = $api->order->create([
 
-            'payment_id' => $payment->id,
+            'receipt' => 'rcpt_' . uniqid(),
 
-            'starts_at' => now(),
+            'amount' => (int) round(
+                $plan->price * 100
+            ),
 
-            'ends_at' => now()->addDays(30),
+            'currency' => 'INR',
 
-            'status' => 'active',
+            'payment_capture' => 1,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | STORE PAYMENT
+        |--------------------------------------------------------------------------
+        */
+
+        return Payment::create([
+
+            'plan_id' => $plan->id,
+
+            'name' => $data['name'],
+
+            'email' => $data['email'],
+
+            'phone' => $data['phone'],
+
+            'gateway' => 'razorpay',
+
+            'order_id' => $order['id'],
+
+            'amount' => $plan->price,
+
+            'currency' => 'INR',
+
+            'status' => 'pending',
+
+            'gateway_response' => $order->toArray(),
+
+            'ip_address' => request()->ip(),
+
+            'user_agent' => request()->userAgent(),
         ]);
     }
 }

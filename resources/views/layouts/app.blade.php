@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html
+    lang="en"
+    data-theme="light">
 
 <head>
-
-    {{-- ========================================================================= --}}
-    {{-- META --}}
-    {{-- ========================================================================= --}}
 
     <meta charset="UTF-8">
 
@@ -14,24 +12,8 @@
         content="width=device-width, initial-scale=1.0">
 
     <meta
-        http-equiv="X-UA-Compatible"
-        content="IE=edge">
-
-    <meta
         name="csrf-token"
         content="{{ csrf_token() }}">
-
-    <meta
-        name="robots"
-        content="index, follow">
-
-    <meta
-        name="referrer"
-        content="strict-origin-when-cross-origin">
-
-    {{-- ========================================================================= --}}
-    {{-- SEO --}}
-    {{-- ========================================================================= --}}
 
     <title>
         @yield('title', 'RiskSignal')
@@ -39,184 +21,282 @@
 
     <meta
         name="description"
-        content="RiskSignal helps advisors monitor portfolio risks and improve client trust using AI-powered risk intelligence.">
+        content="AI-powered portfolio risk intelligence platform for independent financial advisors.">
 
-    <meta
-        name="keywords"
-        content="RiskSignal, portfolio risk, advisor tools, wealth management, risk intelligence, financial advisor SaaS">
-
-    <meta
-        name="author"
-        content="RiskSignal">
-
-    {{-- ========================================================================= --}}
-    {{-- SOCIAL --}}
-    {{-- ========================================================================= --}}
-
-    <meta
-        property="og:type"
-        content="website">
-
-    <meta
-        property="og:title"
-        content="@yield('title', 'RiskSignal')">
-
-    <meta
-        property="og:description"
-        content="AI-powered portfolio risk intelligence for financial advisors.">
-
-    <meta
-        property="og:url"
-        content="{{ url()->current() }}">
-
-    <meta
-        property="og:site_name"
-        content="RiskSignal">
-
-    {{-- ========================================================================= --}}
-    {{-- PERFORMANCE / PWA --}}
-    {{-- ========================================================================= --}}
-
-    <meta
-        name="theme-color"
-        content="#0f172a">
-
-    <meta
-        name="color-scheme"
-        content="dark light">
-
-    {{-- ========================================================================= --}}
-    {{-- FAVICON --}}
-    {{-- ========================================================================= --}}
-
+    {{-- GOOGLE FONT --}}
     <link
-        rel="icon"
-        type="image/x-icon"
-        href="{{ asset('favicon.ico') }}">
-
-    <link
-        rel="shortcut icon"
-        href="{{ asset('favicon.ico') }}">
-
-    {{-- ========================================================================= --}}
-    {{-- PRECONNECT --}}
-    {{-- ========================================================================= --}}
+        rel="preconnect"
+        href="https://fonts.googleapis.com">
 
     <link
         rel="preconnect"
-        href="https://checkout.razorpay.com">
+        href="https://fonts.gstatic.com"
+        crossorigin>
 
     <link
-        rel="dns-prefetch"
-        href="//checkout.razorpay.com">
+        href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
-    {{-- ========================================================================= --}}
     {{-- VITE --}}
-    {{-- ========================================================================= --}}
-
     @vite([
     'resources/css/app.css',
     'resources/js/app.js'
     ])
 
-    {{-- ========================================================================= --}}
-    {{-- PAGE HEAD EXTENSIONS --}}
-    {{-- ========================================================================= --}}
+    <style>
+        /*
+        |--------------------------------------------------------------------------
+        | GLOBAL
+        |--------------------------------------------------------------------------
+        */
 
-    @stack('head')
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+
+            min-height:
+                100vh;
+
+            display: flex;
+
+            flex-direction: column;
+
+            font-family:
+                'Figtree',
+                sans-serif;
+
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIXED NAVBAR WRAPPER
+        |--------------------------------------------------------------------------
+        */
+
+        .navbar-wrapper {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            z-index: 1000;
+
+            backdrop-filter:
+                blur(18px);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAIN
+        |--------------------------------------------------------------------------
+        */
+
+        .main-wrapper {
+
+            flex: 1;
+
+            width: 100%;
+
+            margin-top: 72px;
+        }
+
+        .content-container {
+
+            max-width:
+                1280px;
+
+            margin: 0 auto;
+
+            width: 100%;
+
+            padding:
+                0 1.5rem 4rem;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ALERTS
+        |--------------------------------------------------------------------------
+        */
+
+        .alert {
+
+            padding:
+                1rem 1.2rem;
+
+            border-radius:
+                14px;
+
+            margin:
+                1.5rem 0;
+
+            font-weight:
+                600;
+        }
+
+        .alert-success {
+
+            background:
+                rgba(34, 197, 94, .12);
+
+            color:
+                #86efac;
+
+            border:
+                1px solid rgba(34, 197, 94, .2);
+        }
+
+        .alert-error {
+
+            background:
+                rgba(239, 68, 68, .12);
+
+            color:
+                #fca5a5;
+
+            border:
+                1px solid rgba(239, 68, 68, .2);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FOOTER
+        |--------------------------------------------------------------------------
+        */
+
+        footer {
+
+            border-top:
+                1px solid var(--paper-3);
+
+            margin-top:
+                auto;
+        }
+
+        .footer-container {
+
+            max-width:
+                1200px;
+
+            margin: 0 auto;
+
+            padding:
+                2.5rem 1.5rem;
+
+            text-align: center;
+        }
+
+        .footer-links {
+
+            display: flex;
+
+            justify-content: center;
+
+            gap: 1.2rem;
+
+            flex-wrap: wrap;
+
+            font-size: .875rem;
+
+            margin-bottom: 1rem;
+        }
+
+        .footer-copy {
+
+            font-size:
+                .85rem;
+
+            color:
+                var(--ink-3);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MOBILE
+        |--------------------------------------------------------------------------
+        */
+
+        @media(max-width:768px) {
+
+            .content-container {
+
+                padding:
+                    0 1rem 4rem;
+            }
+
+            .main-wrapper {
+
+                margin-top: 68px;
+            }
+        }
+    </style>
+
+    @stack('styles')
 
 </head>
 
-<body
-    class="flex flex-col min-h-screen antialiased">
+<body>
 
-    {{-- ========================================================================= --}}
-    {{-- NOSCRIPT --}}
-    {{-- ========================================================================= --}}
+    {{-- NAVBAR --}}
+    <div class="navbar-wrapper">
 
-    <noscript>
+        @include('navigation')
 
-        <div
-            style="
-                background:#dc2626;
-                color:white;
-                text-align:center;
-                padding:1rem;
-                font-weight:600;
-            ">
+    </div>
 
-            JavaScript is required to use RiskSignal.
+    {{-- MAIN --}}
+    <main class="main-wrapper">
+
+        <div class="content-container">
+
+            {{-- SUCCESS --}}
+            @if(session('success'))
+
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+
+            @endif
+
+            {{-- ERROR --}}
+            @if(session('error'))
+
+            <div class="alert alert-error">
+                {{ session('error') }}
+            </div>
+
+            @endif
+
+            {{-- CONTENT --}}
+            @yield('content')
 
         </div>
 
-    </noscript>
-
-    {{-- ========================================================================= --}}
-    {{-- NAVBAR --}}
-    {{-- ========================================================================= --}}
-
-    <header
-        style="
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            width: 100%;
-            background: var(--paper-1);
-            border-bottom: 1px solid var(--paper-3);
-        ">
-        @include('navigation')
-    </header>
-
-    {{-- ========================================================================= --}}
-    {{-- MAIN CONTENT --}}
-    {{-- ========================================================================= --}}
-
-    <main
-        id="main-content"
-        class="flex-1"
-        style="
-            margin-top: var(--nav-height);
-            min-height: 100vh;
-        ">
-
-        @yield('content')
-
     </main>
 
-    {{-- ========================================================================= --}}
     {{-- FOOTER --}}
-    {{-- ========================================================================= --}}
+    <footer>
 
-    <footer
-        role="contentinfo"
+        <div class="footer-container">
 
-        style="
-            border-top: 1px solid var(--paper-3);
-            margin-top: 3rem;
-            background: var(--paper-1);
-        ">
-
-        <div
-            style="
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 2.5rem 1.5rem;
-                text-align: center;
-            ">
-
-            {{-- LINKS --}}
-
-            <nav
-                aria-label="Footer Navigation"
-
-                style="
-                    display: flex;
-                    justify-content: center;
-                    gap: 1.2rem;
-                    flex-wrap: wrap;
-                    font-size: .875rem;
-                    margin-bottom: 1rem;
-                ">
+            <div class="footer-links">
 
                 <a href="{{ route('terms') }}">
                     Terms
@@ -234,27 +314,12 @@
                     Refund
                 </a>
 
-                @auth
+            </div>
 
-                <span>•</span>
+            <div class="footer-copy">
 
-                <a href="{{ route('admin.dashboard') }}">
-                    Admin
-                </a>
-
-                @endauth
-
-            </nav>
-
-            {{-- COPYRIGHT --}}
-
-            <div
-                style="
-                    font-size: .85rem;
-                    color: var(--ink-3);
-                ">
-
-                © {{ now()->year }} RiskSignal.
+                © {{ date('Y') }}
+                RiskSignal.
                 All rights reserved.
 
             </div>
@@ -263,31 +328,20 @@
 
     </footer>
 
-    {{-- ========================================================================= --}}
     {{-- THEME TOGGLE --}}
-    {{-- ========================================================================= --}}
-
     <button
         id="theme-toggle"
-
-        type="button"
 
         aria-label="Toggle theme"
 
         style="
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
+            position:fixed;
+            bottom:20px;
+            right:20px;
+            z-index:1000;
         ">
-
         <span class="theme-icon"></span>
-
     </button>
-
-    {{-- ========================================================================= --}}
-    {{-- GLOBAL SCRIPTS --}}
-    {{-- ========================================================================= --}}
 
     @stack('scripts')
 
