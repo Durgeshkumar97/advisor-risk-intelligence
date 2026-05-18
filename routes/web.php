@@ -99,16 +99,43 @@ Route::get('/payment/success', [CheckoutController::class, 'success'])
 Route::post('/payment/failure', [PaymentController::class, 'failure'])
     ->name('payment.failure');
 
-/*--------------------------------------------------------------------------
-| PORTFOLIO UPLOAD
-|-------------------------------------------------------------------------
-*/
+/*------------PORTFOLIO UPLOAD ----------------------------------------*/
 Route::middleware(['auth'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/dashboard',
+        [\App\Http\Controllers\User\DashboardController::class, 'index']
+    )->name('dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PORTFOLIO UPLOAD PAGE
+    |--------------------------------------------------------------------------
+    */
+
     Route::get(
         '/portfolio/upload',
         [PortfolioUploadController::class, 'index']
     )->name('portfolio.upload');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PORTFOLIO FILE SUBMIT
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/portfolio/upload',
+        [PortfolioUploadController::class, 'store']
+    )->name('portfolio.upload.store');
 });
+
 /*
 |--------------------------------------------------------------------------
 | WEBHOOK
