@@ -47,6 +47,9 @@ return new class extends Migration
             $table->decimal('drawdown', 8, 2)
                 ->nullable();
 
+            $table->json('meta')
+                ->nullable();
+
             /*
             |--------------------------------------------------------------------------
             | TIMESTAMP
@@ -90,6 +93,7 @@ return new class extends Migration
                 'score',
                 'volatility',
                 'drawdown',
+                'meta',
                 'generated_at',
             ]);
         });

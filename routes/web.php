@@ -102,23 +102,6 @@ Route::post('/payment/failure', [PaymentController::class, 'failure'])
 /*------------PORTFOLIO UPLOAD ----------------------------------------*/
 Route::middleware(['auth'])->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get(
-        '/dashboard',
-        [\App\Http\Controllers\User\DashboardController::class, 'index']
-    )->name('dashboard');
-
-    /*
-    |--------------------------------------------------------------------------
-    | PORTFOLIO UPLOAD PAGE
-    |--------------------------------------------------------------------------
-    */
-
     Route::get(
         '/portfolio/upload',
         [PortfolioUploadController::class, 'index']
@@ -173,10 +156,10 @@ Route::get('/auto-login/{token}', function ($token) {
     |--------------------------------------------------------------------------
     */
 
-    $user->update([
+    $user->forceFill([
         'login_token' => null,
         'last_login_at' => now(),
-    ]);
+    ])->save();
 
     /*
     |--------------------------------------------------------------------------
@@ -242,10 +225,10 @@ Route::middleware('auth')->group(function () {
         |--------------------------------------------------------------------------
         */
 
-        $user->update([
-            'access_type' => $request->access_type,
+        $user->forceFill([
+            'login_method' => $request->access_type,
             'onboarding_completed' => true,
-        ]);
+        ])->save();
 
         /*
         |--------------------------------------------------------------------------

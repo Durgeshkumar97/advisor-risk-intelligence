@@ -2,18 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePortfolioUploadRequest;
 use App\Jobs\ProcessPortfolioFile;
-
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
+use App\Services\PortfolioUploadException;
+use App\Services\PortfolioUploadService;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class PortfolioUploadController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | CONSTRUCTOR
+    |--------------------------------------------------------------------------
+    */
+
+    public function __construct(
+        private readonly PortfolioUploadService $uploadService
+    ) {
+    }
+
     /*
     |--------------------------------------------------------------------------
     | INDEX
@@ -72,97 +83,33 @@ class PortfolioUploadController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function store(Request $request)
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
-
-        $validated = $request->validate([
-
-            'portfolio_id' => [
-                'nullable',
-                'exists:portfolios,id',
-            ],
-
-            'file' => [
-                'required',
-                'file',
-
-                /*
-                |--------------------------------------------------------------------------
-                | ALLOWED TYPES
-                |--------------------------------------------------------------------------
-                */
-
-                'mimes:pdf,csv,xlsx,xls',
-
-                /*
-                |--------------------------------------------------------------------------
-                | MAX SIZE
-                |--------------------------------------------------------------------------
-                |
-                | 10MB
-                |
-                */
-
-                'max:10240',
-            ],
-        ]);
-
+    public function store(
+        StorePortfolioUploadRequest $request
+    ) {
         try {
 
             $user = Auth::user();
 
             /*
             |--------------------------------------------------------------------------
-            | STORE FILE
+            | HANDLE FILE UPLOAD
             |--------------------------------------------------------------------------
             */
 
-            $storedPath = $request->file('file')->store(
-                '',
-                'portfolios'
-            );
+            $portfolioFile = $this->uploadService
+                ->handleUpload(
+
+                    userId: $user->id,
+
+                    file: $request->getFile(),
+
+                    portfolioId:
+                        $request->getPortfolioId(),
+                );
 
             /*
             |--------------------------------------------------------------------------
-            | CREATE DB RECORD
-            |--------------------------------------------------------------------------
-            */
-
-            $portfolioFile = PortfolioFile::create([
-
-                'user_id' => $user->id,
-
-                'portfolio_id' =>
-                $validated['portfolio_id'] ?? null,
-
-                'original_name' =>
-                $request->file('file')
-                    ->getClientOriginalName(),
-
-                'stored_name' =>
-                basename($storedPath),
-
-                'path' => $storedPath,
-
-                'mime_type' =>
-                $request->file('file')
-                    ->getMimeType(),
-
-                'file_size' =>
-                $request->file('file')
-                    ->getSize(),
-
-                'status' => 'pending',
-            ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | DISPATCH PROCESSING JOB
+            | DISPATCH BACKGROUND PROCESSING
             |--------------------------------------------------------------------------
             */
 
@@ -172,7 +119,7 @@ class PortfolioUploadController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | SUCCESS
+            | SUCCESS RESPONSE
             |--------------------------------------------------------------------------
             */
 
@@ -184,51 +131,61 @@ class PortfolioUploadController extends Controller
                     'success',
                     'Portfolio uploaded successfully. Processing started.'
                 );
-        } catch (\Throwable $e) {
+
+        } catch (PortfolioUploadException $e) {
 
             /*
             |--------------------------------------------------------------------------
-            | CLEANUP FAILED STORAGE
+            | EXPECTED BUSINESS ERROR
             |--------------------------------------------------------------------------
             */
 
-            if (
-                isset($storedPath)
-                &&
-                Storage::disk('portfolios')
-                ->exists($storedPath)
-            ) {
+            Log::warning(
+                'Portfolio upload validation/business error.',
+                [
 
-                Storage::disk('portfolios')
-                    ->delete($storedPath);
-            }
+                    'message' => $e->getMessage(),
 
-            /*
-            |--------------------------------------------------------------------------
-            | LOG ERROR
-            |--------------------------------------------------------------------------
-            */
-
-            Log::error('Portfolio upload failed.', [
-
-                'message' => $e->getMessage(),
-
-                'trace' => $e->getTraceAsString(),
-
-                'user_id' => Auth::id(),
-            ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | RESPONSE
-            |--------------------------------------------------------------------------
-            */
+                    'user_id' => Auth::id(),
+                ]
+            );
 
             return back()
 
                 ->withErrors([
+
                     'file' =>
-                    'Upload failed. Please try again.',
+                        $e->getUserMessage(),
+                ])
+
+                ->withInput();
+
+        } catch (\Throwable $e) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | UNEXPECTED SYSTEM ERROR
+            |--------------------------------------------------------------------------
+            */
+
+            Log::error(
+                'Portfolio upload failed unexpectedly.',
+                [
+
+                    'message' => $e->getMessage(),
+
+                    'trace' => $e->getTraceAsString(),
+
+                    'user_id' => Auth::id(),
+                ]
+            );
+
+            return back()
+
+                ->withErrors([
+
+                    'file' =>
+                        'Upload failed. Please try again.',
                 ])
 
                 ->withInput();

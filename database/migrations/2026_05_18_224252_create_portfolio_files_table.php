@@ -13,7 +13,36 @@ return new class extends Migration
     {
         Schema::create('portfolio_files', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('portfolio_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->string('original_name');
+            $table->string('stored_name');
+            $table->string('path');
+            $table->string('mime_type')->nullable();
+            $table->unsignedBigInteger('file_size')->default(0);
+
+            $table->enum('status', [
+                'pending',
+                'processing',
+                'processed',
+                'failed',
+            ])->default('pending');
+
+            $table->json('meta')->nullable();
+            $table->timestamp('processed_at')->nullable();
+
             $table->timestamps();
+
+            $table->index('status');
+            $table->index('processed_at');
         });
     }
 

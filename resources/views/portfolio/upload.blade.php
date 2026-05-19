@@ -198,7 +198,9 @@
 
                         @foreach($portfolios as $portfolio)
 
-                        <option value="{{ $portfolio->id }}">
+                        <option
+                            value="{{ $portfolio->id }}"
+                            @selected(old('portfolio_id') == $portfolio->id)>
                             {{ $portfolio->name }}
                         </option>
 
@@ -227,6 +229,7 @@
                         type="file"
                         name="file"
                         id="fileInput"
+                        accept=".csv,.xlsx,.xls,.pdf"
                         required
 
                         style="
@@ -383,15 +386,19 @@
 
                         @php
 
-                        $statusBg =
-                        $file->status === 'processed'
-                        ? '#dcfce7'
-                        : '#fef3c7';
+                        $statusBg = match ($file->status) {
+                            'processed' => '#dcfce7',
+                            'failed' => '#fef2f2',
+                            'processing' => '#dbeafe',
+                            default => '#fef3c7',
+                        };
 
-                        $statusColor =
-                        $file->status === 'processed'
-                        ? '#166534'
-                        : '#92400e';
+                        $statusColor = match ($file->status) {
+                            'processed' => '#166534',
+                            'failed' => '#991b1b',
+                            'processing' => '#1d4ed8',
+                            default => '#92400e',
+                        };
 
                         @endphp
 
