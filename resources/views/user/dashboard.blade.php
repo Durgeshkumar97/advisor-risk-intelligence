@@ -4,131 +4,123 @@
 
 @section('content')
 
-<div
-    style="
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-    ">
+@php
+    $riskBadgeClass = match (strtoupper($riskLevel ?? 'LOW')) {
+        'HIGH' => 'dashboard-risk-badge-high',
+        'MEDIUM' => 'dashboard-risk-badge-medium',
+        default => 'dashboard-risk-badge-low',
+    };
+@endphp
 
-    {{-- HEADER --}}
+<div class="dashboard-wrapper">
 
-    <div
-        style="
-            margin-bottom: 2rem;
-        ">
+    {{-- HERO --}}
+    <div class="dashboard-hero">
 
-        <h1
-            style="
-                font-size: 2rem;
-                font-weight: 700;
-                margin-bottom: .5rem;
-            ">
-            Welcome,
-            {{ $user->name }}
-        </h1>
+        <div>
 
-        <p
-            style="
-                color: var(--ink-3);
-            ">
-            Your RiskSignal advisor dashboard.
-        </p>
+            <div class="dashboard-eyebrow">
+                Advisor Intelligence Dashboard
+            </div>
+
+            <h1 class="dashboard-title">
+                Welcome, {{ $user->name }}
+            </h1>
+
+            <p class="dashboard-subtitle">
+                Monitor portfolio risk, advisor intelligence,
+                market exposure, and client panic signals
+                from one unified command center.
+            </p>
+
+        </div>
 
     </div>
 
-    {{-- GRID --}}
+    {{-- STATS GRID --}}
+    <div class="dashboard-grid">
 
-    <div
-        style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-            gap:1.5rem;
-        ">
+        {{-- SUBSCRIPTION --}}
+        <div class="dashboard-card">
 
-        {{-- PLAN --}}
+            <div class="dashboard-label">
+                Subscription
+            </div>
 
-        <div class="card">
-
-            <h3>Subscription</h3>
-
-            <p>
+            <div class="dashboard-value">
                 {{ $planName }}
-            </p>
+            </div>
 
-            <p>
-                Days Left:
-                {{ $daysLeft }}
-            </p>
+            <div class="dashboard-meta">
+                {{ round($daysLeft) }} days remaining
+            </div>
 
         </div>
 
         {{-- RISK SCORE --}}
+        <div class="dashboard-card">
 
-        <div class="card">
+            <div class="dashboard-label">
+                Portfolio Risk
+            </div>
 
-            <h3>Risk Score</h3>
-
-            <p
-                style="
-                    font-size:2rem;
-                    font-weight:700;
-                ">
+            <div class="dashboard-risk-score">
                 {{ $riskScore }}
-            </p>
+            </div>
 
-            <p>
-                {{ $riskLevel }} RISK
-            </p>
+            <div class="dashboard-risk-badge {{ $riskBadgeClass }}">
+
+                {{ strtoupper($riskLevel) }} RISK
+
+            </div>
 
         </div>
 
         {{-- RECOMMENDATION --}}
+        <div class="dashboard-card">
 
-        <div class="card">
+            <div class="dashboard-label">
+                Recommendation
+            </div>
 
-            <h3>Recommendation</h3>
-
-            <p>
+            <div class="dashboard-message">
                 {{ $recommendation }}
-            </p>
+            </div>
 
         </div>
 
         {{-- NEXT ACTION --}}
+        <div class="dashboard-card">
 
-        <div class="card">
+            <div class="dashboard-label">
+                Next Action
+            </div>
 
-            <h3>Next Action</h3>
-
-            <p>
+            <div class="dashboard-message">
                 {{ $nextAction }}
-            </p>
+            </div>
 
         </div>
 
     </div>
 
-    {{-- CTA SECTION --}}
-
-    <div
-        style="
-            margin-top:3rem;
-            display:flex;
-            gap:1rem;
-            flex-wrap:wrap;
-        ">
+    {{-- ACTION BUTTONS --}}
+    <div class="dashboard-actions">
 
         <a
             href="{{ route('portfolio.upload') }}"
-            class="btn btn-dark">
+            class="dashboard-btn dashboard-btn-primary">
+
             Upload Portfolio
+
         </a>
 
         <a
             href="#"
-            class="btn btn-outline-dark">
+            class="dashboard-btn dashboard-btn-secondary">
+
             View Risk Reports
+
         </a>
 
     </div>

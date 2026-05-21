@@ -1013,8 +1013,7 @@ select:focus {
   }
 }
 /* =====================================
-   LEGAL PAGES — THEME SCOPED
-   Keep this entire block at the bottom.
+   LEGAL PAGES
 ===================================== */
 
 .legal-shell {
@@ -1127,3 +1126,433 @@ select:focus {
   .legal-section h2         { font-size: 1.3rem; }
 }
 
+/* =====================================
+   USER DASHBOARD
+===================================== */
+.dashboard-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding-block: 3rem 4.5rem;
+}
+
+.dashboard-hero {
+  margin-bottom: 2.5rem;
+}
+
+.dashboard-eyebrow {
+  display: inline-block;
+  margin-bottom: 1rem;
+
+  color: var(--gold);
+
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dashboard-title {
+  max-width: 18ch;
+  margin-bottom: 1rem;
+
+  color: var(--ink);
+
+  font-size: 3.75rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.dashboard-subtitle {
+  max-width: 62ch;
+
+  color: var(--ink-2);
+
+  font-size: 1.12rem;
+  line-height: 1.8;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-card {
+  position: relative;
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1.75rem;
+
+  border: 1px solid var(--paper-3);
+  border-radius: var(--radius-lg);
+
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.dashboard-card:hover {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--paper-3));
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+[data-theme="light"] .dashboard-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: var(--shadow);
+}
+
+[data-theme="dark"] .dashboard-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dashboard-card,
+  .dashboard-btn-secondary {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+.dashboard-label {
+  margin-bottom: auto;
+
+  color: var(--ink-3);
+
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.dashboard-value {
+  margin-top: 1.5rem;
+  margin-bottom: 0.9rem;
+
+  color: var(--ink);
+
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-meta {
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.dashboard-risk-score {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+
+  color: var(--ink);
+
+  font-size: 4.5rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+.dashboard-message {
+  margin-top: 1.5rem;
+  max-width: 32ch;
+
+  color: var(--ink-2);
+
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.dashboard-risk-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.9rem;
+
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-risk-badge-low {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.22);
+  color: #16a34a;
+}
+
+.dashboard-risk-badge-medium {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.24);
+  color: #d97706;
+}
+
+.dashboard-risk-badge-high {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.24);
+  color: var(--red);
+}
+
+[data-theme="dark"] .dashboard-risk-badge-low {
+  color: #4ade80;
+}
+
+[data-theme="dark"] .dashboard-risk-badge-medium {
+  color: #fbbf24;
+}
+
+/* =====================================
+   DASHBOARD ACTIONS
+===================================== */
+
+.dashboard-actions {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 0.9rem;
+
+  margin-top: 2rem;
+}
+
+/* =====================================
+   DASHBOARD BUTTON BASE
+===================================== */
+
+.dashboard-btn {
+
+  display: inline-flex;
+
+  min-width: 210px;
+
+  min-height: 56px;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding:
+    0.95rem 1.4rem;
+
+  border:
+    1px solid transparent;
+
+  border-radius:
+    var(--radius-md);
+
+  font-size: 0.98rem;
+
+  font-weight: 800;
+
+  letter-spacing: -.01em;
+
+  text-align: center;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast);
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+/* =====================================
+   BUTTON HOVER
+===================================== */
+
+.dashboard-btn:hover {
+
+  transform:
+    translateY(-2px);
+}
+
+/* =====================================
+   BUTTON ACCESSIBILITY
+===================================== */
+
+.dashboard-btn:focus-visible {
+
+  outline:
+    3px solid color-mix(
+      in srgb,
+      var(--gold) 42%,
+      transparent
+    );
+
+  outline-offset: 3px;
+}
+
+/* =====================================
+   PRIMARY BUTTON
+===================================== */
+
+.dashboard-btn-primary {
+
+  background:
+    linear-gradient(
+      135deg,
+      #16a34a,
+      #22c55e
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 18px 44px rgba(34, 197, 94, 0.28);
+}
+
+.dashboard-btn-primary:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 24px 54px rgba(34, 197, 94, 0.38);
+}
+
+/* subtle glow */
+
+.dashboard-btn-primary::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent,
+      rgba(255,255,255,.12),
+      transparent
+    );
+
+  transform:
+    translateX(-120%);
+
+  transition:
+    transform .7s ease;
+}
+
+.dashboard-btn-primary:hover::before {
+
+  transform:
+    translateX(120%);
+}
+
+/* =====================================
+   SECONDARY BUTTON
+===================================== */
+
+.dashboard-btn-secondary {
+
+  background:
+    color-mix(
+      in srgb,
+      var(--paper) 72%,
+      transparent
+    );
+
+  border-color:
+    var(--paper-3);
+
+  color:
+    var(--ink);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+}
+
+.dashboard-btn-secondary:hover {
+
+  border-color:
+    var(--gold);
+
+  color:
+    var(--gold);
+
+  box-shadow:
+    0 12px 30px rgba(15,23,42,.08);
+}
+
+/* =====================================
+   LIGHT MODE OVERRIDES
+===================================== */
+
+[data-theme="light"] .dashboard-btn-secondary {
+
+  background:
+    rgba(255,255,255,.88);
+
+  border:
+    1px solid rgba(15,23,42,.08);
+
+  color:
+    #0f172a;
+}
+
+/* =====================================
+   DARK MODE OVERRIDES
+===================================== */
+
+[data-theme="dark"] .dashboard-btn-secondary {
+
+  background:
+    rgba(255,255,255,.04);
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  color:
+    rgba(255,255,255,.92);
+}
+
+/* =====================================
+   MOBILE
+===================================== */
+
+@media (max-width: 768px) {
+
+  .dashboard-actions {
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .dashboard-btn {
+
+    width: 100%;
+
+    min-width: 0;
+  }
+}
