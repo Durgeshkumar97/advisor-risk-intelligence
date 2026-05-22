@@ -48,7 +48,7 @@
                 flex-wrap:wrap;
                 align-items:center;
             ">
-                <a href="#contact" class="btn-primary">
+                <a href="#free-trial" class="btn-primary">
                     Get Report Now →
                 </a>
 
@@ -571,7 +571,7 @@
 
         <!-- CTA (CENTERED) -->
         <div style="text-align:center; margin-top:2rem;">
-            <a href="#contact" class="btn-primary">Get Today’s Free Sample Report →</a>
+            <a href="#free-trial" class="btn-primary">Get Today’s Free Sample Report →</a>
 
             <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
                 Delivered on WhatsApp today at 4:30 PM.

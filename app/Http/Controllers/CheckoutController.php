@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Payments\ActivateUserSubscription;
-use App\Actions\Payments\VerifyRazorpayPayment;
+use App\Actions\Payments\VerifyRazorpayPaymentAction;
 use App\Jobs\ProcessSuccessfulPayment;
 use App\Models\Payment;
 use App\Models\Plan;
@@ -40,18 +39,6 @@ class CheckoutController extends Controller
     |--------------------------------------------------------------------------
     | PAYMENT SUCCESS
     |--------------------------------------------------------------------------
-    |
-    | Production-grade implementation:
-    |
-    | - Signature verification
-    | - Rate limiting
-    | - Idempotency
-    | - Queue-safe architecture
-    | - Transaction-safe operations
-    | - Structured logging
-    | - Fraud protection basics
-    | - Safe authentication flow
-    |
     */
 
     public function success(Request $request)
@@ -85,6 +72,7 @@ class CheckoutController extends Controller
         */
 
         $validated = $request->validate([
+
             'razorpay_payment_id' => [
                 'required',
                 'string',
@@ -102,6 +90,7 @@ class CheckoutController extends Controller
                 'string',
                 'max:500',
             ],
+
         ]);
 
         try {
@@ -112,7 +101,7 @@ class CheckoutController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $payment = app(VerifyRazorpayPayment::class)
+            $payment = app(VerifyRazorpayPaymentAction::class)
                 ->execute($validated);
 
             /*
@@ -147,23 +136,23 @@ class CheckoutController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | DISPATCH BACKGROUND JOB
-                |--------------------------------------------------------------------------
-                */
-
-                CompletePaymentAction::dispatch(
-                    $lockedPayment
-                );
-
-                /*
-                |--------------------------------------------------------------------------
                 | MARK PROCESSING
                 |--------------------------------------------------------------------------
                 */
 
                 $lockedPayment->update([
-                    'processed_at' => now(),
+                    'status' => 'processing',
                 ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | DISPATCH BACKGROUND JOB
+                |--------------------------------------------------------------------------
+                */
+
+                ProcessSuccessfulPayment::dispatch(
+                    $lockedPayment
+                );
             });
 
             /*
@@ -174,15 +163,15 @@ class CheckoutController extends Controller
 
             $payment->refresh();
 
-            if ($payment->user) {
+            if (!Auth::check() && $payment->user) {
 
                 Auth::login($payment->user);
 
                 $request->session()->regenerate();
 
-                $payment->user->update([
+                $payment->user->forceFill([
                     'last_login_at' => now(),
-                ]);
+                ])->save();
             }
 
             /*
@@ -192,25 +181,36 @@ class CheckoutController extends Controller
             */
 
             return response()->json([
+
                 'success' => true,
 
                 'redirect' => $payment->user &&
                     !$payment->user->onboarding_completed
                     ? route('onboarding')
                     : route('dashboard'),
+
             ]);
+
         } catch (ValidationException $e) {
 
             Log::warning('Payment validation failed', [
+
                 'message' => $e->getMessage(),
+
                 'ip' => $request->ip(),
+
                 'order_id' => $request->input('razorpay_order_id'),
+
             ]);
 
             return response()->json([
+
                 'success' => false,
+
                 'message' => 'Payment verification failed.',
+
             ], 422);
+
         } catch (\Throwable $e) {
 
             Log::critical('Checkout success failure', [
@@ -226,11 +226,15 @@ class CheckoutController extends Controller
                 'user_agent' => $request->userAgent(),
 
                 'order_id' => $request->input('razorpay_order_id'),
+
             ]);
 
             return response()->json([
+
                 'success' => false,
+
                 'message' => 'Unable to process payment.',
+
             ], 500);
         }
     }
