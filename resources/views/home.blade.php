@@ -258,12 +258,7 @@
         </div>
 
         <!-- Grid -->
-        <div class="built-for-grid" style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-            gap:1rem;
-            text-align:center;
-        ">
+        <div class="built-for-grid">
 
             <div class="built-for-card">
                 Independent Financial Advisors
@@ -380,7 +375,7 @@
 </section>
 
 {{-- ── HOW IT WORKS ─────────────────────────────────── --}}
-<div id="how-it-works"
+<section id="how-it-works"
     style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;max-width:900px;margin-inline:auto;">
 
     {{-- STEP 1 --}}
@@ -415,7 +410,7 @@
             WhatsApp report + client script. Ready to use instantly.
         </p>
     </div>
-</div>
+</section>
 
 {{-- ── SAMPLE REPORT ────────────────────────────────── --}}
 <section id="sample-report" style="background:var(--paper-2); display:flex; justify-content:center;">
@@ -891,6 +886,36 @@
                     type="tel"
                     name="whatsapp"
                     placeholder="WhatsApp number"
+                    required
+                    style="
+                        padding:.9rem 1rem;
+                        border:1px solid var(--paper-3);
+                        border-radius:var(--radius-md);
+                        background:transparent;
+                        color:var(--ink);
+                        font-size:.9rem;
+                        outline:none;
+                    ">
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email address"
+                    required
+                    style="
+                        padding:.9rem 1rem;
+                        border:1px solid var(--paper-3);
+                        border-radius:var(--radius-md);
+                        background:transparent;
+                        color:var(--ink);
+                        font-size:.9rem;
+                        outline:none;
+                    ">
+
+                <input
+                    type="text"
+                    name="firm_name"
+                    placeholder="Firm name"
                     required
                     style="
                         padding:.9rem 1rem;

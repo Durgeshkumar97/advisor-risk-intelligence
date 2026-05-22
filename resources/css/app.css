@@ -443,6 +443,11 @@ select:focus {
   gap: 2rem;
 }
 
+.built-for-grid {
+  gap: 1rem;
+  text-align: center;
+}
+
 .hero-grid {
   grid-template-columns: 1fr;
 }
@@ -489,11 +494,11 @@ select:focus {
 /* =====================================
    BUILT FOR
 ===================================== */
-#built-for {
+#services {
   background: var(--paper);
 }
 
-#built-for .eyebrow {
+#services .eyebrow {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -501,7 +506,10 @@ select:focus {
   color: var(--gold);
 }
 
-#built-for .built-for-card {
+.built-for-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem 1.2rem;
   text-align: center;
   font-weight: 500;
@@ -513,13 +521,13 @@ select:focus {
   transition: var(--transition-fast);
 }
 
-#built-for .built-for-card::before {
+.built-for-card::before {
   content: "• ";
   color: var(--gold);
   font-weight: 700;
 }
 
-#built-for .built-for-card:hover {
+.built-for-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
@@ -862,12 +870,16 @@ select:focus {
   .how-grid,
   #how-it-works,
   .pricing-grid,
-  .built-for-grid,
   .two-col,
   .main-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    width: 100%;
+  }
+
+  .built-for-grid {
+    grid-template-columns: repeat(2, 1fr);
     width: 100%;
   }
 
@@ -979,18 +991,6 @@ select:focus {
     text-align: center;
   }
 
-  /* Legal mobile */
-  .legal-container {
-    padding: 2rem 1.2rem 4rem;
-  }
-
-  .legal-title {
-    font-size: 2.3rem;
-  }
-
-  .legal-section h2 {
-    font-size: 1.3rem;
-  }
 }
 
 /* =====================================
@@ -1010,6 +1010,18 @@ select:focus {
   .btn-outline {
     font-size: .85rem;
     padding: .72rem 1rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .built-for-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+    margin-inline: auto;
+  }
+
+  .built-for-card {
+    width: 100%;
   }
 }
 /* =====================================
