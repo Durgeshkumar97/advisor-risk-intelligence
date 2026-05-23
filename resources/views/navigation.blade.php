@@ -145,6 +145,39 @@
                     Upload
                 </a>
 
+                <a
+                    href="{{ route('subscription.index') }}"
+                    class="nav-link">
+                    Subscription
+                </a>
+
+                <a
+                    href="{{ route('profile.edit') }}"
+                    class="nav-link">
+                    Profile
+                </a>
+
+                @if(Auth::user()->is_admin)
+                <a
+                    href="{{ route('admin.dashboard') }}"
+                    style="
+                        padding:.55rem 1.1rem;
+                        border-radius:10px;
+                        border:1px solid rgba(250,204,21,.3);
+                        background:rgba(250,204,21,.08);
+                        color:#facc15;
+                        font-weight:800;
+                        font-size:.85rem;
+                        text-decoration:none;
+                        transition:.2s ease;
+                        white-space:nowrap;
+                    "
+                    onmouseover="this.style.background='rgba(250,204,21,.16)'"
+                    onmouseout="this.style.background='rgba(250,204,21,.08)'">
+                    ⚙ Admin
+                </a>
+                @endif
+
                 <form
                     method="POST"
                     action="{{ route('logout') }}">
@@ -295,6 +328,36 @@
                 class="nav-link mobile-link">
                 Upload
             </a>
+
+            <a
+                href="{{ route('subscription.index') }}"
+                class="nav-link mobile-link">
+                Subscription
+            </a>
+
+            <a
+                href="{{ route('profile.edit') }}"
+                class="nav-link mobile-link">
+                Profile
+            </a>
+
+            @if(Auth::user()->is_admin)
+            <a
+                href="{{ route('admin.dashboard') }}"
+                style="
+                    padding:.75rem 1.2rem;
+                    border-radius:12px;
+                    border:1px solid rgba(250,204,21,.3);
+                    background:rgba(250,204,21,.08);
+                    color:#facc15;
+                    font-weight:800;
+                    font-size:.95rem;
+                    text-decoration:none;
+                    text-align:center;
+                ">
+                ⚙ Admin Panel
+            </a>
+            @endif
 
             <form
                 method="POST"

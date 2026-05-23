@@ -2,39 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
+use App\Models\PortfolioFile;
+
 use Illuminate\Support\Facades\Auth;
-use App\Models\ClientIntake;
+use Illuminate\Support\Facades\Storage;
 
 class FileController extends Controller
 {
-    public function view($id)
-    {
-        // must be logged in
-        if (!Auth::check()) {
-            abort(403, 'Unauthorized');
-        }
+    /*
+    |--------------------------------------------------------------------------
+    | STORAGE DISK
+    |--------------------------------------------------------------------------
+    */
 
+    private const DISK = 'portfolios';
+
+    /*
+    |--------------------------------------------------------------------------
+    | DOWNLOAD PORTFOLIO FILE
+    |--------------------------------------------------------------------------
+    |
+    | Only the file owner (or an admin) may download.
+    | Files are served from the private portfolios disk — never from public URLs.
+    |
+    */
+
+    public function view(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
         $user = Auth::user();
 
-        $intake = ClientIntake::findOrFail($id);
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD FILE — scope to requesting user unless admin
+        |--------------------------------------------------------------------------
+        */
 
-        // admin OR owner
-        if (
-            !$user->is_admin &&
-            $user->email !== $intake->email
-        ) {
-            abort(403, 'Access denied');
+        $file = PortfolioFile::query()
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY FILE EXISTS ON DISK
+        |--------------------------------------------------------------------------
+        */
+
+        if (!Storage::disk(self::DISK)->exists($file->path)) {
+            abort(404, 'File not found on storage.');
         }
 
-        if (!$intake->document_path) {
-            abort(404, 'File not found');
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | STREAM FILE AS DOWNLOAD
+        |--------------------------------------------------------------------------
+        */
 
-        if (!Storage::exists($intake->document_path)) {
-            abort(404, 'File missing');
-        }
-
-        return Storage::download($intake->document_path);
+        return Storage::disk(self::DISK)->download(
+            $file->path,
+            $file->original_name
+        );
     }
 }

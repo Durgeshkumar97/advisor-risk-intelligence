@@ -3,20 +3,28 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Subscription;
+use App\Models\Portfolio;
+use App\Models\PortfolioFile;
 use App\Models\RiskScore;
+use App\Models\Subscription;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): View
     {
         $user = Auth::user();
 
         /*
         |--------------------------------------------------------------------------
-        | SUBSCRIPTION
+        | SUBSCRIPTION + PLAN
         |--------------------------------------------------------------------------
+        |
+        | Eager-load plan in one query.
+        | Never redirect here — the view handles the "no subscription" empty state.
+        |
         */
 
         $subscription = Subscription::with('plan')
@@ -24,82 +32,83 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription) {
-            return redirect('/pricing')
-                ->with('error', 'No active subscription found.');
-        }
+        $plan           = $subscription?->plan;
+        $planName       = $plan?->name ?? null;
+        $portfolioLimit = $plan?->portfolio_limit ?? 0;
 
         /*
         |--------------------------------------------------------------------------
-        | PLAN
+        | DAYS REMAINING
         |--------------------------------------------------------------------------
+        |
+        | Use the model helper (handles active vs. trial correctly).
+        |
         */
 
-        $planName = $subscription->plan->name ?? 'No Plan';
+        $daysLeft = $subscription?->daysRemaining() ?? 0;
 
         /*
         |--------------------------------------------------------------------------
-        | EXPIRY
+        | PORTFOLIO USAGE
         |--------------------------------------------------------------------------
         */
 
-        $expiryDate = $subscription->ends_at;
+        $portfolioCount = Portfolio::where('user_id', $user->id)->count();
 
-        $daysLeft = 0;
+        /*
+        |--------------------------------------------------------------------------
+        | RECENT FILE UPLOADS (last 5)
+        |--------------------------------------------------------------------------
+        */
 
-        if ($expiryDate) {
-            $daysLeft = max(
-                0,
-                now()->diffInDays($expiryDate)
-            );
-        }
+        $recentFiles = PortfolioFile::with('portfolio')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get();
 
         /*
         |--------------------------------------------------------------------------
         | RISK SCORE
         |--------------------------------------------------------------------------
+        |
+        | null  = no score generated yet (show empty state in view)
+        | 0–100 = actual score
+        |
         */
 
         $risk = RiskScore::where('user_id', $user->id)
             ->latest()
             ->first();
 
-        $riskScore = $risk->score ?? 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | RISK LEVEL
-        |--------------------------------------------------------------------------
-        */
+        $riskScore       = $risk ? (float) $risk->score : null;
+        $riskGeneratedAt = $risk?->generatedTimestamp();
 
         $riskLevel = match (true) {
-            $riskScore < 30 => 'LOW',
-            $riskScore < 70 => 'MEDIUM',
-            default => 'HIGH',
+            $riskScore === null  => 'NONE',
+            $riskScore < 30      => 'LOW',
+            $riskScore < 70      => 'MEDIUM',
+            default              => 'HIGH',
         };
 
         /*
         |--------------------------------------------------------------------------
-        | RECOMMENDATION
+        | RECOMMENDATION & NEXT ACTION
         |--------------------------------------------------------------------------
         */
 
         $recommendation = match ($riskLevel) {
-            'LOW' => 'Portfolio stable. Continue monitoring.',
+            'LOW'    => 'Portfolio stable. Continue monitoring.',
             'MEDIUM' => 'Review exposure and rebalance selectively.',
-            'HIGH' => 'Immediate portfolio review recommended.',
+            'HIGH'   => 'Immediate portfolio review recommended.',
+            default  => 'Upload your portfolio to receive your first risk score.',
         };
 
-        /*
-        |--------------------------------------------------------------------------
-        | NEXT ACTION
-        |--------------------------------------------------------------------------
-        */
-
         $nextAction = match ($riskLevel) {
-            'LOW' => 'Monitor market movement weekly.',
+            'LOW'    => 'Monitor market movement weekly.',
             'MEDIUM' => 'Reduce concentration risk.',
-            'HIGH' => 'Schedule immediate portfolio review.',
+            'HIGH'   => 'Schedule an immediate portfolio review.',
+            default  => 'Upload a CSV, XLSX, or PDF portfolio file to get started.',
         };
 
         /*
@@ -109,15 +118,18 @@ class DashboardController extends Controller
         */
 
         return view('user.dashboard', [
-            'user' => $user,
-            'subscription' => $subscription,
-            'planName' => $planName,
-            'expiryDate' => $expiryDate,
-            'daysLeft' => $daysLeft,
-            'riskScore' => $riskScore,
-            'riskLevel' => $riskLevel,
-            'recommendation' => $recommendation,
-            'nextAction' => $nextAction,
+            'user'            => $user,
+            'subscription'    => $subscription,
+            'planName'        => $planName,
+            'portfolioLimit'  => $portfolioLimit,
+            'portfolioCount'  => $portfolioCount,
+            'recentFiles'     => $recentFiles,
+            'daysLeft'        => $daysLeft,
+            'riskScore'       => $riskScore,
+            'riskLevel'       => $riskLevel,
+            'riskGeneratedAt' => $riskGeneratedAt,
+            'recommendation'  => $recommendation,
+            'nextAction'      => $nextAction,
         ]);
     }
 }

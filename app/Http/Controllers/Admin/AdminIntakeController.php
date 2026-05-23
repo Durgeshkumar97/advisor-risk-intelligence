@@ -3,50 +3,96 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lead;
+
 use Illuminate\Http\Request;
-use App\Models\ClientIntake;
 
 class AdminIntakeController extends Controller
 {
-    /**
-     * Display list of leads with filtering + sorting
-     */
-    public function index(Request $request)
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX — paginated + filterable leads list
+    |--------------------------------------------------------------------------
+    */
+
+    public function index(Request $request): \Illuminate\View\View
     {
-        $query = ClientIntake::query();
+        $query = Lead::query();
 
-        // 🔍 Filter: minimum lead score
-        if ($request->filled('min_score')) {
-            $query->where('lead_score', '>=', (int) $request->min_score);
+        /*
+        |--------------------------------------------------------------------------
+        | FILTERS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name',  'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
         }
 
-        // 🔍 Filter: recent (last 7 days)
-        if ($request->filled('recent')) {
-            $query->where('created_at', '>=', now()->subDays(7));
+        if ($request->filled('plan') && $request->plan !== 'all') {
+            $query->where('selected_plan', $request->plan);
         }
 
-        // 🔍 Filter: email search
-        if ($request->filled('email')) {
-            $query->where('email', 'LIKE', '%' . $request->email . '%');
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
         }
 
-        // Sorting (IMPORTANT)
-        $intakes = $query
-            ->orderByDesc('lead_score')   // highest priority first
-            ->orderByDesc('created_at')   // newest next
-            ->paginate(20)
+        if ($request->filled('days')) {
+            $query->where('created_at', '>=', now()->subDays((int) $request->days));
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SORT + PAGINATE
+        |--------------------------------------------------------------------------
+        */
+
+        $leads = $query
+            ->latest()
+            ->paginate(25)
             ->withQueryString();
 
-        return view('admin.intakes.index', compact('intakes'));
+        return view('admin.intakes.index', compact('leads'));
     }
 
-    /**
-     * Show single lead
-     */
-    public function show($id)
-    {
-        $intake = ClientIntake::findOrFail($id);
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW — single lead detail
+    |--------------------------------------------------------------------------
+    */
 
-        return view('admin.intakes.show', compact('intake'));
+    public function show(int $id): \Illuminate\View\View
+    {
+        $lead = Lead::findOrFail($id);
+
+        return view('admin.intakes.show', compact('lead'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE STATUS (AJAX-friendly)
+    |--------------------------------------------------------------------------
+    */
+
+    public function updateStatus(Request $request, int $id): \Illuminate\Http\RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:new,contacted,converted,lost',
+        ]);
+
+        Lead::findOrFail($id)->update([
+            'status'       => $validated['status'],
+            'contacted_at' => in_array($validated['status'], ['contacted', 'converted'])
+                ? now()
+                : null,
+        ]);
+
+        return redirect()->route('admin.intakes.show', $id)
+            ->with('success', 'Lead status updated.');
     }
 }

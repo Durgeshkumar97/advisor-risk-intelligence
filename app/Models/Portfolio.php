@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Portfolio extends Model
 {
@@ -68,9 +69,9 @@ class Portfolio extends Model
     /**
      * Uploaded files
      */
-    public function uploadedFiles()
+    public function files(): HasMany
     {
-        return $this->hasMany(UploadedFile::class);
+        return $this->hasMany(PortfolioFile::class);
     }
 
     /*

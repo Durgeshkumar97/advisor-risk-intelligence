@@ -2,45 +2,94 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
+use App\Models\Subscription;
+
 use Illuminate\Http\Request;
-use App\Models\ClientIntake;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
-    private array $planPrices = [
-        'starter' => 799,
-        'pro'     => 1499,
-        'team'    => 3499,
-    ];
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX — subscription management page
+    |--------------------------------------------------------------------------
+    */
 
-    public function upgrade(Request $request)
+    public function index(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
-        // validate
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'plan'  => 'required|in:starter,pro,team',
-        ]);
+        $user = Auth::user();
 
-        // find user
-        $user = ClientIntake::where('email', $validated['email'])->first();
+        $subscription = Subscription::with('plan')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->first();
 
-        if (!$user) {
-            return back()->with('error', 'User not found. Start trial first.');
+        if (!$subscription) {
+            return redirect()->route('pricing')
+                ->with('error', 'No subscription found. Choose a plan to get started.');
         }
 
-        // get price
-        $price = $this->planPrices[$validated['plan']];
-
-        // upgrade logic
-        $user->update([
-            'plan' => $validated['plan'],
-            'status' => 'active',
-            'converted_at' => now(),
-
-            'plan_price' => $price,
-            'revenue_generated' => $price,
+        return view('user.subscription', [
+            'user'         => $user,
+            'subscription' => $subscription,
+            'plan'         => $subscription->plan,
         ]);
+    }
 
-        return back()->with('success', 'Plan upgraded successfully.');
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL — soft cancel (marks ends_at as now, status stays active till then)
+    |--------------------------------------------------------------------------
+    */
+
+    public function cancel(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $user = Auth::user();
+
+        $subscription = Subscription::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'trial'])
+            ->latest()
+            ->first();
+
+        if (!$subscription) {
+            return redirect()->route('subscription.index')
+                ->with('error', 'No active subscription to cancel.');
+        }
+
+        try {
+
+            /*
+            |------------------------------------------------------------------
+            | Soft cancel: subscription keeps running until ends_at,
+            | but we flag it so renewal does not auto-trigger.
+            | We set status = 'cancelled' to distinguish from 'expired'.
+            |------------------------------------------------------------------
+            */
+
+            $subscription->update([
+                'status' => 'cancelled',
+            ]);
+
+            Log::info('Subscription cancelled by user.', [
+                'user_id'         => $user->id,
+                'subscription_id' => $subscription->id,
+            ]);
+
+            return redirect()->route('subscription.index')
+                ->with('success', 'Your subscription has been cancelled. You retain access until ' . optional($subscription->ends_at)->format('d M Y') . '.');
+
+        } catch (\Throwable $e) {
+
+            Log::error('Subscription cancellation failed.', [
+                'user_id'         => $user->id,
+                'subscription_id' => $subscription->id,
+                'message'         => $e->getMessage(),
+            ]);
+
+            return redirect()->route('subscription.index')
+                ->with('error', 'Cancellation failed. Please contact support.');
+        }
     }
 }

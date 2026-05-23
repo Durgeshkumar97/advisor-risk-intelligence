@@ -86,8 +86,8 @@ class PaymentController extends Controller
                 ->execute($payment);
 
             return response()->json([
-                'success' => true,
-                'redirect' => route('dashboard'),
+                'success'  => true,
+                'redirect' => route('payment.success'),
             ]);
 
         } catch (ValidationException $e) {

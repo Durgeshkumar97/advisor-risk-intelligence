@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,17 +19,9 @@ use App\Http\Controllers\IntakeController;
 
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\PortfolioUploadController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminIntakeController;
-
-/*
-|--------------------------------------------------------------------------
-| SERVICES & MODELS
-|--------------------------------------------------------------------------
-*/
-
-use App\Services\ReportService;
-use App\Models\ClientIntake;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +108,11 @@ Route::middleware(['auth'])->group(function () {
         '/portfolio/upload',
         [PortfolioUploadController::class, 'store']
     )->name('portfolio.upload.store');
+
+    Route::delete(
+        '/portfolio/file/{id}',
+        [PortfolioUploadController::class, 'destroy']
+    )->name('portfolio.file.destroy');
 });
 
 /*
@@ -251,8 +247,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
-        ->name('upgrade');
+    /*
+    |--------------------------------------------------------------------------
+    | SUBSCRIPTION MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/subscription', [SubscriptionController::class, 'index'])
+        ->name('subscription.index');
+
+    Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel'])
+        ->name('subscription.cancel');
 
     Route::get('/file/{id}', [FileController::class, 'view'])
         ->name('file.view');
@@ -278,11 +283,29 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN PANEL
+| ADMIN AUTH — public (login / logout, no middleware)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])
+Route::prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/login', [AdminAuthController::class, 'showLogin'])
+        ->name('login');
+
+    Route::post('/login', [AdminAuthController::class, 'login'])
+        ->name('login.post');
+
+    Route::post('/logout', [AdminAuthController::class, 'logout'])
+        ->name('logout');
+});
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN PANEL — protected (admin middleware = auth + is_admin check)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -295,6 +318,9 @@ Route::middleware(['auth'])
 
         Route::get('/intakes/{id}', [AdminIntakeController::class, 'show'])
             ->name('intakes.show');
+
+        Route::post('/intakes/{id}/status', [AdminIntakeController::class, 'updateStatus'])
+            ->name('intakes.status');
     });
 
 /*

@@ -86,40 +86,46 @@
 
         </div>
 
-        {{-- FILTERS --}}
-        <div class="card mt-18">
+        {{-- FILTERS (link to intakes index) --}}
+        <form method="GET" action="{{ route('admin.intakes.index') }}" class="card mt-18">
 
             <div class="grid filters-grid">
 
-                <select class="field">
-                    <option>All Plans</option>
-                    <option>Starter</option>
-                    <option>Pro</option>
-                    <option>Team</option>
+                <select name="plan" class="field">
+                    <option value="all">All Plans</option>
+                    <option value="starter">Starter</option>
+                    <option value="pro">Pro</option>
+                    <option value="team">Team</option>
                 </select>
 
-                <select class="field">
-                    <option>All Status</option>
-                    <option>Trial</option>
-                    <option>Paid</option>
-                    <option>Expired</option>
+                <select name="status" class="field">
+                    <option value="all">All Status</option>
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="converted">Converted</option>
+                    <option value="lost">Lost</option>
                 </select>
 
-                <select class="field">
-                    <option>Today</option>
-                    <option>1 Week</option>
-                    <option>2 Weeks</option>
-                    <option>1 Month</option>
-                    <option>Quarterly</option>
-                    <option>Half-Yearly</option>
-                    <option>Yearly</option>
+                <select name="days" class="field">
+                    <option value="">All Time</option>
+                    <option value="1">Today</option>
+                    <option value="7">1 Week</option>
+                    <option value="14">2 Weeks</option>
+                    <option value="30">1 Month</option>
+                    <option value="90">Quarterly</option>
                 </select>
 
-                <input class="field" placeholder="Search lead / phone / email">
+                <input name="search" class="field" placeholder="Search lead / phone / email">
 
             </div>
 
-        </div>
+            <div style="margin-top:12px;text-align:right;">
+                <button type="submit" class="btn btn-outline" style="padding:10px 20px;">
+                    Search Leads →
+                </button>
+            </div>
+
+        </form>
 
         {{-- MAIN GRID --}}
         <div class="main-grid">
@@ -150,21 +156,40 @@
 
                             <tbody>
                             @forelse($recentLeads ?? [] as $lead)
+                                @php
+                                    $planPrice = match($lead->selected_plan ?? '') {
+                                        'pro'  => $proPrice,
+                                        'team' => $teamPrice,
+                                        default => $starterPrice,
+                                    };
+                                    $stagePill = match($lead->status ?? 'new') {
+                                        'contacted' => ['cls' => 'yellow-pill', 'lbl' => 'Contacted'],
+                                        'converted' => ['cls' => 'green-pill',  'lbl' => 'Converted'],
+                                        'lost'      => ['cls' => 'red-pill',    'lbl' => 'Lost'],
+                                        default     => ['cls' => 'blue-pill',   'lbl' => 'New'],
+                                    };
+                                @endphp
                                 <tr>
                                     <td>
-                                        <strong>{{ $lead->name }}</strong><br>
+                                        <a href="{{ route('admin.intakes.show', $lead->id) }}" style="color:#fff;text-decoration:none;">
+                                            <strong>{{ $lead->name }}</strong>
+                                        </a><br>
                                         <small>{{ $lead->phone }}</small>
                                     </td>
 
-                                    <td>{{ ucfirst($lead->selected_plan) }}</td>
+                                    <td>{{ ucfirst($lead->selected_plan ?? '—') }}</td>
 
                                     <td>
-                                        <span class="pill green-pill">Trial</span>
+                                        <span class="pill {{ $stagePill['cls'] }}">{{ $stagePill['lbl'] }}</span>
                                     </td>
 
-                                    <td>₹999</td>
+                                    <td>₹{{ number_format($planPrice) }}</td>
 
-                                    <td class="green-text">Follow-up</td>
+                                    <td>
+                                        <a href="{{ route('admin.intakes.show', $lead->id) }}" class="green-text" style="text-decoration:none;font-size:13px;">
+                                            View →
+                                        </a>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -246,7 +271,8 @@
 
                         <div class="mini-box">
                             <small>Risk Level</small>
-                            <h2 style="color:{{ $riskColor ?? '#22c55e' }}">
+                            @php $riskColorStyle = 'color:' . ($riskColor ?? '#22c55e'); @endphp
+                            <h2 style="{{ $riskColorStyle }}">
                                 {{ $riskLevel ?? 'LOW' }}
                             </h2>
                         </div>
@@ -316,7 +342,7 @@
                         <div class="mini-box">
                             <small>Last Login Time</small>
                             <h2 class="small-title">
-                                {{ $lastLogin ? \Illuminate\Support\Carbon::parse($lastLogin)->format('d M h:i A') : 'N/A' }}
+                                {{ $lastLogin ?? 'N/A' }}
                             </h2>
                         </div>
 
@@ -356,6 +382,54 @@
                         <label class="task p2"><input type="checkbox"><span><strong>2.</strong> Improve landing conversion copy</span></label>
                         <label class="task p2"><input type="checkbox"><span><strong>3.</strong> Enable Razorpay auto capture</span></label>
                         <label class="task p3"><input type="checkbox"><span><strong>4.</strong> Polish dashboard styling</span></label>
+                    </div>
+                </div>
+
+                {{-- RECENT PAYMENTS --}}
+                <div class="card">
+                    <div class="head">
+                        <h3>Recent Payments</h3>
+                        <span>₹{{ number_format($totalRevenue ?? 0) }} total</span>
+                    </div>
+
+                    <div class="stack-sm">
+                        @forelse($recentPayments ?? [] as $payment)
+                            <div class="list-row">
+                                <div>
+                                    <div class="strong" style="font-size:14px;">{{ $payment->user?->name ?? 'Unknown' }}</div>
+                                    <div class="mini-muted">{{ $payment->plan?->name ?? '—' }} · {{ $payment->paid_at?->format('d M Y') }}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="green" style="font-weight:700;">₹{{ number_format($payment->amount) }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="muted" style="font-size:13px;">No payments yet.</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- RECENT SIGNUPS --}}
+                <div class="card">
+                    <div class="head">
+                        <h3>Recent Signups</h3>
+                        <span>{{ $newUsersWeek ?? 0 }} this week</span>
+                    </div>
+
+                    <div class="stack-sm">
+                        @forelse($recentSignups ?? [] as $user)
+                            <div class="list-row">
+                                <div>
+                                    <div class="strong" style="font-size:14px;">{{ $user->name }}</div>
+                                    <div class="mini-muted">{{ $user->email }}</div>
+                                </div>
+                                <div class="text-right mini-muted" style="font-size:12px;white-space:nowrap;">
+                                    {{ $user->created_at->diffForHumans() }}
+                                </div>
+                            </div>
+                        @empty
+                            <div class="muted" style="font-size:13px;">No recent signups.</div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -559,6 +633,9 @@
 }
 
 .green-pill{background:rgba(34,197,94,.15);color:#22c55e;}
+.yellow-pill{background:rgba(251,191,36,.15);color:#fbbf24;}
+.blue-pill{background:rgba(59,130,246,.15);color:#93c5fd;}
+.red-pill{background:rgba(239,68,68,.15);color:#fca5a5;}
 
 .list-row{
     display:flex;

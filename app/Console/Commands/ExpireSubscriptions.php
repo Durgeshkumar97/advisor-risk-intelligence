@@ -10,23 +10,46 @@ class ExpireSubscriptions extends Command
 {
     protected $signature = 'subscriptions:expire';
 
-    protected $description = 'Expire subscriptions that have reached their end date';
+    protected $description = 'Expire active and trial subscriptions that have reached their end date';
 
-    public function handle()
+    public function handle(): int
     {
-        $this->info("Starting subscription expiry...");
+        $this->info('Starting subscription expiry check...');
 
-        $expiredCount = Subscription::where('status', 'active')
+        /*
+        |--------------------------------------------------------------------------
+        | EXPIRE ACTIVE SUBSCRIPTIONS
+        |--------------------------------------------------------------------------
+        */
+
+        $expiredActive = Subscription::where('status', 'active')
+            ->whereNotNull('ends_at')
             ->where('ends_at', '<=', now())
             ->update([
-                'status' => 'expired',
-                'updated_at' => now()
+                'status'     => 'expired',
+                'updated_at' => now(),
             ]);
 
-        Log::info("Expired subscriptions count: {$expiredCount}");
+        /*
+        |--------------------------------------------------------------------------
+        | EXPIRE TRIAL SUBSCRIPTIONS
+        |--------------------------------------------------------------------------
+        */
 
-        $this->info("Expired {$expiredCount} subscriptions.");
+        $expiredTrials = Subscription::where('status', 'trial')
+            ->whereNotNull('trial_ends_at')
+            ->where('trial_ends_at', '<=', now())
+            ->update([
+                'status'     => 'expired',
+                'updated_at' => now(),
+            ]);
+
+        $total = $expiredActive + $expiredTrials;
+
+        Log::info("subscriptions:expire — expired {$expiredActive} active, {$expiredTrials} trials ({$total} total).");
+
+        $this->info("Expired {$expiredActive} active subscriptions, {$expiredTrials} trial subscriptions ({$total} total).");
 
         return Command::SUCCESS;
     }
-}             
+}

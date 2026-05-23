@@ -10,6 +10,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
 
         \App\Console\Commands\GenerateRiskScore::class,
+        \App\Console\Commands\ExpireSubscriptions::class,
     ];
 
     protected function schedule(Schedule $schedule): void
@@ -22,6 +23,15 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('risk:generate')
             ->dailyAt('08:00');
+
+        /*
+        |--------------------------------------------------------------------------
+        | EXPIRE SUBSCRIPTIONS (runs just after midnight)
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('subscriptions:expire')
+            ->dailyAt('00:05');
 
         /*
         |--------------------------------------------------------------------------

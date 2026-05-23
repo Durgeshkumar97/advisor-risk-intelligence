@@ -1,163 +1,97 @@
 @extends('layouts.app')
 
-@section('title', 'Portfolio Upload Center')
+@section('title', 'Portfolio Upload Center — RiskSignal')
 
 @section('content')
 
-<div
-    style="
-        max-width:1200px;
-        margin:0 auto;
-        padding:2rem 1.5rem;
-    ">
+<div style="max-width:1200px;margin:0 auto;padding:2rem 0;">
 
     {{-- HEADER --}}
-    <div
-        style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:1rem;
-            margin-bottom:2rem;
-        ">
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        flex-wrap:wrap;
+        gap:1rem;
+        margin-bottom:2rem;
+    ">
 
         <div>
 
-            <h1
-                style="
-                    font-size:2rem;
-                    font-weight:700;
-                    margin-bottom:.5rem;
-                ">
+            <div class="eyebrow" style="margin-bottom:.4rem;">
+                {{ $planName }} Plan
+            </div>
+
+            <h1 style="font-size:1.85rem;font-weight:800;margin-bottom:.4rem;">
                 Portfolio Upload Center
             </h1>
 
-            <p
-                style="
-                    color:var(--ink-3);
-                    max-width:700px;
-                    line-height:1.6;
-                ">
-                Securely upload portfolio files for
-                AI-powered portfolio risk analysis
-                and advisor intelligence generation.
+            <p style="color:var(--ink-3);font-size:.9rem;line-height:1.5;">
+                Securely upload portfolio files for AI-powered risk analysis.
+                &nbsp;·&nbsp;
+                <strong>{{ $portfolioCount }} / {{ $portfolioLimit }}</strong> portfolios used.
             </p>
 
         </div>
 
         <a
             href="{{ route('dashboard') }}"
-
             style="
-                padding:.85rem 1.2rem;
+                padding:.75rem 1.2rem;
                 border-radius:12px;
                 border:1px solid var(--paper-3);
                 text-decoration:none;
                 color:inherit;
                 font-weight:600;
+                font-size:.875rem;
+                white-space:nowrap;
             ">
             ← Dashboard
         </a>
 
     </div>
 
-    {{-- SUCCESS MESSAGE --}}
-    @if(session('success'))
-
-    <div
-        style="
-                background:#dcfce7;
-                border:1px solid #bbf7d0;
-                color:#166534;
-                padding:1rem 1.25rem;
-                border-radius:14px;
-                margin-bottom:1.5rem;
-            ">
-        {{ session('success') }}
-    </div>
-
-    @endif
-
-    {{-- ERROR MESSAGE --}}
+    {{-- VALIDATION ERRORS --}}
     @if($errors->any())
 
-    <div
-        style="
-                background:#fef2f2;
-                border:1px solid #fecaca;
-                color:#991b1b;
-                padding:1rem 1.25rem;
-                border-radius:14px;
-                margin-bottom:1.5rem;
-            ">
-
-        <ul
-            style="
-                    margin:0;
-                    padding-left:1rem;
-                ">
-
-            @foreach($errors->all() as $error)
-
-            <li>{{ $error }}</li>
-
-            @endforeach
-
-        </ul>
-
+    <div style="
+        background:rgba(239,68,68,.1);
+        border:1px solid rgba(239,68,68,.2);
+        color:#fca5a5;
+        padding:1rem 1.25rem;
+        border-radius:14px;
+        margin-bottom:1.5rem;
+        font-weight:600;
+        font-size:.9rem;
+    ">
+        @foreach($errors->all() as $error)
+            <div>⚠️ {{ $error }}</div>
+        @endforeach
     </div>
 
     @endif
 
     {{-- MAIN GRID --}}
-    <div
-        style="
-            display:grid;
-            grid-template-columns:
-                minmax(320px,420px)
-                1fr;
+    <div style="
+        display:grid;
+        grid-template-columns:minmax(300px,400px) 1fr;
+        gap:2rem;
+        align-items:start;
+    ">
 
-            gap:2rem;
-            align-items:start;
-        ">
+        {{-- ============================================================
+           LEFT — UPLOAD FORM
+        ============================================================ --}}
+        <div class="card" style="padding:1.75rem;">
 
-        {{-- LEFT PANEL --}}
-        <div
-            style="
-                background:var(--paper-2);
-                border:1px solid var(--paper-3);
-                border-radius:20px;
-                padding:1.75rem;
-            ">
+            <h2 style="font-size:1.15rem;font-weight:700;margin-bottom:.4rem;">
+                Upload Portfolio
+            </h2>
 
-            <div
-                style="
-                    margin-bottom:1.5rem;
-                ">
+            <p style="color:var(--ink-3);font-size:.875rem;margin-bottom:1.5rem;line-height:1.5;">
+                Supported: CSV, XLSX, XLS, PDF &nbsp;·&nbsp; Max 20 MB
+            </p>
 
-                <h2
-                    style="
-                        font-size:1.25rem;
-                        font-weight:700;
-                        margin-bottom:.5rem;
-                    ">
-                    Upload Portfolio
-                </h2>
-
-                <p
-                    style="
-                        color:var(--ink-3);
-                        line-height:1.6;
-                        font-size:.95rem;
-                    ">
-                    Supported formats:
-                    CSV, XLSX, PDF
-                </p>
-
-            </div>
-
-            {{-- FORM --}}
             <form
                 method="POST"
                 action="{{ route('portfolio.upload.store') }}"
@@ -166,218 +100,164 @@
 
                 @csrf
 
-                {{-- PORTFOLIO --}}
-                <div
-                    style="
-                        margin-bottom:1.25rem;
-                    ">
+                {{-- PORTFOLIO SELECT --}}
+                <div style="margin-bottom:1.25rem;">
 
-                    <label
-                        style="
-                            display:block;
-                            margin-bottom:.5rem;
-                            font-weight:600;
-                        ">
+                    <label style="display:block;margin-bottom:.5rem;font-weight:600;font-size:.875rem;">
                         Select Portfolio
                     </label>
 
                     <select
                         name="portfolio_id"
-
                         style="
                             width:100%;
-                            padding:.95rem 1rem;
-                            border-radius:14px;
+                            padding:.85rem 1rem;
+                            border-radius:12px;
                             border:1px solid var(--paper-3);
                             background:var(--paper-1);
+                            font-size:.9rem;
+                            color:inherit;
                         ">
 
-                        <option value="">
-                            Default Portfolio
-                        </option>
+                        <option value="">Default Portfolio</option>
 
                         @foreach($portfolios as $portfolio)
-
                         <option
                             value="{{ $portfolio->id }}"
                             @selected(old('portfolio_id') == $portfolio->id)>
                             {{ $portfolio->name }}
                         </option>
-
                         @endforeach
 
                     </select>
 
                 </div>
 
-                {{-- FILE --}}
-                <div
-                    style="
-                        margin-bottom:1.5rem;
-                    ">
+                {{-- FILE INPUT --}}
+                <div style="margin-bottom:1.5rem;">
 
-                    <label
-                        style="
-                            display:block;
-                            margin-bottom:.5rem;
-                            font-weight:600;
-                        ">
-                        Upload File
+                    <label style="display:block;margin-bottom:.5rem;font-weight:600;font-size:.875rem;">
+                        Choose File
                     </label>
 
-                    <input
-                        type="file"
-                        name="file"
-                        id="fileInput"
-                        accept=".csv,.xlsx,.xls,.pdf"
-                        required
-
+                    <div
+                        id="dropZone"
                         style="
-                            width:100%;
-                            padding:1rem;
+                            border:2px dashed var(--paper-3);
                             border-radius:14px;
-                            border:1px dashed var(--paper-3);
-                            background:var(--paper-1);
-                        ">
+                            padding:1.5rem 1rem;
+                            text-align:center;
+                            cursor:pointer;
+                            transition:.2s ease;
+                            position:relative;
+                        "
+                        onclick="document.getElementById('fileInput').click()">
 
-                    <small
-                        style="
-                            display:block;
-                            margin-top:.65rem;
-                            color:var(--ink-3);
-                        ">
-                        Max upload size:
-                        20MB
-                    </small>
+                        <div id="dropLabel" style="pointer-events:none;">
+                            <div style="font-size:1.75rem;margin-bottom:.5rem;">📂</div>
+                            <div style="font-weight:600;font-size:.9rem;margin-bottom:.25rem;">
+                                Drop file here or click to browse
+                            </div>
+                            <div style="color:var(--ink-3);font-size:.8rem;">
+                                CSV, XLSX, XLS, PDF — up to 20 MB
+                            </div>
+                        </div>
+
+                        <input
+                            type="file"
+                            name="file"
+                            id="fileInput"
+                            accept=".csv,.xlsx,.xls,.pdf"
+                            required
+                            style="
+                                position:absolute;
+                                inset:0;
+                                opacity:0;
+                                cursor:pointer;
+                                width:100%;
+                                height:100%;
+                            ">
+
+                    </div>
+
+                    <div
+                        id="filePreview"
+                        style="display:none;margin-top:.75rem;padding:.6rem .9rem;border-radius:10px;background:rgba(16,185,129,.1);color:#34d399;font-size:.85rem;font-weight:600;">
+                    </div>
 
                 </div>
 
-                {{-- BUTTON --}}
+                {{-- SUBMIT --}}
                 <button
                     type="submit"
                     id="uploadBtn"
-
                     style="
                         width:100%;
                         border:none;
-                        border-radius:14px;
+                        border-radius:12px;
                         padding:1rem 1.25rem;
-                        background:#111827;
+                        background:linear-gradient(135deg,#111827,#1f2937);
                         color:white;
                         font-weight:700;
+                        font-size:.95rem;
                         cursor:pointer;
-                    ">
-                    Upload Portfolio
+                        transition:.2s ease;
+                    "
+                    onmouseover="this.style.opacity='.88'"
+                    onmouseout="this.style.opacity='1'">
+                    Upload Portfolio →
                 </button>
 
             </form>
 
         </div>
 
-        {{-- RIGHT PANEL --}}
-        <div
-            style="
-                background:var(--paper-2);
-                border:1px solid var(--paper-3);
-                border-radius:20px;
-                padding:1.75rem;
+        {{-- ============================================================
+           RIGHT — UPLOAD HISTORY
+        ============================================================ --}}
+        <div class="card" style="padding:1.75rem;">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:1.5rem;
+                flex-wrap:wrap;
+                gap:.75rem;
             ">
 
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    margin-bottom:1.5rem;
-                    flex-wrap:wrap;
-                    gap:1rem;
-                ">
-
                 <div>
-
-                    <h2
-                        style="
-                            font-size:1.25rem;
-                            font-weight:700;
-                            margin-bottom:.25rem;
-                        ">
-                        Uploaded Files
+                    <h2 style="font-size:1.15rem;font-weight:700;margin-bottom:.2rem;">
+                        Upload History
                     </h2>
-
-                    <p
-                        style="
-                            color:var(--ink-3);
-                            margin:0;
-                        ">
-                        Portfolio processing and upload history.
+                    <p style="color:var(--ink-3);font-size:.875rem;margin:0;">
+                        Portfolio processing and file status.
                     </p>
-
                 </div>
 
-                <div
-                    style="
-                        color:var(--ink-3);
-                        font-size:.9rem;
-                    ">
-                    Total:
-                    {{ $files->count() }}
-                </div>
+                <span style="
+                    color:var(--ink-3);
+                    font-size:.85rem;
+                    font-weight:600;
+                ">
+                    {{ $files->count() }} {{ Str::plural('file', $files->count()) }}
+                </span>
 
             </div>
 
             {{-- TABLE --}}
-            <div
-                style="
-                    overflow-x:auto;
-                ">
+            <div style="overflow-x:auto;">
 
-                <table
-                    style="
-                        width:100%;
-                        border-collapse:collapse;
-                    ">
+                <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
 
                     <thead>
-
-                        <tr
-                            style="
-                                border-bottom:1px solid var(--paper-3);
-                            ">
-
-                            <th
-                                style="
-                                    text-align:left;
-                                    padding:1rem .75rem;
-                                ">
-                                File
-                            </th>
-
-                            <th
-                                style="
-                                    text-align:left;
-                                    padding:1rem .75rem;
-                                ">
-                                Status
-                            </th>
-
-                            <th
-                                style="
-                                    text-align:left;
-                                    padding:1rem .75rem;
-                                ">
-                                Size
-                            </th>
-
-                            <th
-                                style="
-                                    text-align:left;
-                                    padding:1rem .75rem;
-                                ">
-                                Uploaded
-                            </th>
-
+                        <tr style="border-bottom:1px solid var(--paper-3);">
+                            <th style="text-align:left;padding:.75rem .6rem;font-weight:700;color:var(--ink-2);">File</th>
+                            <th style="text-align:left;padding:.75rem .6rem;font-weight:700;color:var(--ink-2);">Status</th>
+                            <th style="text-align:left;padding:.75rem .6rem;font-weight:700;color:var(--ink-2);">Size</th>
+                            <th style="text-align:left;padding:.75rem .6rem;font-weight:700;color:var(--ink-2);">Uploaded</th>
+                            <th style="text-align:center;padding:.75rem .6rem;font-weight:700;color:var(--ink-2);">Action</th>
                         </tr>
-
                     </thead>
 
                     <tbody>
@@ -385,72 +265,132 @@
                         @forelse($files as $file)
 
                         @php
+                            $statusStyles = match($file->status) {
+                                'processed'  => ['bg' => 'rgba(16,185,129,.15)',  'color' => '#34d399',  'label' => '✓ Processed'],
+                                'failed'     => ['bg' => 'rgba(239,68,68,.15)',   'color' => '#fca5a5',  'label' => '✗ Failed'],
+                                'processing' => ['bg' => 'rgba(59,130,246,.15)',  'color' => '#93c5fd',  'label' => '⟳ Processing'],
+                                default      => ['bg' => 'rgba(251,191,36,.15)',  'color' => '#fbbf24',  'label' => '⏳ Pending'],
+                            };
 
-                        $statusBg = match ($file->status) {
-                            'processed' => '#dcfce7',
-                            'failed' => '#fef2f2',
-                            'processing' => '#dbeafe',
-                            default => '#fef3c7',
-                        };
-
-                        $statusColor = match ($file->status) {
-                            'processed' => '#166534',
-                            'failed' => '#991b1b',
-                            'processing' => '#1d4ed8',
-                            default => '#92400e',
-                        };
-
+                            // Human-readable file size
+                            $bytes = $file->file_size;
+                            if ($bytes >= 1048576) {
+                                $sizeLabel = round($bytes / 1048576, 1) . ' MB';
+                            } elseif ($bytes >= 1024) {
+                                $sizeLabel = round($bytes / 1024, 1) . ' KB';
+                            } else {
+                                $sizeLabel = $bytes . ' B';
+                            }
                         @endphp
 
-                        <tr
-                            style="
-                                    border-bottom:1px solid var(--paper-3);
-                                ">
+                        <tr style="border-bottom:1px solid var(--paper-3);">
 
-                            {{-- FILE --}}
-                            <td
-                                style="
-                                        padding:1rem .75rem;
-                                        font-weight:600;
-                                    ">
-                                {{ $file->original_name }}
+                            {{-- FILE NAME --}}
+                            <td style="padding:.85rem .6rem;font-weight:600;max-width:220px;">
+                                <div style="
+                                    white-space:nowrap;
+                                    overflow:hidden;
+                                    text-overflow:ellipsis;
+                                    max-width:200px;
+                                " title="{{ $file->original_name }}">
+                                    {{ $file->original_name }}
+                                </div>
+                                @if($file->portfolio)
+                                <div style="color:var(--ink-3);font-size:.78rem;margin-top:.15rem;">
+                                    {{ $file->portfolio->name }}
+                                </div>
+                                @endif
                             </td>
 
                             {{-- STATUS --}}
-                            <td
-                                style="
-                                        padding:1rem .75rem;
-                                    ">
-
-                                <span
-                                    style="
-                                            padding:.4rem .7rem;
-                                            border-radius:999px;
-                                            font-size:.8rem;
-                                            font-weight:700;
-                                            background: {{ $statusBg }};
-                                            color: {{ $statusColor }};
-                                        ">
-                                    {{ strtoupper($file->status) }}
+                            <td style="padding:.85rem .6rem;">
+                                <span style="
+                                    display:inline-block;
+                                    padding:.3rem .7rem;
+                                    border-radius:999px;
+                                    font-size:.75rem;
+                                    font-weight:700;
+                                    background:{{ $statusStyles['bg'] }};
+                                    color:{{ $statusStyles['color'] }};
+                                    white-space:nowrap;
+                                ">
+                                    {{ $statusStyles['label'] }}
                                 </span>
-
+                                @if($file->isFailed() && isset($file->meta['error_message']))
+                                <div style="color:#fca5a5;font-size:.75rem;margin-top:.25rem;max-width:160px;">
+                                    {{ Str::limit($file->meta['error_message'], 60) }}
+                                </div>
+                                @endif
                             </td>
 
                             {{-- SIZE --}}
-                            <td
-                                style="
-                                        padding:1rem .75rem;
-                                    ">
-                                {{ round($file->file_size / 1024, 2) }} KB
+                            <td style="padding:.85rem .6rem;color:var(--ink-3);white-space:nowrap;">
+                                {{ $sizeLabel }}
                             </td>
 
                             {{-- DATE --}}
-                            <td
-                                style="
-                                        padding:1rem .75rem;
-                                        color:var(--ink-3);
-                                    ">
-                                {{ $file->created_at->format('d M Y h:i A') }}
+                            <td style="padding:.85rem .6rem;color:var(--ink-3);white-space:nowrap;">
+                                {{ $file->created_at->format('d M Y') }}<br>
+                                <span style="font-size:.78rem;">{{ $file->created_at->format('h:i A') }}</span>
+                            </td>
+
+                            {{-- ACTIONS --}}
+                            <td style="padding:.85rem .6rem;text-align:center;">
+
+                                <div style="display:flex;gap:.5rem;justify-content:center;align-items:center;">
+
+                                    {{-- DOWNLOAD --}}
+                                    <a
+                                        href="{{ route('file.view', $file->id) }}"
+                                        title="Download"
+                                        style="
+                                            display:inline-flex;
+                                            align-items:center;
+                                            justify-content:center;
+                                            width:32px;height:32px;
+                                            border-radius:8px;
+                                            background:rgba(59,130,246,.12);
+                                            color:#93c5fd;
+                                            text-decoration:none;
+                                            font-size:.9rem;
+                                            transition:.15s ease;
+                                        "
+                                        onmouseover="this.style.background='rgba(59,130,246,.22)'"
+                                        onmouseout="this.style.background='rgba(59,130,246,.12)'"
+                                    >⬇</a>
+
+                                    {{-- DELETE (not while processing) --}}
+                                    @unless($file->isProcessing())
+                                    <form
+                                        method="POST"
+                                        action="{{ route('portfolio.file.destroy', $file->id) }}"
+                                        onsubmit="return confirm('Delete \'{{ addslashes($file->original_name) }}\'? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button
+                                            type="submit"
+                                            title="Delete"
+                                            style="
+                                                display:inline-flex;
+                                                align-items:center;
+                                                justify-content:center;
+                                                width:32px;height:32px;
+                                                border-radius:8px;
+                                                border:none;
+                                                background:rgba(239,68,68,.12);
+                                                color:#fca5a5;
+                                                cursor:pointer;
+                                                font-size:.9rem;
+                                                transition:.15s ease;
+                                            "
+                                            onmouseover="this.style.background='rgba(239,68,68,.25)'"
+                                            onmouseout="this.style.background='rgba(239,68,68,.12)'"
+                                        >✕</button>
+                                    </form>
+                                    @endunless
+
+                                </div>
+
                             </td>
 
                         </tr>
@@ -458,18 +398,11 @@
                         @empty
 
                         <tr>
-
-                            <td
-                                colspan="4"
-
-                                style="
-                                        padding:2rem;
-                                        text-align:center;
-                                        color:var(--ink-3);
-                                    ">
-                                No portfolio uploads yet.
+                            <td colspan="5" style="padding:2.5rem;text-align:center;color:var(--ink-3);">
+                                <div style="font-size:2rem;margin-bottom:.5rem;">📁</div>
+                                <div style="font-weight:600;">No files uploaded yet</div>
+                                <div style="font-size:.85rem;margin-top:.25rem;">Upload your first portfolio file using the form on the left.</div>
                             </td>
-
                         </tr>
 
                         @endforelse
@@ -486,27 +419,65 @@
 
 </div>
 
-{{-- UX SCRIPT --}}
 @push('scripts')
-
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
 
-        const form = document.getElementById("uploadForm");
+    const form      = document.getElementById('uploadForm');
+    const btn       = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone  = document.getElementById('dropZone');
+    const preview   = document.getElementById('filePreview');
 
-        const uploadBtn = document.getElementById("uploadBtn");
+    // ── FILE SELECTION PREVIEW ──────────────────────────────────────
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) { preview.style.display = 'none'; return; }
 
-        form.addEventListener("submit", () => {
+        const mb    = file.size / 1048576;
+        const size  = mb >= 1 ? mb.toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB';
 
-            uploadBtn.disabled = true;
+        preview.textContent = '✓  ' + file.name + '  (' + size + ')';
+        preview.style.display = 'block';
 
-            uploadBtn.innerText = "Uploading...";
+        // Highlight drop zone
+        dropZone.style.borderColor = '#34d399';
+    });
 
-            uploadBtn.style.opacity = ".7";
+    // ── DRAG AND DROP ───────────────────────────────────────────────
+    ['dragenter','dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, e => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#fbbf24';
+            dropZone.style.background  = 'rgba(251,191,36,.06)';
         });
     });
-</script>
 
+    ['dragleave','drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--paper-3)';
+            dropZone.style.background  = '';
+        });
+    });
+
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        const dt = e.dataTransfer;
+        if (dt.files.length) {
+            fileInput.files = dt.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // ── SUBMIT STATE ────────────────────────────────────────────────
+    form.addEventListener('submit', () => {
+        btn.disabled     = true;
+        btn.textContent  = 'Uploading…';
+        btn.style.opacity = '.65';
+    });
+});
+</script>
 @endpush
 
 @endsection

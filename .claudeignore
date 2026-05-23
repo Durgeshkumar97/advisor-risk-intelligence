@@ -1,0 +1,22 @@
+# NEVER touch - secrets
+.env
+.env.*
+auth.json
+
+# NEVER touch - database history
+/database/migrations/
+
+# NEVER touch - production keys
+/storage/*.key
+
+# NEVER touch - uploaded portfolio files
+/storage/app/private/
+/storage/app/public/
+
+# NEVER touch - payment config
+config/services.php
+config/database.php
+
+# Read-only context (Claude can read, shouldn't rewrite)
+composer.lock
+package-lock.json

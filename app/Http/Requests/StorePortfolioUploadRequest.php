@@ -63,6 +63,10 @@ class StorePortfolioUploadRequest extends FormRequest
                 'nullable',
 
                 'integer',
+
+                'min:1',
+
+                'exists:portfolios,id',
             ],
 
             /*

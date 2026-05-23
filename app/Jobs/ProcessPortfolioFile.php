@@ -2,13 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Models\Portfolio;
+use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
+use App\Models\RiskScore;
+use App\Services\RiskEngine\AssetRiskScorer;
+use App\Services\RiskEngine\PortfolioParser;
+use App\Services\RiskEngine\PortfolioRiskCalculator;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -51,42 +58,33 @@ class ProcessPortfolioFile implements ShouldQueue
     |--------------------------------------------------------------------------
     */
 
-    public function handle(): void
-    {
+    public function handle(
+        PortfolioParser          $parser,
+        AssetRiskScorer          $assetScorer,
+        PortfolioRiskCalculator  $calculator
+    ): void {
+
         /*
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         | REFRESH MODEL
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         */
 
         $file = $this->portfolioFile->fresh();
 
         if (!$file) {
-
-            Log::warning(
-                'Portfolio file no longer exists.'
-            );
-
+            Log::warning('ProcessPortfolioFile: file record deleted before processing.');
             return;
         }
 
         /*
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         | PREVENT DUPLICATE PROCESSING
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         */
 
-        if (
-            $file->status === PortfolioFile::STATUS_PROCESSED
-        ) {
-
-            Log::info(
-                'Portfolio file already processed.',
-                [
-                    'portfolio_file_id' => $file->id,
-                ]
-            );
-
+        if ($file->status === PortfolioFile::STATUS_PROCESSED) {
+            Log::info('ProcessPortfolioFile: already processed.', ['id' => $file->id]);
             return;
         }
 
@@ -94,185 +92,197 @@ class ProcessPortfolioFile implements ShouldQueue
 
             /*
             |------------------------------------------------------------------
-            | LOG START
-            |------------------------------------------------------------------
-            */
-
-            Log::info(
-                'Portfolio processing started.',
-                [
-                    'portfolio_file_id' => $file->id,
-
-                    'user_id' => $file->user_id,
-
-                    'file_name' =>
-                    $file->original_name,
-
-                    'attempt' =>
-                    $this->attempts(),
-                ]
-            );
-
-            /*
-            |------------------------------------------------------------------
-            | UPDATE STATUS
+            | MARK PROCESSING
             |------------------------------------------------------------------
             */
 
             $file->update([
+                'status' => PortfolioFile::STATUS_PROCESSING,
+                'meta'   => array_merge($file->meta ?? [], [
+                    'processing_started_at' => now()->toIso8601String(),
+                    'attempt'               => $this->attempts(),
+                ]),
+            ]);
 
-                'status' =>
-                PortfolioFile::STATUS_PROCESSING,
-
-                'meta' => array_merge(
-                    $file->meta ?? [],
-                    [
-                        'processing_started_at' =>
-                        now()->toIso8601String(),
-                    ]
-                ),
+            Log::info('ProcessPortfolioFile: started.', [
+                'id'       => $file->id,
+                'user_id'  => $file->user_id,
+                'filename' => $file->original_name,
             ]);
 
             /*
             |------------------------------------------------------------------
-            | VERIFY FILE EXISTS
+            | VERIFY PHYSICAL FILE EXISTS
             |------------------------------------------------------------------
             */
 
             if (!Storage::disk(self::DISK)->exists($file->path)) {
-
-                throw new \Exception(
-                    'Portfolio file missing from storage.'
-                );
+                throw new \RuntimeException('Portfolio file missing from storage: ' . $file->path);
             }
 
-            /*
-            |------------------------------------------------------------------
-            | ABSOLUTE FILE PATH
-            |------------------------------------------------------------------
-            */
-
-            $absolutePath = Storage::disk(self::DISK)
-                ->path($file->path);
+            $extension = strtolower(pathinfo($file->path, PATHINFO_EXTENSION));
 
             /*
             |------------------------------------------------------------------
-            | FILE TYPE
+            | PARSE HOLDINGS
             |------------------------------------------------------------------
             */
 
-            $extension = strtolower(
-                pathinfo(
-                    $absolutePath,
-                    PATHINFO_EXTENSION
-                )
-            );
+            $parseResult = $parser->parse($file);
+            $holdings    = $parseResult['rows'];
+            $parseErrors = $parseResult['errors'];
 
-            /*
-            |------------------------------------------------------------------
-            | TODO: ACTUAL PARSING ENGINE
-            |------------------------------------------------------------------
-            |
-            | Future:
-            | - PDF parsing
-            | - Excel extraction
-            | - Holdings extraction
-            | - Risk analysis
-            | - AI summaries
-            |
-            */
-
-            sleep(2);
-
-            /*
-            |------------------------------------------------------------------
-            | UPDATE STATUS SUCCESS
-            |------------------------------------------------------------------
-            */
-
-            $file->update([
-
-                'status' =>
-                PortfolioFile::STATUS_PROCESSED,
-
-                'processed_at' => now(),
-
-                'meta' => array_merge(
-                    $file->meta ?? [],
-                    [
-                        'processing_completed_at' =>
-                        now()->toIso8601String(),
-
-                        'extension' => $extension,
-                    ]
-                ),
+            Log::info('ProcessPortfolioFile: parsed.', [
+                'id'          => $file->id,
+                'rows_found'  => count($holdings),
+                'parse_errors'=> $parseErrors,
             ]);
 
             /*
             |------------------------------------------------------------------
-            | LOG SUCCESS
+            | PERSIST ASSETS (inside a transaction)
             |------------------------------------------------------------------
             */
 
-            Log::info(
-                'Portfolio processing completed.',
-                [
-                    'portfolio_file_id' => $file->id,
+            $portfolioId = $file->portfolio_id;
 
-                    'user_id' => $file->user_id,
+            DB::transaction(function () use (
+                $file, $holdings, $portfolioId, $assetScorer, $calculator
+            ) {
 
-                    'file_name' =>
-                    $file->original_name,
-                ]
-            );
+                /*
+                |--------------------------------------------------------------
+                | DELETE OLD ASSETS FOR THIS FILE'S PORTFOLIO (re-process safe)
+                |--------------------------------------------------------------
+                */
+
+                if ($portfolioId) {
+                    PortfolioAsset::where('portfolio_id', $portfolioId)->delete();
+                }
+
+                $assetModels = collect();
+
+                foreach ($holdings as $row) {
+
+                    // Score each asset individually
+                    $assetScore = $assetScorer->score(
+                        $row['asset_type'],
+                        $row['name']
+                    );
+
+                    $asset = PortfolioAsset::create([
+                        'portfolio_id'   => $portfolioId,
+                        'asset_type'     => $row['asset_type'],
+                        'symbol'         => $row['symbol'],
+                        'name'           => $row['name'],
+                        'isin'           => $row['isin'],
+                        'quantity'       => $row['quantity'],
+                        'buy_price'      => $row['buy_price'],
+                        'current_price'  => $row['current_price'],
+                        'invested_value' => $row['invested_value'],
+                        'current_value'  => $row['current_value'],
+                        'profit_loss'    => $row['profit_loss'],
+                        'risk_score'     => $assetScore,
+                        'risk_level'     => $assetScorer->level($assetScore),
+                        'meta'           => ['source_file_id' => $this->portfolioFile->id],
+                    ]);
+
+                    $assetModels->push($asset);
+                }
+
+                /*
+                |--------------------------------------------------------------
+                | RECALCULATE PORTFOLIO TOTALS
+                |--------------------------------------------------------------
+                */
+
+                if ($portfolioId && $assetModels->isNotEmpty()) {
+
+                    /** @var Portfolio $portfolio */
+                    $portfolio = Portfolio::find($portfolioId);
+
+                    if ($portfolio) {
+                        $portfolio->recalculateMetrics();
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------
+                | GENERATE IMMEDIATE RISK SCORE SNAPSHOT
+                |--------------------------------------------------------------
+                */
+
+                if ($assetModels->isNotEmpty()) {
+
+                    $result = $calculator->calculate($assetModels);
+
+                    RiskScore::create([
+                        'user_id'      => $this->portfolioFile->user_id,
+                        'portfolio_id' => $portfolioId,
+                        'score'        => $result['score'],
+                        'volatility'   => $result['volatility'],
+                        'drawdown'     => $result['drawdown'],
+                        'generated_at' => now(),
+                        'meta'         => array_merge($result['meta'], [
+                            'trigger'     => 'file_upload',
+                            'next_action' => $result['next_action'],
+                            'risk_flags'  => $result['risk_flags'],
+                        ]),
+                    ]);
+
+                    Log::info('ProcessPortfolioFile: risk score saved.', [
+                        'id'          => $this->portfolioFile->id,
+                        'score'       => $result['score'],
+                        'risk_level'  => $result['meta']['risk_level'],
+                        'asset_count' => count($assetModels),
+                    ]);
+                }
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | MARK PROCESSED
+            |------------------------------------------------------------------
+            */
+
+            $file->update([
+                'status'       => PortfolioFile::STATUS_PROCESSED,
+                'processed_at' => now(),
+                'meta'         => array_merge($file->meta ?? [], [
+                    'processing_completed_at' => now()->toIso8601String(),
+                    'extension'               => $extension,
+                    'holdings_parsed'         => count($holdings),
+                    'parse_errors'            => $parseErrors,
+                ]),
+            ]);
+
+            Log::info('ProcessPortfolioFile: completed.', [
+                'id'             => $file->id,
+                'holdings_saved' => count($holdings),
+            ]);
+
         } catch (\Throwable $e) {
 
             /*
             |------------------------------------------------------------------
-            | UPDATE FAILED STATUS
+            | MARK FAILED
             |------------------------------------------------------------------
             */
 
             $file->update([
-
-                'status' =>
-                PortfolioFile::STATUS_FAILED,
-
-                'meta' => array_merge(
-                    $file->meta ?? [],
-                    [
-                        'failed_at' =>
-                        now()->toIso8601String(),
-
-                        'error_message' =>
-                        $e->getMessage(),
-                    ]
-                ),
+                'status' => PortfolioFile::STATUS_FAILED,
+                'meta'   => array_merge($file->meta ?? [], [
+                    'failed_at'     => now()->toIso8601String(),
+                    'error_message' => $e->getMessage(),
+                ]),
             ]);
 
-            /*
-            |------------------------------------------------------------------
-            | LOG ERROR
-            |------------------------------------------------------------------
-            */
-
-            Log::error(
-                'Portfolio processing failed.',
-                [
-                    'portfolio_file_id' => $file->id,
-
-                    'user_id' => $file->user_id,
-
-                    'file_name' =>
-                    $file->original_name,
-
-                    'message' =>
-                    $e->getMessage(),
-
-                    'trace' =>
-                    $e->getTraceAsString(),
-                ]
-            );
+            Log::error('ProcessPortfolioFile: failed.', [
+                'id'      => $file->id,
+                'user_id' => $file->user_id,
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
 
             throw $e;
         }

@@ -1139,6 +1139,18 @@ select:focus {
 }
 
 /* =====================================
+   EYEBROW LABEL (global)
+===================================== */
+.eyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* =====================================
    USER DASHBOARD
 ===================================== */
 .dashboard-wrapper {

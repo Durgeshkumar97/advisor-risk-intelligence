@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Subscription;
 
 class User extends Authenticatable
 {
@@ -15,18 +14,26 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'login_token',
+        'login_method',
+        'onboarding_completed',
+        'last_login_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'login_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'    => 'datetime',
+            'last_login_at'        => 'datetime',
+            'onboarding_completed' => 'boolean',
+            'password'             => 'hashed',
         ];
     }
 
@@ -36,9 +43,20 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Latest subscription (single object, for dashboard/middleware checks)
+     */
     public function subscription()
     {
         return $this->hasOne(\App\Models\Subscription::class)->latestOfMany();
+    }
+
+    /**
+     * All subscriptions (collection, required by SubscriptionService::activate)
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(\App\Models\Subscription::class);
     }
 
     /*
