@@ -24,6 +24,18 @@
         </div>
 
         <div>
+            <x-input-label for="phone" :value="__('WhatsApp / Phone Number')" />
+            <x-text-input id="phone" name="phone" type="tel" class="mt-1 block w-full"
+                :value="old('phone', $user->phone)"
+                placeholder="e.g. 9876543210"
+                autocomplete="tel" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Used for WhatsApp risk signal delivery. Leave blank to skip.
+            </p>
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+
+        <div>
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />

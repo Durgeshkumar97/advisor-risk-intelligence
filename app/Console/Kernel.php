@@ -8,9 +8,9 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     protected $commands = [
-
         \App\Console\Commands\GenerateRiskScore::class,
         \App\Console\Commands\ExpireSubscriptions::class,
+        \App\Console\Commands\SendDailyWhatsApp::class,
     ];
 
     protected function schedule(Schedule $schedule): void
@@ -23,6 +23,20 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('risk:generate')
             ->dailyAt('08:00');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DAILY WHATSAPP RISK SIGNAL (4:30 PM IST)
+        |--------------------------------------------------------------------------
+        |
+        | Dispatches SendWhatsAppMessage jobs on the 'whatsapp' queue for every
+        | active subscriber who has a phone number and at least one risk score.
+        | Runs AFTER the 8 AM email delivery so scores are always fresh.
+        |
+        */
+
+        $schedule->command('whatsapp:signal')
+            ->dailyAt('16:30');
 
         /*
         |--------------------------------------------------------------------------

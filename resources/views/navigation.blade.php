@@ -140,6 +140,12 @@
                 </a>
 
                 <a
+                    href="{{ route('portfolio.manage') }}"
+                    class="nav-link">
+                    Portfolios
+                </a>
+
+                <a
                     href="{{ route('portfolio.upload') }}"
                     class="nav-link">
                     Upload
@@ -321,6 +327,12 @@
                 href="{{ route('dashboard') }}"
                 class="nav-link mobile-link">
                 Dashboard
+            </a>
+
+            <a
+                href="{{ route('portfolio.manage') }}"
+                class="nav-link mobile-link">
+                Portfolios
             </a>
 
             <a

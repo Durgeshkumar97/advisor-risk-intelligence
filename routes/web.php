@@ -19,9 +19,12 @@ use App\Http\Controllers\IntakeController;
 
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\PortfolioUploadController;
+use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminIntakeController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminPaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -89,6 +92,27 @@ Route::get('/payment/success', [CheckoutController::class, 'success'])
 
 Route::post('/payment/failure', [PaymentController::class, 'failure'])
     ->name('payment.failure');
+
+/*
+|--------------------------------------------------------------------------
+| PORTFOLIO MANAGEMENT (create / rename / delete portfolios)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/portfolios', [PortfolioController::class, 'index'])
+        ->name('portfolio.manage');
+
+    Route::post('/portfolios', [PortfolioController::class, 'store'])
+        ->name('portfolio.store');
+
+    Route::patch('/portfolios/{id}', [PortfolioController::class, 'update'])
+        ->name('portfolio.update');
+
+    Route::delete('/portfolios/{id}', [PortfolioController::class, 'destroy'])
+        ->name('portfolio.destroy');
+});
 
 /*------------PORTFOLIO UPLOAD ----------------------------------------*/
 Route::middleware(['auth'])->group(function () {
@@ -205,32 +229,21 @@ Route::middleware('auth')->group(function () {
 
         $request->validate([
             'access_type' => 'required|in:email,whatsapp',
+            'phone'       => 'nullable|string|min:10|max:20|required_if:access_type,whatsapp',
         ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | GET AUTH USER
-        |--------------------------------------------------------------------------
-        */
 
         $user = \Illuminate\Support\Facades\Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE USER SETTINGS
-        |--------------------------------------------------------------------------
-        */
-
-        $user->forceFill([
-            'login_method' => $request->access_type,
+        $updates = [
+            'login_method'         => $request->access_type,
             'onboarding_completed' => true,
-        ])->save();
+        ];
 
-        /*
-        |--------------------------------------------------------------------------
-        | REDIRECT TO DASHBOARD
-        |--------------------------------------------------------------------------
-        */
+        if ($request->filled('phone')) {
+            $updates['phone'] = $request->phone;
+        }
+
+        $user->forceFill($updates)->save();
 
         return redirect()->route('dashboard');
     })->name('onboarding.store');
@@ -321,30 +334,31 @@ Route::middleware(['admin'])
 
         Route::post('/intakes/{id}/status', [AdminIntakeController::class, 'updateStatus'])
             ->name('intakes.status');
+
+        /*
+        |----------------------------------------------------------------------
+        | USERS
+        |----------------------------------------------------------------------
+        */
+
+        Route::get('/users', [AdminUserController::class, 'index'])
+            ->name('users.index');
+
+        Route::get('/users/{id}', [AdminUserController::class, 'show'])
+            ->name('users.show');
+
+        Route::post('/users/{id}/login-link', [AdminUserController::class, 'sendLoginLink'])
+            ->name('users.login-link');
+
+        /*
+        |----------------------------------------------------------------------
+        | PAYMENTS
+        |----------------------------------------------------------------------
+        */
+
+        Route::get('/payments', [AdminPaymentController::class, 'index'])
+            ->name('payments.index');
     });
-
-/*
-|--------------------------------------------------------------------------
-| TEST ROUTES (DEV ONLY)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['web'])->group(function () {
-
-    Route::get('/checkout/test', function () {
-
-        if (!app()->environment('local')) {
-            abort(404);
-        }
-
-        $plan = \App\Models\Plan::where(
-            'slug',
-            'test-plan'
-        )->firstOrFail();
-
-        return view('checkout', compact('plan'));
-    });
-});
 
 /*
 |--------------------------------------------------------------------------

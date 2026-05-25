@@ -9,42 +9,79 @@ use Illuminate\Validation\ValidationException;
 
 class VerifyRazorpayPaymentAction
 {
+    /**
+     * Verify an incoming Razorpay callback and mark the payment as paid.
+     *
+     * FIX (Bug #3): The entire operation — including the SELECT — must live
+     * inside DB::transaction() for lockForUpdate() to take effect.
+     * Previously lockForUpdate() was called outside any transaction, making
+     * the row-level lock a no-op and leaving a payment-duplication race window.
+     */
     public function execute(array $payload): Payment
     {
-        $payment = Payment::query()
-            ->where('order_id', $payload['razorpay_order_id'])
-            ->lockForUpdate()
-            ->first();
+        return DB::transaction(function () use ($payload) {
 
-        if (!$payment) {
-            throw ValidationException::withMessages([
-                'payment' => 'Payment not found.',
-            ]);
-        }
+            /*
+            |----------------------------------------------------------------------
+            | SELECT WITH ROW LOCK
+            |----------------------------------------------------------------------
+            |
+            | lockForUpdate() only works inside an open transaction.
+            | Any concurrent request for the same order_id will block here
+            | until this transaction commits, preventing double-processing.
+            |
+            */
 
-        if ($payment->status === 'paid') {
-            return $payment;
-        }
+            $payment = Payment::query()
+                ->where('order_id', $payload['razorpay_order_id'])
+                ->lockForUpdate()
+                ->first();
 
-        $verified = app(RazorpayService::class)
-            ->verifySignature($payload);
+            if (!$payment) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Payment not found.',
+                ]);
+            }
 
-        if (!$verified) {
-            throw ValidationException::withMessages([
-                'signature' => 'Invalid payment signature.',
-            ]);
-        }
+            /*
+            |----------------------------------------------------------------------
+            | IDEMPOTENCY — already paid, return early
+            |----------------------------------------------------------------------
+            */
 
-        DB::transaction(function () use ($payment, $payload) {
+            if ($payment->status === 'paid') {
+                return $payment;
+            }
+
+            /*
+            |----------------------------------------------------------------------
+            | SIGNATURE VERIFICATION
+            |----------------------------------------------------------------------
+            */
+
+            $verified = app(RazorpayService::class)
+                ->verifySignature($payload);
+
+            if (!$verified) {
+                throw ValidationException::withMessages([
+                    'signature' => 'Invalid payment signature.',
+                ]);
+            }
+
+            /*
+            |----------------------------------------------------------------------
+            | MARK PAID
+            |----------------------------------------------------------------------
+            */
 
             $payment->update([
                 'payment_id' => $payload['razorpay_payment_id'],
-                'signature' => $payload['razorpay_signature'],
-                'status' => 'paid',
-                'paid_at' => now(),
+                'signature'  => $payload['razorpay_signature'],
+                'status'     => 'paid',
+                'paid_at'    => now(),
             ]);
-        });
 
-        return $payment->fresh();
+            return $payment->fresh();
+        });
     }
 }

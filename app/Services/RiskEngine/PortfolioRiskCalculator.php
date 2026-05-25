@@ -286,10 +286,13 @@ class PortfolioRiskCalculator
 
     public function level(float $score): string
     {
+        $low  = config('risk.low_threshold', 30);
+        $high = config('risk.high_threshold', 70);
+
         return match (true) {
-            $score < 30 => 'LOW',
-            $score < 65 => 'MEDIUM',
-            default     => 'HIGH',
+            $score < $low  => 'LOW',
+            $score < $high => 'MEDIUM',
+            default        => 'HIGH',
         };
     }
 

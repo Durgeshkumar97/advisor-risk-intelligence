@@ -116,14 +116,14 @@ class Portfolio extends Model
 
         $averageRisk = $assets->avg('risk_score') ?? 0;
 
+        // Canonical thresholds: LOW < 30, MEDIUM 30–69, HIGH >= 70
+        // Must match RiskScore::level(), AssetRiskScorer::level(),
+        // PortfolioRiskCalculator::level(), and DashboardController.
         $riskLevel = 'LOW';
 
         if ($averageRisk >= 70) {
-
             $riskLevel = 'HIGH';
-
-        } elseif ($averageRisk >= 40) {
-
+        } elseif ($averageRisk >= 30) {
             $riskLevel = 'MEDIUM';
         }
 

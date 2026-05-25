@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html
     lang="en"
-    data-theme="light">
+    data-theme="dark">
 
 <head>
 
@@ -87,19 +87,7 @@
         */
 
         .navbar-wrapper {
-
-            position: fixed;
-
-            top: 0;
-
-            left: 0;
-
-            width: 100%;
-
-            z-index: 1000;
-
-            backdrop-filter:
-                blur(18px);
+            /* positioning handled entirely by the <nav> inside */
         }
 
         /*

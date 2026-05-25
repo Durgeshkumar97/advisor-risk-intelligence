@@ -184,7 +184,7 @@ class ProcessPortfolioFile implements ShouldQueue
                         'profit_loss'    => $row['profit_loss'],
                         'risk_score'     => $assetScore,
                         'risk_level'     => $assetScorer->level($assetScore),
-                        'meta'           => ['source_file_id' => $this->portfolioFile->id],
+                        'meta'           => ['source_file_id' => $file->id],
                     ]);
 
                     $assetModels->push($asset);
@@ -217,7 +217,7 @@ class ProcessPortfolioFile implements ShouldQueue
                     $result = $calculator->calculate($assetModels);
 
                     RiskScore::create([
-                        'user_id'      => $this->portfolioFile->user_id,
+                        'user_id'      => $file->user_id,
                         'portfolio_id' => $portfolioId,
                         'score'        => $result['score'],
                         'volatility'   => $result['volatility'],
@@ -231,7 +231,7 @@ class ProcessPortfolioFile implements ShouldQueue
                     ]);
 
                     Log::info('ProcessPortfolioFile: risk score saved.', [
-                        'id'          => $this->portfolioFile->id,
+                        'id'          => $file->id,
                         'score'       => $result['score'],
                         'risk_level'  => $result['meta']['risk_level'],
                         'asset_count' => count($assetModels),

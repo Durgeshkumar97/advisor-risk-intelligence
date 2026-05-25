@@ -32,6 +32,6 @@ return [
     */
 
     'low_threshold'  => (int) env('RISK_LOW_THRESHOLD', 30),
-    'high_threshold' => (int) env('RISK_HIGH_THRESHOLD', 65),
+    'high_threshold' => (int) env('RISK_HIGH_THRESHOLD', 70),
 
 ];

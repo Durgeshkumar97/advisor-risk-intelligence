@@ -3,6 +3,7 @@
 namespace App\Actions\Payments;
 
 use App\Models\Payment;
+use App\Models\Portfolio;
 use App\Models\User;
 use App\Notifications\PaymentSuccessNotification;
 
@@ -18,6 +19,10 @@ class CreateUserFromPaymentAction
         |----------------------------------------------------------------------
         | EXISTING USER — link payment and return early
         |----------------------------------------------------------------------
+        |
+        | If the user already exists we do NOT create another default portfolio;
+        | they already have their own portfolios from before.
+        |
         */
 
         $existingUser = User::where('email', $payment->email)->first();
@@ -25,7 +30,6 @@ class CreateUserFromPaymentAction
         if ($existingUser) {
 
             if (!$payment->user_id) {
-
                 $payment->update(['user_id' => $existingUser->id]);
             }
 
@@ -34,7 +38,7 @@ class CreateUserFromPaymentAction
 
         /*
         |----------------------------------------------------------------------
-        | NEW USER — create with a random secure password
+        | NEW USER — create with a random secure password + magic-link token
         |----------------------------------------------------------------------
         |
         | The user is auto-logged in immediately by CompletePaymentAction,
@@ -55,6 +59,33 @@ class CreateUserFromPaymentAction
 
         /*
         |----------------------------------------------------------------------
+        | DEFAULT PORTFOLIO (Bug #8 fix)
+        |----------------------------------------------------------------------
+        |
+        | Every new user needs at least one portfolio so that:
+        |  1. PortfolioUploadController has something to attach files to.
+        |  2. ProcessPortfolioFile gets a valid portfolio_id — without it,
+        |     PortfolioAssets are created with portfolio_id = null (orphans).
+        |
+        | The portfolio name uses the user's name so it feels personalised
+        | right out of the box. They can rename or add more from the dashboard.
+        |
+        */
+
+        Portfolio::create([
+            'user_id'    => $user->id,
+            'name'       => 'My Portfolio',
+            'total_value' => 0,
+            'risk_score' => 0,
+            'risk_level' => 'LOW',
+        ]);
+
+        Log::info('CreateUserFromPaymentAction: default portfolio created.', [
+            'user_id' => $user->id,
+        ]);
+
+        /*
+        |----------------------------------------------------------------------
         | LINK PAYMENT
         |----------------------------------------------------------------------
         */
@@ -66,9 +97,9 @@ class CreateUserFromPaymentAction
         | QUEUE WELCOME NOTIFICATION (magic link inside)
         |----------------------------------------------------------------------
         |
-        | Uses the existing PaymentSuccessNotification which now embeds the
-        | login_token so the user can access their dashboard with one click,
-        | even if they close the browser before the auto-login redirect lands.
+        | PaymentSuccessNotification embeds the login_token so the user can
+        | access their dashboard with one click, even after the browser closes.
+        | Also dispatches the WhatsApp welcome job if the user has a phone.
         |
         */
 
