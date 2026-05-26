@@ -35,7 +35,7 @@ return new class extends Migration
     {
         if (Schema::getConnection()->getDriverName() !== 'mysql') {
             Schema::table('payments', function (Blueprint $table) {
-                $table->string('status', 50)->change();
+                $table->string('status', 50)->default('pending')->change();
             });
 
             return;
@@ -43,7 +43,14 @@ return new class extends Migration
 
         DB::statement("
             ALTER TABLE payments
-            MODIFY status VARCHAR(50)
+            MODIFY status ENUM(
+                'pending',
+                'paid',
+                'failed',
+                'refunded'
+            )
+            NOT NULL
+            DEFAULT 'pending'
         ");
     }
 };

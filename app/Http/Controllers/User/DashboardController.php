@@ -24,7 +24,7 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription) {
+        if (!$subscription || (! $subscription->isActive() && ! $subscription->isTrial())) {
             return redirect('/pricing')
                 ->with('error', 'No active subscription found.');
         }
@@ -43,7 +43,7 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $expiryDate = $subscription->ends_at;
+        $expiryDate = $subscription->ends_at ?? $subscription->trial_ends_at;
 
         $daysLeft = 0;
 

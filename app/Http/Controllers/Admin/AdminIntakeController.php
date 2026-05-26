@@ -15,17 +15,17 @@ class AdminIntakeController extends Controller
     {
         $query = ClientIntake::query();
 
-        // 🔍 Filter: minimum lead score
+        // ðŸ” Filter: minimum lead score
         if ($request->filled('min_score')) {
             $query->where('lead_score', '>=', (int) $request->min_score);
         }
 
-        // 🔍 Filter: recent (last 7 days)
+        // ðŸ” Filter: recent (last 7 days)
         if ($request->filled('recent')) {
             $query->where('created_at', '>=', now()->subDays(7));
         }
 
-        // 🔍 Filter: email search
+        // ðŸ” Filter: email search
         if ($request->filled('email')) {
             $query->where('email', 'LIKE', '%' . $request->email . '%');
         }
@@ -48,5 +48,23 @@ class AdminIntakeController extends Controller
         $intake = ClientIntake::findOrFail($id);
 
         return view('admin.intakes.show', compact('intake'));
+    }
+
+    /**
+     * Update lead status
+     */
+    public function updateStatus(\Illuminate\Http\Request $request, $id)
+    {
+        $intake = ClientIntake::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|in:new,contacted,qualified,converted,rejected',
+        ]);
+
+        $intake->update(['status' => $validated['status']]);
+
+        return redirect()
+            ->route('admin.intakes.show', $id)
+            ->with('success', 'Status updated to ' . ucfirst($validated['status']) . '.');
     }
 }

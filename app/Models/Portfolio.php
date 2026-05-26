@@ -66,11 +66,11 @@ class Portfolio extends Model
     }
 
     /**
-     * Uploaded files
+     * Uploaded files (PortfolioFile records)
      */
-    public function uploadedFiles()
+    public function files()
     {
-        return $this->hasMany(UploadedFile::class);
+        return $this->hasMany(PortfolioFile::class);
     }
 
     /*

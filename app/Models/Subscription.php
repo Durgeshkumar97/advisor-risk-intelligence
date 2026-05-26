@@ -73,4 +73,21 @@ class Subscription extends Model
     {
         return $this->ends_at && $this->ends_at->isPast();
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DAYS REMAINING
+    |--------------------------------------------------------------------------
+    */
+
+    public function daysRemaining(): int
+    {
+        $end = $this->ends_at ?? $this->trial_ends_at;
+
+        if (!$end || $end->isPast()) {
+            return 0;
+        }
+
+        return (int) now()->diffInDays($end, false);
+    }
 }

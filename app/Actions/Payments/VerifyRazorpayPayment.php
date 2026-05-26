@@ -7,25 +7,10 @@ use App\Services\RazorpayService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class VerifyRazorpayPaymentAction
+class VerifyRazorpayPayment
 {
     public function execute(array $payload): Payment
     {
-        $payment = Payment::query()
-            ->where('order_id', $payload['razorpay_order_id'])
-            ->lockForUpdate()
-            ->first();
-
-        if (!$payment) {
-            throw ValidationException::withMessages([
-                'payment' => 'Payment not found.',
-            ]);
-        }
-
-        if ($payment->status === 'paid') {
-            return $payment;
-        }
-
         $verified = app(RazorpayService::class)
             ->verifySignature($payload);
 
@@ -35,16 +20,31 @@ class VerifyRazorpayPaymentAction
             ]);
         }
 
-        DB::transaction(function () use ($payment, $payload) {
+        return DB::transaction(function () use ($payload) {
+
+            $payment = Payment::query()
+                ->where('order_id', $payload['razorpay_order_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$payment) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Payment not found.',
+                ]);
+            }
+
+            if ($payment->status === Payment::STATUS_PAID) {
+                return $payment;
+            }
 
             $payment->update([
                 'payment_id' => $payload['razorpay_payment_id'],
                 'signature' => $payload['razorpay_signature'],
-                'status' => 'paid',
+                'status' => Payment::STATUS_PAID,
                 'paid_at' => now(),
             ]);
-        });
 
-        return $payment->fresh();
+            return $payment->fresh();
+        });
     }
 }

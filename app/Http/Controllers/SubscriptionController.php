@@ -2,45 +2,61 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
+use App\Models\Subscription;
+
 use Illuminate\Http\Request;
-use App\Models\ClientIntake;
+use Illuminate\Support\Facades\Auth;
 
 class SubscriptionController extends Controller
 {
-    private array $planPrices = [
-        'starter' => 799,
-        'pro'     => 1499,
-        'team'    => 3499,
-    ];
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX — show the user current subscription details
+    |--------------------------------------------------------------------------
+    */
 
-    public function upgrade(Request $request)
+    public function index()
     {
-        // validate
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'plan'  => 'required|in:starter,pro,team',
-        ]);
+        $user         = Auth::user();
+        $subscription = Subscription::with('plan')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->first();
 
-        // find user
-        $user = ClientIntake::where('email', $validated['email'])->first();
+        $plan     = $subscription?->plan;
+        $plans    = Plan::where('is_active', true)->orderBy('price')->get();
+        $daysLeft = $subscription ? $subscription->daysRemaining() : 0;
 
-        if (!$user) {
-            return back()->with('error', 'User not found. Start trial first.');
+        return view('user.subscription', compact('subscription', 'plan', 'plans', 'daysLeft'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL — soft-cancel an active or trial subscription
+    |--------------------------------------------------------------------------
+    */
+
+    public function cancel(Request $request)
+    {
+        $user         = Auth::user();
+        $subscription = Subscription::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'trial'])
+            ->latest()
+            ->first();
+
+        if (!$subscription) {
+            return redirect()
+                ->route('subscription.index')
+                ->with('error', 'No active subscription to cancel.');
         }
 
-        // get price
-        $price = $this->planPrices[$validated['plan']];
+        $subscription->update(['status' => 'cancelled']);
 
-        // upgrade logic
-        $user->update([
-            'plan' => $validated['plan'],
-            'status' => 'active',
-            'converted_at' => now(),
+        $endDate = ($subscription->ends_at ?? $subscription->trial_ends_at)?->format('d M Y');
 
-            'plan_price' => $price,
-            'revenue_generated' => $price,
-        ]);
-
-        return back()->with('success', 'Plan upgraded successfully.');
+        return redirect()
+            ->route('subscription.index')
+            ->with('success', 'Subscription cancelled. You retain access until ' . $endDate . '.');
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ProcessSuccessfulPayment implements ShouldQueue
 {
@@ -21,12 +22,23 @@ class ProcessSuccessfulPayment implements ShouldQueue
 
     public function handle(): void
     {
-        if ($this->payment->processed_at) {
+        $user = DB::transaction(function () {
+            $payment = Payment::query()
+                ->whereKey($this->payment->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $payment || $payment->processed_at) {
+                return null;
+            }
+
+            return app(SubscriptionService::class)
+                ->activate($payment);
+        });
+
+        if (! $user) {
             return;
         }
-
-        $user = app(SubscriptionService::class)
-            ->activate($this->payment);
 
         $user->notify(
             new PaymentSuccessNotification($this->payment)

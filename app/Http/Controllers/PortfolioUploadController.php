@@ -11,6 +11,7 @@ use App\Services\PortfolioUploadService;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PortfolioUploadController extends Controller
 {
@@ -190,5 +191,25 @@ class PortfolioUploadController extends Controller
 
                 ->withInput();
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DESTROY — delete a single uploaded file (owner only)
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(int $id)
+    {
+        $file = PortfolioFile::where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        Storage::disk('portfolios')->delete($file->path);
+
+        $file->delete();
+
+        return redirect()
+            ->route('portfolio.upload')
+            ->with('success', 'File deleted.');
     }
 }

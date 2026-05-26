@@ -1,110 +1,142 @@
 import "./bootstrap";
 
 /* =========================================================
-   RISKSIGNAL APP CORE
-   Production Grade Frontend System
+   RISKSIGNAL FRONTEND CORE
+   Production-Ready Application Layer
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-    RiskSignal.init();
-});
+class RiskSignalApp {
 
-const RiskSignal = {
+    constructor() {
+
+        this.state = {
+            theme: "light",
+            menuOpen: false,
+        };
+
+        this.elements = {};
+
+        this.observers = [];
+
+        this.boundHandlers = new Map();
+    }
 
     /* =====================================================
        INITIALIZE
     ===================================================== */
 
     init() {
-        this.cache();
-        this.theme();
-        this.legalPageFix();
-        this.mobileMenu();
-        this.revealAnimations();
-        this.navbarScroll();
-        this.smoothAnchors();
-        this.activeNavLinks();
-        this.resizeFix();
-    },
+
+        this.cacheDom();
+
+        this.initializeTheme();
+
+        this.initializeLegalPage();
+
+        this.initializeMobileMenu();
+
+        this.initializeRevealAnimations();
+
+        this.initializeNavbar();
+
+        this.initializeSmoothScroll();
+
+        this.initializeActiveSections();
+
+        this.initializeResizeHandler();
+
+        this.initializeReducedMotionSupport();
+
+        this.markApplicationReady();
+    }
 
     /* =====================================================
        CACHE DOM
     ===================================================== */
 
-    cache() {
+    cacheDom() {
 
-        this.html = document.documentElement;
-        this.body = document.body;
+        this.elements = {
 
-        this.nav = document.querySelector("nav");
+            html:
+                document.documentElement,
 
-        this.menu = document.getElementById("mobile-menu");
-        this.toggle = document.getElementById("menu-toggle");
+            body:
+                document.body,
 
-        this.themeBtn = document.getElementById("theme-toggle");
+            nav:
+                document.querySelector("nav"),
 
-        this.openIcon = document.getElementById("icon-open");
-        this.closeIcon = document.getElementById("icon-close");
+            mobileMenu:
+                document.getElementById("mobile-menu"),
 
-        this.reveals = [
-            ...document.querySelectorAll(".reveal")
-        ].filter((el) => !el.closest(".legal-shell"));
+            menuToggle:
+                document.getElementById("menu-toggle"),
 
-        this.anchorLinks = [
-            ...document.querySelectorAll('a[href*="#"]')
-        ];
+            themeToggle:
+                document.getElementById("theme-toggle"),
 
-        this.sections = [
-            ...document.querySelectorAll("section[id]")
-        ];
-    },
+            openIcon:
+                document.getElementById("icon-open"),
 
-    /* =====================================================
-       LEGAL PAGE FIX
-    ===================================================== */
+            closeIcon:
+                document.getElementById("icon-close"),
 
-    legalPageFix() {
+            revealElements:
+                [
+                    ...document.querySelectorAll(".reveal")
+                ].filter(
+                    (el) => !el.closest(".legal-shell")
+                ),
 
-        const shell = document.querySelector(".legal-shell");
+            anchorLinks:
+                [
+                    ...document.querySelectorAll('a[href*="#"]')
+                ],
 
-        if (!shell) return;
+            sections:
+                [
+                    ...document.querySelectorAll("section[id]")
+                ],
 
-        const all = [shell, ...shell.querySelectorAll("*")];
-
-        all.forEach((el) => {
-
-            el.style.setProperty("opacity", "1", "important");
-            el.style.setProperty("transform", "none", "important");
-            el.style.setProperty("visibility", "visible", "important");
-            el.style.setProperty("animation", "none", "important");
-            el.style.setProperty("transition", "none", "important");
-
-            el.classList.add("active");
-
-        });
-    },
+            navLinks:
+                [
+                    ...document.querySelectorAll(".nav-link")
+                ],
+        };
+    }
 
     /* =====================================================
        THEME SYSTEM
     ===================================================== */
 
-    theme() {
+    initializeTheme() {
 
-        const saved =
-            localStorage.getItem("theme") ||
-            (
-                window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? "dark"
-                    : "light"
-            );
+        const savedTheme =
+            localStorage.getItem("theme");
 
-        this.applyTheme(saved);
+        const preferredTheme =
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches
+                ? "dark"
+                : "light";
 
-        if (!this.themeBtn) return;
+        const theme =
+            savedTheme || preferredTheme;
 
-        this.themeBtn.addEventListener("click", () => {
+        this.applyTheme(theme);
 
-            const current = this.html.getAttribute("data-theme");
+        if (!this.elements.themeToggle) {
+            return;
+        }
+
+        const handler = () => {
+
+            const current =
+                this.elements.html.getAttribute(
+                    "data-theme"
+                );
 
             const next =
                 current === "dark"
@@ -113,18 +145,40 @@ const RiskSignal = {
 
             this.applyTheme(next);
 
-            localStorage.setItem("theme", next);
+            localStorage.setItem(
+                "theme",
+                next
+            );
+        };
 
-        });
-    },
+        this.elements.themeToggle.addEventListener(
+            "click",
+            handler
+        );
+
+        this.boundHandlers.set(
+            "themeToggle",
+            handler
+        );
+    }
 
     applyTheme(theme) {
 
-        this.html.setAttribute("data-theme", theme);
+        this.state.theme = theme;
 
-        if (!this.themeBtn) return;
+        this.elements.html.setAttribute(
+            "data-theme",
+            theme
+        );
 
-        const icon = this.themeBtn.querySelector(".theme-icon");
+        if (!this.elements.themeToggle) {
+            return;
+        }
+
+        const icon =
+            this.elements.themeToggle.querySelector(
+                ".theme-icon"
+            );
 
         const symbol =
             theme === "dark"
@@ -132,308 +186,523 @@ const RiskSignal = {
                 : "🌙";
 
         if (icon) {
+
             icon.textContent = symbol;
+
         } else {
-            this.themeBtn.textContent = symbol;
+
+            this.elements.themeToggle.textContent =
+                symbol;
         }
-    },
+    }
 
-/* =====================================================
-   MOBILE MENU
-===================================================== */
+    /* =====================================================
+       LEGAL PAGE FIX
+    ===================================================== */
 
-    mobileMenu() {
+    initializeLegalPage() {
 
-        if (!this.toggle || !this.menu) return;
+        const shell =
+            document.querySelector(".legal-shell");
 
-        this.toggle.addEventListener("click", (e) => {
+        if (!shell) {
+            return;
+        }
 
-            e.stopPropagation();
+        const nodes = [
+            shell,
+            ...shell.querySelectorAll("*"),
+        ];
 
-            this.menu.classList.contains("open")
+        nodes.forEach((element) => {
+
+            element.style.setProperty(
+                "opacity",
+                "1",
+                "important"
+            );
+
+            element.style.setProperty(
+                "transform",
+                "none",
+                "important"
+            );
+
+            element.style.setProperty(
+                "visibility",
+                "visible",
+                "important"
+            );
+
+            element.style.setProperty(
+                "animation",
+                "none",
+                "important"
+            );
+
+            element.style.setProperty(
+                "transition",
+                "none",
+                "important"
+            );
+
+            element.classList.add("active");
+        });
+    }
+
+    /* =====================================================
+       MOBILE MENU
+    ===================================================== */
+
+    initializeMobileMenu() {
+
+        const {
+            menuToggle,
+            mobileMenu,
+        } = this.elements;
+
+        if (!menuToggle || !mobileMenu) {
+            return;
+        }
+
+        const toggleHandler = (event) => {
+
+            event.stopPropagation();
+
+            this.state.menuOpen
                 ? this.closeMenu()
                 : this.openMenu();
+        };
 
-        });
+        menuToggle.addEventListener(
+            "click",
+            toggleHandler
+        );
 
-        this.menu.querySelectorAll("a").forEach((link) => {
+        this.boundHandlers.set(
+            "menuToggle",
+            toggleHandler
+        );
 
-            link.addEventListener("click", () => {
-                this.closeMenu();
+        mobileMenu
+            .querySelectorAll("a")
+            .forEach((link) => {
+
+                link.addEventListener(
+                    "click",
+                    () => this.closeMenu()
+                );
             });
 
-        });
+        document.addEventListener(
+            "click",
+            (event) => {
 
-        document.addEventListener("click", (e) => {
+                if (
+                    !this.state.menuOpen
+                ) {
+                    return;
+                }
 
-            if (
-                this.menu.classList.contains("open") &&
-                !this.menu.contains(e.target) &&
-                !this.toggle.contains(e.target)
-            ) {
+                if (
+                    mobileMenu.contains(event.target)
+                ) {
+                    return;
+                }
+
+                if (
+                    menuToggle.contains(event.target)
+                ) {
+                    return;
+                }
+
                 this.closeMenu();
             }
+        );
 
-        });
+        window.addEventListener(
+            "keydown",
+            (event) => {
 
-        window.addEventListener("keydown", (e) => {
-
-            if (e.key === "Escape") {
-                this.closeMenu();
+                if (event.key === "Escape") {
+                    this.closeMenu();
+                }
             }
-
-        });
-    },
+        );
+    }
 
     openMenu() {
 
-        this.menu.classList.add("open");
+        const {
+            mobileMenu,
+            body,
+            menuToggle,
+            openIcon,
+            closeIcon,
+            themeToggle,
+        } = this.elements;
 
-        this.body.classList.add("overflow-hidden");
+        this.state.menuOpen = true;
 
-        this.toggle.setAttribute(
+        mobileMenu?.classList.add("open");
+
+        body?.classList.add("overflow-hidden");
+
+        menuToggle?.setAttribute(
             "aria-expanded",
             "true"
         );
 
-        this.openIcon?.classList.add("hidden");
+        openIcon?.classList.add("hidden");
 
-        this.closeIcon?.classList.remove("hidden");
+        closeIcon?.classList.remove("hidden");
 
-        if (this.themeBtn) {
-            this.themeBtn.style.opacity = "0";
+        if (themeToggle) {
+            themeToggle.style.opacity = "0";
         }
-    },
+    }
 
     closeMenu() {
 
-        this.menu.classList.remove("open");
+        const {
+            mobileMenu,
+            body,
+            menuToggle,
+            openIcon,
+            closeIcon,
+            themeToggle,
+        } = this.elements;
 
-        this.body.classList.remove("overflow-hidden");
+        this.state.menuOpen = false;
 
-        this.toggle.setAttribute(
+        mobileMenu?.classList.remove("open");
+
+        body?.classList.remove("overflow-hidden");
+
+        menuToggle?.setAttribute(
             "aria-expanded",
             "false"
         );
 
-        this.openIcon?.classList.remove("hidden");
+        openIcon?.classList.remove("hidden");
 
-        this.closeIcon?.classList.add("hidden");
+        closeIcon?.classList.add("hidden");
 
-        if (this.themeBtn) {
-            this.themeBtn.style.opacity = "1";
+        if (themeToggle) {
+            themeToggle.style.opacity = "1";
         }
-    },
+    }
 
     /* =====================================================
        REVEAL ANIMATIONS
     ===================================================== */
 
-    revealAnimations() {
+    initializeRevealAnimations() {
 
-        if (!this.reveals.length) return;
+        const elements =
+            this.elements.revealElements;
 
-        if (!("IntersectionObserver" in window)) {
+        if (!elements.length) {
+            return;
+        }
 
-            this.reveals.forEach((el) => {
-                el.classList.add("active");
+        if (
+            !("IntersectionObserver" in window)
+        ) {
+
+            elements.forEach((element) => {
+                element.classList.add("active");
             });
 
             return;
         }
 
-        const observer = new IntersectionObserver(
+        const observer =
+            new IntersectionObserver(
 
-            (entries) => {
+                (entries) => {
 
-                entries.forEach((entry) => {
+                    entries.forEach((entry) => {
 
-                    if (!entry.isIntersecting) return;
+                        if (
+                            !entry.isIntersecting
+                        ) {
+                            return;
+                        }
 
-                    requestAnimationFrame(() => {
-                        entry.target.classList.add("active");
+                        requestAnimationFrame(() => {
+
+                            entry.target.classList.add(
+                                "active"
+                            );
+                        });
+
+                        observer.unobserve(
+                            entry.target
+                        );
                     });
+                },
 
-                    observer.unobserve(entry.target);
+                {
+                    threshold: 0.12,
+                    rootMargin:
+                        "0px 0px -40px 0px",
+                }
+            );
 
-                });
-
-            },
-
-            {
-                threshold: 0.12,
-                rootMargin: "0px 0px -40px 0px",
-            }
-
-        );
-
-        this.reveals.forEach((el) => {
-            observer.observe(el);
+        elements.forEach((element) => {
+            observer.observe(element);
         });
-    },
+
+        this.observers.push(observer);
+    }
 
     /* =====================================================
        NAVBAR SCROLL
     ===================================================== */
 
-    navbarScroll() {
+    initializeNavbar() {
 
-        if (!this.nav) return;
+        const nav =
+            this.elements.nav;
+
+        if (!nav) {
+            return;
+        }
 
         let ticking = false;
 
         const update = () => {
 
-            const scrolled = window.scrollY > 30;
+            const scrolled =
+                window.scrollY > 30;
 
-            this.nav.classList.toggle("nav-scrolled", scrolled);
+            nav.classList.toggle(
+                "nav-scrolled",
+                scrolled
+            );
 
-            this.nav.classList.toggle("nav-default", !scrolled);
+            nav.classList.toggle(
+                "nav-default",
+                !scrolled
+            );
 
             ticking = false;
-        };
-
-        const onScroll = () => {
-
-            if (!ticking) {
-
-                requestAnimationFrame(update);
-
-                ticking = true;
-            }
         };
 
         update();
 
         window.addEventListener(
             "scroll",
-            onScroll,
+
+            () => {
+
+                if (ticking) {
+                    return;
+                }
+
+                requestAnimationFrame(update);
+
+                ticking = true;
+            },
+
             { passive: true }
         );
-    },
+    }
 
     /* =====================================================
        SMOOTH SCROLL
     ===================================================== */
 
-    smoothAnchors() {
+    initializeSmoothScroll() {
 
-        if (!this.anchorLinks.length) return;
+        const {
+            anchorLinks,
+            nav,
+        } = this.elements;
 
-        this.anchorLinks.forEach((link) => {
+        if (!anchorLinks.length) {
+            return;
+        }
 
-            link.addEventListener("click", (e) => {
+        anchorLinks.forEach((link) => {
 
-                const href = link.getAttribute("href");
+            link.addEventListener(
+                "click",
 
-                if (!href || !href.includes("#")) return;
+                (event) => {
 
-                const hash = href.substring(href.indexOf("#"));
+                    const href =
+                        link.getAttribute("href");
 
-                const target = document.querySelector(hash);
+                    if (
+                        !href ||
+                        !href.includes("#")
+                    ) {
+                        return;
+                    }
 
-                if (!target) return;
-
-                e.preventDefault();
-
-                const navHeight =
-                    this.nav?.offsetHeight || 70;
-
-                const top =
-                    target.getBoundingClientRect().top +
-                    window.scrollY -
-                    navHeight;
-
-                window.scrollTo({
-                    top,
-                    behavior: "smooth",
-                });
-
-                this.closeMenu();
-
-            });
-
-        });
-    },
-
-    /* =====================================================
-       ACTIVE NAV LINKS
-    ===================================================== */
-
-    activeNavLinks() {
-
-        if (!this.sections.length) return;
-
-        const links = [
-            ...document.querySelectorAll(".nav-link")
-        ];
-
-        const observer = new IntersectionObserver(
-
-            (entries) => {
-
-                entries.forEach((entry) => {
-
-                    if (!entry.isIntersecting) return;
-
-                    const id = entry.target.id;
-
-                    links.forEach((link) => {
-
-                        const href =
-                            link.getAttribute("href");
-
-                        const isActive =
-                            href?.includes(`#${id}`);
-
-                        link.classList.toggle(
-                            "active",
-                            isActive
+                    const hash =
+                        href.substring(
+                            href.indexOf("#")
                         );
 
+                    const target =
+                        document.querySelector(hash);
+
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    const navHeight =
+                        nav?.offsetHeight || 70;
+
+                    const top =
+                        target.getBoundingClientRect()
+                            .top +
+                        window.scrollY -
+                        navHeight;
+
+                    window.scrollTo({
+                        top,
+                        behavior: "smooth",
                     });
 
-                });
-
-            },
-
-            {
-                threshold: 0.45,
-            }
-
-        );
-
-        this.sections.forEach((section) => {
-            observer.observe(section);
+                    this.closeMenu();
+                }
+            );
         });
-    },
+    }
 
     /* =====================================================
-       RESIZE FIX
+       ACTIVE NAVIGATION
     ===================================================== */
 
-    resizeFix() {
+    initializeActiveSections() {
 
-        window.addEventListener(
+        const {
+            sections,
+            navLinks,
+        } = this.elements;
 
-            "resize",
+        if (!sections.length) {
+            return;
+        }
 
+        const observer =
+            new IntersectionObserver(
+
+                (entries) => {
+
+                    entries.forEach((entry) => {
+
+                        if (
+                            !entry.isIntersecting
+                        ) {
+                            return;
+                        }
+
+                        const id =
+                            entry.target.id;
+
+                        navLinks.forEach((link) => {
+
+                            const href =
+                                link.getAttribute(
+                                    "href"
+                                );
+
+                            const active =
+                                href?.includes(
+                                    `#${id}`
+                                );
+
+                            link.classList.toggle(
+                                "active",
+                                active
+                            );
+                        });
+                    });
+                },
+
+                {
+                    threshold: 0.45,
+                }
+            );
+
+        sections.forEach((section) => {
+            observer.observe(section);
+        });
+
+        this.observers.push(observer);
+    }
+
+    /* =====================================================
+       RESIZE HANDLER
+    ===================================================== */
+
+    initializeResizeHandler() {
+
+        const handler =
             this.debounce(() => {
 
-                if (window.innerWidth >= 768) {
+                if (
+                    window.innerWidth >= 768
+                ) {
                     this.closeMenu();
                 }
 
-            }, 180)
+            }, 180);
 
+        window.addEventListener(
+            "resize",
+            handler
         );
-    },
+
+        this.boundHandlers.set(
+            "resize",
+            handler
+        );
+    }
+
+    /* =====================================================
+       REDUCED MOTION SUPPORT
+    ===================================================== */
+
+    initializeReducedMotionSupport() {
+
+        const reduced =
+            window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            );
+
+        if (!reduced.matches) {
+            return;
+        }
+
+        document.documentElement.classList.add(
+            "reduced-motion"
+        );
+    }
+
+    /* =====================================================
+       READY STATE
+    ===================================================== */
+
+    markApplicationReady() {
+
+        document.documentElement.classList.add(
+            "app-ready"
+        );
+    }
 
     /* =====================================================
        HELPERS
     ===================================================== */
 
-    debounce(fn, wait = 200) {
+    debounce(callback, delay = 200) {
 
         let timer;
 
@@ -442,9 +711,35 @@ const RiskSignal = {
             clearTimeout(timer);
 
             timer = setTimeout(() => {
-                fn(...args);
-            }, wait);
-
+                callback(...args);
+            }, delay);
         };
-    },
-};
+    }
+}
+
+/* =========================================================
+   APPLICATION BOOT
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        try {
+
+            const app =
+                new RiskSignalApp();
+
+            app.init();
+
+            window.RiskSignalApp = app;
+
+        } catch (error) {
+
+            console.error(
+                "[RiskSignal] Frontend initialization failed:",
+                error
+            );
+        }
+    }
+);

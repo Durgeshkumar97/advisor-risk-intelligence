@@ -53,6 +53,8 @@ class Payment extends Model
 
         'paid_at',
 
+        'processed_at',
+
         'ip_address',
 
         'user_agent',
@@ -73,6 +75,8 @@ class Payment extends Model
         'meta' => 'array',
 
         'paid_at' => 'datetime',
+
+        'processed_at' => 'datetime',
     ];
 
     /*
@@ -84,6 +88,8 @@ class Payment extends Model
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_PAID = 'paid';
+
+    public const STATUS_PROCESSING = 'processing';
 
     public const STATUS_FAILED = 'failed';
 

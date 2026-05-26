@@ -31,9 +31,17 @@ return [
 
             'driver' => 'local',
 
-            'root' => storage_path('app/private/portfolios'),
+            /*
+             | SECURITY: serve MUST remain false.
+             | Root points to private portfolio storage — serve:true would
+             | expose these files via the public storage/{path} route
+             | with NO authentication. Downloads go through
+             | FileController (auth middleware) only.
+             */
 
-            'serve' => true,
+            'root' => storage_path('app/private'),
+
+            'serve' => false,
 
             'throw' => false,
 

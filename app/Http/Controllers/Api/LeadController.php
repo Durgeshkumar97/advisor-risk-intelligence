@@ -4,10 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
-use App\Models\Plan;
-use App\Models\Subscription;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class LeadController extends Controller
 {
@@ -40,22 +37,9 @@ class LeadController extends Controller
             'status' => 'new',
         ]);
 
-        // Get Starter Plan
-        $plan = Plan::where('slug', 'starter')->first();
-
-        // Create Trial Subscription
-        Subscription::create([
-            'lead_id' => $lead->id,
-            'plan_id' => $plan->id,
-            'status' => 'trial',
-            'trial_started_at' => now(),
-            'trial_ends_at' => now()->addDays(7),
-            'renewal_at' => now()->addDays(7),
-        ]);
-
         return response()->json([
             'success' => true,
-            'message' => '7-day trial started successfully',
+            'message' => 'Trial request received successfully',
             'data' => $lead
         ], 201);
     }
