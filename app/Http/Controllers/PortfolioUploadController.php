@@ -6,7 +6,7 @@ use App\Http\Requests\StorePortfolioUploadRequest;
 use App\Jobs\ProcessPortfolioFile;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
-use App\Services\PortfolioUploadException;
+use App\Exceptions\PortfolioUploadException;
 use App\Services\PortfolioUploadService;
 
 use Illuminate\Support\Facades\Auth;

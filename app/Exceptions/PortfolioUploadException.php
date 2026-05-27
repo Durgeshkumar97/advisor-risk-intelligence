@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Exceptions;
 
 class PortfolioUploadException extends \Exception
 {
@@ -17,7 +17,7 @@ class PortfolioUploadException extends \Exception
 
     /*
     |--------------------------------------------------------------------------
-    | FACTORY METHOD
+    | FACTORY METHODS
     |--------------------------------------------------------------------------
     */
 
@@ -34,8 +34,8 @@ class PortfolioUploadException extends \Exception
         $exception->fileName = $fileName;
         $exception->storedPath = $storedPath;
         $exception->context = array_merge([
-            'user_id' => $userId,
-            'file_name' => $fileName,
+            'user_id'     => $userId,
+            'file_name'   => $fileName,
             'stored_path' => $storedPath,
         ], $additionalContext);
 

@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Portfolio;
+use App\Models\PortfolioFile;
+use App\Policies\PortfolioFilePolicy;
+use App\Policies\PortfolioPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -12,7 +16,8 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        Portfolio::class     => PortfolioPolicy::class,
+        PortfolioFile::class => PortfolioFilePolicy::class,
     ];
 
     /**

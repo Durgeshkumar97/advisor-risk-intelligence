@@ -7,6 +7,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Subscription;
 
+/**
+ * Alias: 'paid'
+ *
+ * PERMISSIVE subscription gate — used on most protected routes.
+ * Allows access if the user has ANY of:
+ *   - An active subscription (status = active, ends_at in the future)
+ *   - A trial subscription (status = trial, trial_ends_at in the future)
+ *   - A grace period (subscription ended within the last 3 days)
+ *
+ * Use this on: /dashboard, /portfolio/*, /subscription, etc.
+ *
+ * @see EnsureActiveSubscription for the STRICT gate (active-only, no grace)
+ */
 class CheckSubscription
 {
     public function handle(Request $request, Closure $next)

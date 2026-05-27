@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\PortfolioFileUploaded;
+use App\Exceptions\PortfolioUploadException;
 
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;

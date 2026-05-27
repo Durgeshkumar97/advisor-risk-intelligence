@@ -15,16 +15,16 @@ return [
 
     'guards' => [
 
-        // Customer (SaaS users)
+        // Main SaaS users
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
 
-        // Admin (internal)
+        // Internal admin dashboard
         'admin' => [
             'driver' => 'session',
-            'provider' => 'admins',
+            'provider' => 'users',
         ],
     ],
 
@@ -36,22 +36,16 @@ return [
 
     'providers' => [
 
-        // Customers
+        // Shared users table
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
-        ],
-
-        // Admins
-        'admins' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
         ],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Password Reset (ONLY users for now)
+    | Password Reset
     |--------------------------------------------------------------------------
     */
 
@@ -67,7 +61,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Timeout
+    | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     */
 
