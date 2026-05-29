@@ -16,11 +16,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\IntakeController;
+use App\Http\Controllers\PortfolioController;
 
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\PortfolioUploadController;
-use App\Http\Controllers\PortfolioController;
-use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminIntakeController;
 use App\Http\Controllers\Admin\AdminUserController;
@@ -83,36 +82,21 @@ Route::post('/payment/create', [PaymentController::class, 'create'])
     ->middleware('throttle:20,1')
     ->name('payment.create');
 
-Route::post('/payment/verify', [PaymentController::class, 'verify'])
+Route::post('/payment/verify', [CheckoutController::class, 'success'])
     ->middleware('throttle:10,1')
     ->name('payment.verify');
 
-Route::get('/payment/success', [CheckoutController::class, 'success'])
+Route::view('/payment/success', 'payment-success')
     ->name('payment.success');
 
-Route::post('/payment/failure', [PaymentController::class, 'failure'])
-    ->name('payment.failure');
-
 /*
-|--------------------------------------------------------------------------
-| PORTFOLIO MANAGEMENT (create / rename / delete portfolios)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->group(function () {
-
-    Route::get('/portfolios', [PortfolioController::class, 'index'])
-        ->name('portfolio.manage');
-
-    Route::post('/portfolios', [PortfolioController::class, 'store'])
-        ->name('portfolio.store');
-
-    Route::patch('/portfolios/{id}', [PortfolioController::class, 'update'])
-        ->name('portfolio.update');
-
-    Route::delete('/portfolios/{id}', [PortfolioController::class, 'destroy'])
-        ->name('portfolio.destroy');
-});
+ | payment/failure is fired by Razorpay client-side JS — no server
+ | signature on failure events. Throttle prevents order-id bruteforcing.
+ | Only pending payments can be flipped to failed (guard in controller).
+ */
+Route::post('/payment/failure', [PaymentController::class, 'failure'])
+    ->middleware('throttle:15,1')
+    ->name('payment.failure');
 
 /*------------PORTFOLIO UPLOAD ----------------------------------------*/
 Route::middleware(['auth'])->group(function () {
@@ -132,16 +116,11 @@ Route::middleware(['auth'])->group(function () {
         '/portfolio/upload',
         [PortfolioUploadController::class, 'store']
     )->name('portfolio.upload.store');
-
-    Route::delete(
-        '/portfolio/file/{id}',
-        [PortfolioUploadController::class, 'destroy']
-    )->name('portfolio.file.destroy');
 });
 
 /*
 |--------------------------------------------------------------------------
-| WEBHOOK
+| WEBHOOK — Razorpay server-to-server (HMAC verified inside controller)
 |--------------------------------------------------------------------------
 */
 
@@ -150,7 +129,7 @@ Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
 
 /*
 |--------------------------------------------------------------------------
-| AUTO LOGIN
+| AUTO LOGIN — magic link sent from admin panel
 |--------------------------------------------------------------------------
 */
 
@@ -162,40 +141,16 @@ Route::get('/auto-login/{token}', function ($token) {
         return redirect()->route('login');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | LOGIN USER
-    |--------------------------------------------------------------------------
-    */
-
     \Illuminate\Support\Facades\Auth::login($user);
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE LOGIN STATE
-    |--------------------------------------------------------------------------
-    */
-
     $user->forceFill([
-        'login_token' => null,
+        'login_token'   => null,
         'last_login_at' => now(),
     ])->save();
-
-    /*
-    |--------------------------------------------------------------------------
-    | ONBOARDING CHECK
-    |--------------------------------------------------------------------------
-    */
 
     if (!$user->onboarding_completed) {
         return redirect()->route('onboarding');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | FINAL REDIRECT
-    |--------------------------------------------------------------------------
-    */
 
     return redirect()->route('dashboard');
 })->name('auto.login');
@@ -208,22 +163,9 @@ Route::get('/auto-login/{token}', function ($token) {
 
 Route::middleware('auth')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW ONBOARDING
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/onboarding', function () {
-
         return view('onboarding');
     })->name('onboarding');
-
-    /*
-    |--------------------------------------------------------------------------
-    | SAVE ONBOARDING
-    |--------------------------------------------------------------------------
-    */
 
     Route::post('/onboarding', function (\Illuminate\Http\Request $request) {
 
@@ -260,20 +202,50 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    /*
-    |--------------------------------------------------------------------------
-    | SUBSCRIPTION MANAGEMENT
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/subscription', [SubscriptionController::class, 'index'])
-        ->name('subscription.index');
-
-    Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel'])
-        ->name('subscription.cancel');
+    Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
+        ->name('upgrade');
 
     Route::get('/file/{id}', [FileController::class, 'view'])
         ->name('file.view');
+});
+
+/*
+|--------------------------------------------------------------------------
+| PORTFOLIO MANAGEMENT — create / rename / delete named portfolios
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/portfolios', [PortfolioController::class, 'index'])
+        ->name('portfolio.manage');
+
+    Route::post('/portfolios', [PortfolioController::class, 'store'])
+        ->name('portfolio.store');
+
+    Route::patch('/portfolios/{id}', [PortfolioController::class, 'update'])
+        ->name('portfolio.update');
+
+    Route::delete('/portfolios/{id}', [PortfolioController::class, 'destroy'])
+        ->name('portfolio.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| PORTFOLIO UPLOAD
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/portfolio/upload', [PortfolioUploadController::class, 'index'])
+        ->name('portfolio.upload');
+
+    Route::post('/portfolio/upload', [PortfolioUploadController::class, 'store'])
+        ->name('portfolio.upload.store');
+
+    Route::delete('/portfolio/file/{id}', [PortfolioUploadController::class, 'destroy'])
+        ->name('portfolio.file.destroy');
 });
 
 /*
@@ -296,25 +268,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN AUTH — public (login / logout, no middleware)
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')->name('admin.')->group(function () {
-
-    Route::get('/login', [AdminAuthController::class, 'showLogin'])
-        ->name('login');
-
-    Route::post('/login', [AdminAuthController::class, 'login'])
-        ->name('login.post');
-
-    Route::post('/logout', [AdminAuthController::class, 'logout'])
-        ->name('logout');
-});
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN PANEL — protected (admin middleware = auth + is_admin check)
+| ADMIN PANEL
 |--------------------------------------------------------------------------
 */
 
@@ -325,6 +279,12 @@ Route::middleware(['admin'])
 
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        /*
+        |----------------------------------------------------------------------
+        | INTAKES / LEADS
+        |----------------------------------------------------------------------
+        */
 
         Route::get('/intakes', [AdminIntakeController::class, 'index'])
             ->name('intakes.index');
@@ -362,18 +322,17 @@ Route::middleware(['admin'])
 
 /*
 |--------------------------------------------------------------------------
-| FALLBACK
+| FALLBACK — proper 404 (not a 302 redirect to home)
 |--------------------------------------------------------------------------
 */
 
 Route::fallback(function () {
-
-    return redirect()->route('home');
+    return response()->view('errors.404', [], 404);
 });
 
 /*
 |--------------------------------------------------------------------------
-| AUTH ROUTES
+| AUTH ROUTES (Breeze)
 |--------------------------------------------------------------------------
 */
 

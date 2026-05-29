@@ -89,36 +89,21 @@ class Subscription extends Model
             return false;
         }
 
-        // 3-day grace window after expiry
         return $this->ends_at
             && $this->ends_at->diffInDays(now()) <= 3;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | EXPIRY HELPERS
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Days until subscription expires (0 if already expired).
-     */
     public function daysRemaining(): int
     {
-        if ($this->isTrial()) {
-            return (int) max(0, now()->diffInDays($this->trial_ends_at, false));
-        }
+        $end = $this->ends_at ?? $this->trial_ends_at;
 
-        if (!$this->ends_at) {
+        if (!$end || $end->isPast()) {
             return 0;
         }
 
-        return (int) max(0, now()->diffInDays($this->ends_at, false));
+        return (int) now()->diffInDays($end, false);
     }
 
-    /**
-     * True when the subscription expires within $days days.
-     */
     public function isExpiringSoon(int $days = 7): bool
     {
         return $this->isActive() && $this->daysRemaining() <= $days;

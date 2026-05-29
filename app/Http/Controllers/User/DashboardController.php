@@ -17,16 +17,6 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUBSCRIPTION + PLAN
-        |--------------------------------------------------------------------------
-        |
-        | Eager-load plan in one query.
-        | Never redirect here — the view handles the "no subscription" empty state.
-        |
-        */
-
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
@@ -35,47 +25,17 @@ class DashboardController extends Controller
         $plan           = $subscription?->plan;
         $planName       = $plan?->name ?? null;
         $portfolioLimit = $plan?->portfolio_limit ?? 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | DAYS REMAINING
-        |--------------------------------------------------------------------------
-        |
-        | Use the model helper (handles active vs. trial correctly).
-        |
-        */
+        $expiryDate     = $subscription?->ends_at ?? $subscription?->trial_ends_at;
 
         $daysLeft = $subscription?->daysRemaining() ?? 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | PORTFOLIO USAGE
-        |--------------------------------------------------------------------------
-        */
-
         $portfolioCount = Portfolio::where('user_id', $user->id)->count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | RECENT FILE UPLOADS (last 5)
-        |--------------------------------------------------------------------------
-        */
 
         $recentFiles = PortfolioFile::with('portfolio')
             ->where('user_id', $user->id)
             ->latest()
             ->take(5)
             ->get();
-
-        /*
-        |--------------------------------------------------------------------------
-        | RISK SCORE
-        |--------------------------------------------------------------------------
-        |
-        | null  = no score generated yet (show empty state in view)
-        | 0–100 = actual score
-        |
-        */
 
         $risk = RiskScore::where('user_id', $user->id)
             ->latest()
@@ -91,12 +51,6 @@ class DashboardController extends Controller
             default              => 'HIGH',
         };
 
-        /*
-        |--------------------------------------------------------------------------
-        | RECOMMENDATION & NEXT ACTION
-        |--------------------------------------------------------------------------
-        */
-
         $recommendation = match ($riskLevel) {
             'LOW'    => 'Portfolio stable. Continue monitoring.',
             'MEDIUM' => 'Review exposure and rebalance selectively.',
@@ -111,11 +65,9 @@ class DashboardController extends Controller
             default  => 'Upload a CSV, XLSX, or PDF portfolio file to get started.',
         };
 
-        /*
-        |--------------------------------------------------------------------------
-        | VIEW
-        |--------------------------------------------------------------------------
-        */
+        $portfolios = Portfolio::where('user_id', $user->id)
+            ->latest()
+            ->get();
 
         return view('user.dashboard', [
             'user'            => $user,
@@ -123,6 +75,7 @@ class DashboardController extends Controller
             'planName'        => $planName,
             'portfolioLimit'  => $portfolioLimit,
             'portfolioCount'  => $portfolioCount,
+            'expiryDate'      => $expiryDate,
             'recentFiles'     => $recentFiles,
             'daysLeft'        => $daysLeft,
             'riskScore'       => $riskScore,
@@ -130,6 +83,7 @@ class DashboardController extends Controller
             'riskGeneratedAt' => $riskGeneratedAt,
             'recommendation'  => $recommendation,
             'nextAction'      => $nextAction,
+            'portfolios'      => $portfolios,
         ]);
     }
 }

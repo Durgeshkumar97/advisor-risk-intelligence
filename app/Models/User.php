@@ -53,13 +53,21 @@ class User extends Authenticatable
         return $this->hasOne(\App\Models\Subscription::class)->latestOfMany();
     }
 
-    /**
-     * All subscriptions (collection, required by SubscriptionService::activate)
-     */
     public function subscriptions()
     {
         return $this->hasMany(\App\Models\Subscription::class);
     }
+
+    public function portfolios()
+    {
+        return $this->hasMany(\App\Models\Portfolio::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\Payment::class);
+    }
+
 
     /*
     |--------------------------------------------------------------------------

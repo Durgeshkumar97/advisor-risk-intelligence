@@ -19,28 +19,22 @@ class SubscriptionController extends Controller
 
     public function index(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
-        $user = Auth::user();
-
+        $user         = Auth::user();
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
             ->first();
 
-        if (!$subscription) {
-            return redirect()->route('pricing')
-                ->with('error', 'No subscription found. Choose a plan to get started.');
-        }
+        $plan     = $subscription?->plan;
+        $plans    = Plan::where('is_active', true)->orderBy('price')->get();
+        $daysLeft = $subscription ? $subscription->daysRemaining() : 0;
 
-        return view('user.subscription', [
-            'user'         => $user,
-            'subscription' => $subscription,
-            'plan'         => $subscription->plan,
-        ]);
+        return view('user.subscription', compact('subscription', 'plan', 'plans', 'daysLeft'));
     }
 
     /*
     |--------------------------------------------------------------------------
-    | CANCEL — soft cancel (marks ends_at as now, status stays active till then)
+    | CANCEL — soft cancel (marks status cancelled, access continues till ends_at)
     |--------------------------------------------------------------------------
     */
 
@@ -59,29 +53,19 @@ class SubscriptionController extends Controller
         }
 
         try {
-
-            /*
-            |------------------------------------------------------------------
-            | Soft cancel: subscription keeps running until ends_at,
-            | but we flag it so renewal does not auto-trigger.
-            | We set status = 'cancelled' to distinguish from 'expired'.
-            |------------------------------------------------------------------
-            */
-
-            $subscription->update([
-                'status' => 'cancelled',
-            ]);
+            $subscription->update(['status' => 'cancelled']);
 
             Log::info('Subscription cancelled by user.', [
                 'user_id'         => $user->id,
                 'subscription_id' => $subscription->id,
             ]);
 
+            $endDate = ($subscription->ends_at ?? $subscription->trial_ends_at)?->format('d M Y');
+
             return redirect()->route('subscription.index')
-                ->with('success', 'Your subscription has been cancelled. You retain access until ' . optional($subscription->ends_at)->format('d M Y') . '.');
+                ->with('success', 'Your subscription has been cancelled. You retain access until ' . $endDate . '.');
 
         } catch (\Throwable $e) {
-
             Log::error('Subscription cancellation failed.', [
                 'user_id'         => $user->id,
                 'subscription_id' => $subscription->id,

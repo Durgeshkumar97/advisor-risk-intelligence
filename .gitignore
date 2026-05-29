@@ -1,6 +1,11 @@
-# Laravel Core 
+# Laravel Core
 /vendor
 /node_modules
+
+# SQLite (local dev only — never commit a real DB)
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 /public/build
 /public/hot
 /storage/*.key

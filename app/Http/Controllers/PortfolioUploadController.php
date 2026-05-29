@@ -7,7 +7,7 @@ use App\Jobs\ProcessPortfolioFile;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\Subscription;
-use App\Services\PortfolioUploadException;
+use App\Exceptions\PortfolioUploadException;
 use App\Services\PortfolioUploadService;
 
 use Illuminate\Http\RedirectResponse;
@@ -20,12 +20,6 @@ use Illuminate\View\View;
 class PortfolioUploadController extends Controller
 {
     private const DISK = 'portfolios';
-
-    /*
-    |--------------------------------------------------------------------------
-    | CONSTRUCTOR
-    |--------------------------------------------------------------------------
-    */
 
     public function __construct(
         private readonly PortfolioUploadService $uploadService
@@ -41,12 +35,6 @@ class PortfolioUploadController extends Controller
     {
         $user = Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUBSCRIPTION GUARD
-        |--------------------------------------------------------------------------
-        */
-
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
@@ -57,21 +45,9 @@ class PortfolioUploadController extends Controller
                 ->with('error', 'An active subscription is required to upload portfolios.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PLAN LIMITS
-        |--------------------------------------------------------------------------
-        */
-
         $plan            = $subscription->plan;
         $portfolioLimit  = $plan->portfolio_limit ?? 1;
         $portfolioCount  = Portfolio::where('user_id', $user->id)->count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | USER PORTFOLIOS & FILES
-        |--------------------------------------------------------------------------
-        */
 
         $portfolios = Portfolio::query()
             ->where('user_id', $user->id)
@@ -103,12 +79,6 @@ class PortfolioUploadController extends Controller
     {
         $user = Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUBSCRIPTION GUARD (re-check on POST — never trust only the GET guard)
-        |--------------------------------------------------------------------------
-        */
-
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
@@ -120,7 +90,6 @@ class PortfolioUploadController extends Controller
         }
 
         try {
-
             $portfolioFile = $this->uploadService->handleUpload(
                 userId:      $user->id,
                 file:        $request->getFile(),
@@ -134,7 +103,6 @@ class PortfolioUploadController extends Controller
                 ->with('success', 'Portfolio uploaded successfully. Processing has started.');
 
         } catch (PortfolioUploadException $e) {
-
             Log::warning('Portfolio upload business error.', [
                 'message' => $e->getMessage(),
                 'user_id' => $user->id,
@@ -145,7 +113,6 @@ class PortfolioUploadController extends Controller
                 ->withInput();
 
         } catch (\Throwable $e) {
-
             Log::error('Portfolio upload failed unexpectedly.', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
@@ -168,44 +135,19 @@ class PortfolioUploadController extends Controller
     {
         $user = Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD + VERIFY OWNERSHIP
-        |--------------------------------------------------------------------------
-        */
-
         $file = PortfolioFile::query()
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
-
-        /*
-        |--------------------------------------------------------------------------
-        | BLOCK DELETION WHILE PROCESSING
-        |--------------------------------------------------------------------------
-        */
 
         if ($file->isProcessing()) {
             return back()->with('error', 'Cannot delete a file that is currently being processed.');
         }
 
         try {
-
-            /*
-            |------------------------------------------------------------------
-            | REMOVE FROM STORAGE (best-effort — don't fail if already gone)
-            |------------------------------------------------------------------
-            */
-
             if (Storage::disk(self::DISK)->exists($file->path)) {
                 Storage::disk(self::DISK)->delete($file->path);
             }
-
-            /*
-            |------------------------------------------------------------------
-            | DELETE DB RECORD
-            |------------------------------------------------------------------
-            */
 
             $file->delete();
 
@@ -219,7 +161,6 @@ class PortfolioUploadController extends Controller
                 ->with('success', 'File "' . $file->original_name . '" deleted.');
 
         } catch (\Throwable $e) {
-
             Log::error('Portfolio file deletion failed.', [
                 'portfolio_file_id' => $id,
                 'user_id'           => $user->id,

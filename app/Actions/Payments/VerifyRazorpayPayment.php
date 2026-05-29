@@ -7,7 +7,7 @@ use App\Services\RazorpayService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class VerifyRazorpayPaymentAction
+class VerifyRazorpayPayment
 {
     /**
      * Verify an incoming Razorpay callback and mark the payment as paid.
@@ -21,17 +21,6 @@ class VerifyRazorpayPaymentAction
     {
         return DB::transaction(function () use ($payload) {
 
-            /*
-            |----------------------------------------------------------------------
-            | SELECT WITH ROW LOCK
-            |----------------------------------------------------------------------
-            |
-            | lockForUpdate() only works inside an open transaction.
-            | Any concurrent request for the same order_id will block here
-            | until this transaction commits, preventing double-processing.
-            |
-            */
-
             $payment = Payment::query()
                 ->where('order_id', $payload['razorpay_order_id'])
                 ->lockForUpdate()
@@ -43,21 +32,9 @@ class VerifyRazorpayPaymentAction
                 ]);
             }
 
-            /*
-            |----------------------------------------------------------------------
-            | IDEMPOTENCY — already paid, return early
-            |----------------------------------------------------------------------
-            */
-
-            if ($payment->status === 'paid') {
+            if ($payment->status === Payment::STATUS_PAID) {
                 return $payment;
             }
-
-            /*
-            |----------------------------------------------------------------------
-            | SIGNATURE VERIFICATION
-            |----------------------------------------------------------------------
-            */
 
             $verified = app(RazorpayService::class)
                 ->verifySignature($payload);
@@ -68,16 +45,10 @@ class VerifyRazorpayPaymentAction
                 ]);
             }
 
-            /*
-            |----------------------------------------------------------------------
-            | MARK PAID
-            |----------------------------------------------------------------------
-            */
-
             $payment->update([
                 'payment_id' => $payload['razorpay_payment_id'],
                 'signature'  => $payload['razorpay_signature'],
-                'status'     => 'paid',
+                'status'     => Payment::STATUS_PAID,
                 'paid_at'    => now(),
             ]);
 

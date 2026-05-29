@@ -2,12 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    */
-
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
@@ -35,23 +29,10 @@ return [
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | WhatsApp (Meta Cloud API)
-    |--------------------------------------------------------------------------
-    |
-    | token           — permanent System User token from Meta Business Manager
-    | phone_number_id — numeric Phone Number ID (not the phone number itself)
-    | test_mode       — set true in dev/staging to log instead of send
-    |
-    | See DEPLOY.md § WhatsApp Setup for registration instructions.
-    |
-    */
-
     'whatsapp' => [
         'token'           => env('WHATSAPP_TOKEN', ''),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID', ''),
         'test_mode'       => (bool) env('WHATSAPP_TEST_MODE', false),
     ],
 
-];  
+];

@@ -6,7 +6,9 @@
    ROOT VARIABLES
 ===================================== */
 :root {
-  --nav-height: 64px;
+  color-scheme: light;
+
+  --nav-height: 80px;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -16,6 +18,7 @@
 
   --transition-fast: 0.2s ease;
   --transition-base: 0.3s ease;
+  --focus-ring: 0 0 0 3px rgba(212, 175, 55, 0.28);
 
   /* ── Light-mode fallbacks (prevents flash of unstyled dark content) ── */
   --ink: #0b1220;
@@ -51,9 +54,12 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
+  min-height: 100vh;
   margin: 0;
   padding-top: var(--nav-height);
   overflow-x: hidden;
@@ -87,6 +93,7 @@ canvas {
 a {
   color: inherit;
   text-decoration: none;
+  text-underline-offset: 0.18em;
 }
 
 button,
@@ -96,14 +103,46 @@ select {
   font: inherit;
 }
 
+input,
+textarea,
+select {
+  min-height: 44px;
+}
+
 button {
+  border: 0;
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gold) 42%, transparent);
+  outline-offset: 3px;
+}
+
+@supports not (color: color-mix(in srgb, white, black)) {
+  :focus-visible {
+    box-shadow: var(--focus-ring);
+    outline: none;
+  }
 }
 
 /* =====================================
    LIGHT THEME
 ===================================== */
 [data-theme="light"] {
+  color-scheme: light;
+
   --ink: #0b1220;
   --ink-2: #1e293b;
   --ink-3: #475569;
@@ -122,12 +161,15 @@ button {
 
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --focus-ring: 0 0 0 3px rgba(212, 175, 55, 0.28);
 }
 
 /* =====================================
    DARK THEME
 ===================================== */
 [data-theme="dark"] {
+  color-scheme: dark;
+
   --ink: #f1f5f9;
   --ink-2: #e2e8f0;
   --ink-3: #94a3b8;
@@ -146,6 +188,7 @@ button {
 
   --shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   --shadow-hover: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --focus-ring: 0 0 0 3px rgba(240, 192, 64, 0.32);
 }
 
 /* =====================================
@@ -290,7 +333,14 @@ button {
   border-radius: var(--radius-sm);
 
   transition: var(--transition-fast);
-  will-change: transform;
+  will-change: transform, opacity;
+}
+
+.btn-primary:focus-visible,
+.btn-outline:focus-visible,
+.checkout-btn:focus-visible,
+#theme-toggle:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 .btn-primary {
@@ -331,12 +381,25 @@ button {
 
   box-shadow: var(--shadow);
   transition: var(--transition-fast);
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
+}
+
+@media (hover: none) {
+  .btn-primary:hover,
+  .btn-outline:hover,
+  .card:hover,
+  .pricing-card:hover,
+  .built-for-card:hover,
+  .dashboard-card:hover,
+  .dashboard-btn:hover,
+  .checkout-btn:hover {
+    transform: none;
+  }
 }
 
 /* =====================================
@@ -362,9 +425,28 @@ select {
   color: var(--ink);
 }
 
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  min-width: auto;
+  min-height: auto;
+  accent-color: var(--gold);
+}
+
 textarea {
   resize: vertical;
-  min-height: auto;
+  min-height: 7rem;
+}
+
+::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
 }
 
 input:focus,
@@ -372,7 +454,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  box-shadow: var(--focus-ring);
 }
 
 /* =====================================
@@ -387,8 +469,6 @@ select:focus {
   transition:
     opacity 0.8s ease,
     transform 0.8s ease;
-
-  will-change: transform, opacity;
 }
 
 .reveal-left {
@@ -429,6 +509,37 @@ select:focus {
 
 .reveal-delay-4 {
   transition-delay: 0.6s;
+}
+
+html:not(.app-ready) .reveal {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal,
+  .reveal-left,
+  .reveal-right,
+  .reveal-up,
+  .reveal-pop {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
 }
 
 /* =====================================
@@ -522,7 +633,7 @@ select:focus {
 }
 
 .built-for-card::before {
-  content: "• ";
+  content: "\2022 ";
   color: var(--gold);
   font-weight: 700;
 }
@@ -581,7 +692,7 @@ select:focus {
 
   color: var(--ink);
 
-  font-size: 2.6rem;
+  font-size: clamp(2rem, 8vw, 2.6rem);
   font-weight: 800;
   line-height: 1.08;
 }
@@ -782,6 +893,10 @@ select:focus {
   border: 1px solid rgba(239, 68, 68, 0.18);
   border-radius: 12px;
 
+  color: var(--red);
+}
+
+[data-theme="dark"] .alert-box {
   color: #fecaca;
 }
 
@@ -846,7 +961,7 @@ select:focus {
 @media (max-width: 768px) {
 
   :root {
-    --nav-height: 60px;
+    --nav-height: 80px;
   }
 
   body {
@@ -863,7 +978,6 @@ select:focus {
   section {
     width: 100%;
     padding: 2.5rem 0;
-    overflow: hidden;
   }
 
   .hero-grid,
@@ -917,12 +1031,15 @@ select:focus {
   }
 
   #mobile-menu {
+    display: block;
     position: fixed;
     top: var(--nav-height);
     left: 0;
     right: 0;
 
     z-index: 1100;
+    max-height: calc(100vh - var(--nav-height));
+    overflow-y: auto;
 
     background: var(--nav-bg);
 
@@ -939,6 +1056,7 @@ select:focus {
   }
 
   #mobile-menu.open {
+    display: block;
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -977,6 +1095,25 @@ select:focus {
     font-size: .95rem;
   }
 
+  .dashboard-wrapper {
+    padding-block: 2rem 3rem;
+  }
+
+  .dashboard-title {
+    max-width: 100%;
+    font-size: 2.45rem;
+    line-height: 1.08;
+  }
+
+  .dashboard-subtitle,
+  .dashboard-message {
+    max-width: 100%;
+  }
+
+  .dashboard-risk-score {
+    font-size: 3.25rem;
+  }
+
   img,
   svg,
   video,
@@ -1005,6 +1142,19 @@ select:focus {
   h1 { font-size: 1.75rem; }
   h2 { font-size: 1.28rem; }
   p  { font-size: .92rem;  }
+
+  .dashboard-title {
+    font-size: 2rem;
+  }
+
+  .dashboard-value {
+    font-size: 2.25rem;
+  }
+
+  .dashboard-card {
+    min-height: 220px;
+    padding: 1.25rem;
+  }
 
   .btn-primary,
   .btn-outline {
@@ -1222,6 +1372,7 @@ select:focus {
 }
 
 .dashboard-card:hover {
+  border-color: var(--gold);
   border-color: color-mix(in srgb, var(--gold) 32%, var(--paper-3));
   transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
@@ -1336,6 +1487,145 @@ select:focus {
 
 [data-theme="dark"] .dashboard-risk-badge-medium {
   color: #fbbf24;
+}
+
+/* =====================================
+   DASHBOARD EXPIRY WARNING
+===================================== */
+
+.dashboard-expiry-warning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md);
+  background: rgba(249, 115, 22, 0.10);
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  color: #f97316;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dashboard-expiry-warning a {
+  color: #f97316;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.dashboard-expiry-expired {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #ef4444;
+}
+
+.dashboard-expiry-expired a {
+  color: #ef4444;
+}
+
+/* =====================================
+   DASHBOARD RISK GAUGE
+===================================== */
+
+.dashboard-gauge {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.dashboard-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-gauge-fill-low    { background: #22c55e; }
+.dashboard-gauge-fill-medium { background: #f59e0b; }
+.dashboard-gauge-fill-high   { background: #ef4444; }
+
+/* =====================================
+   DASHBOARD PORTFOLIOS SECTION
+===================================== */
+
+.dashboard-portfolios-section {
+  margin-top: 2.5rem;
+}
+
+.dashboard-section-heading {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-portfolio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--paper-3);
+  margin-bottom: 0.75rem;
+  transition: border-color var(--transition-fast);
+}
+
+.dashboard-portfolio-row:hover {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--paper-3));
+}
+
+[data-theme="light"] .dashboard-portfolio-row {
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+[data-theme="dark"] .dashboard-portfolio-row {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-portfolio-name {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.dashboard-portfolio-meta {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+  margin-top: 0.25rem;
+}
+
+.dashboard-portfolio-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.dashboard-portfolio-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.dashboard-portfolio-empty {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--paper-3);
+  border-radius: var(--radius-md);
+}
+
+.dashboard-portfolio-empty a {
+  color: var(--gold);
+  font-weight: 700;
 }
 
 /* =====================================
@@ -1495,6 +1785,9 @@ select:focus {
 ===================================== */
 
 .dashboard-btn-secondary {
+
+  background:
+    rgba(255, 255, 255, 0.72);
 
   background:
     color-mix(

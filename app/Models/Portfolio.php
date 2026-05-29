@@ -67,7 +67,7 @@ class Portfolio extends Model
     }
 
     /**
-     * Uploaded files
+     * Uploaded files (PortfolioFile records)
      */
     public function files(): HasMany
     {

@@ -18,6 +18,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProcessPortfolioFile implements ShouldQueue
 {
@@ -26,50 +27,29 @@ class ProcessPortfolioFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    /*
-    |--------------------------------------------------------------------------
-    | QUEUE SETTINGS
-    |--------------------------------------------------------------------------
-    */
-
-    public int $timeout = 300;
-
-    public int $tries = 3;
-
-    public int $backoff = 60;
-
+    public int $timeout      = 300;
+    public int $tries        = 3;
+    public int $backoff      = 60;
     public int $maxExceptions = 3;
 
-    private const DISK = 'portfolios';
-
-    /*
-    |--------------------------------------------------------------------------
-    | CONSTRUCTOR
-    |--------------------------------------------------------------------------
-    */
+    private const DISK               = 'portfolios';
+    private const ALLOWED_EXTENSIONS = ['csv', 'xlsx', 'xls', 'pdf'];
+    private const MIME_MAP           = [
+        'csv'  => 'text/csv',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls'  => 'application/vnd.ms-excel',
+        'pdf'  => 'application/pdf',
+    ];
 
     public function __construct(
         public readonly PortfolioFile $portfolioFile
     ) {}
 
-    /*
-    |--------------------------------------------------------------------------
-    | HANDLE
-    |--------------------------------------------------------------------------
-    */
-
     public function handle(
-        PortfolioParser          $parser,
-        AssetRiskScorer          $assetScorer,
-        PortfolioRiskCalculator  $calculator
+        PortfolioParser         $parser,
+        AssetRiskScorer         $assetScorer,
+        PortfolioRiskCalculator $calculator
     ): void {
-
-        /*
-        |----------------------------------------------------------------------
-        | REFRESH MODEL
-        |----------------------------------------------------------------------
-        */
-
         $file = $this->portfolioFile->fresh();
 
         if (!$file) {
@@ -77,25 +57,12 @@ class ProcessPortfolioFile implements ShouldQueue
             return;
         }
 
-        /*
-        |----------------------------------------------------------------------
-        | PREVENT DUPLICATE PROCESSING
-        |----------------------------------------------------------------------
-        */
-
         if ($file->status === PortfolioFile::STATUS_PROCESSED) {
             Log::info('ProcessPortfolioFile: already processed.', ['id' => $file->id]);
             return;
         }
 
         try {
-
-            /*
-            |------------------------------------------------------------------
-            | MARK PROCESSING
-            |------------------------------------------------------------------
-            */
-
             $file->update([
                 'status' => PortfolioFile::STATUS_PROCESSING,
                 'meta'   => array_merge($file->meta ?? [], [
@@ -110,52 +77,37 @@ class ProcessPortfolioFile implements ShouldQueue
                 'filename' => $file->original_name,
             ]);
 
-            /*
-            |------------------------------------------------------------------
-            | VERIFY PHYSICAL FILE EXISTS
-            |------------------------------------------------------------------
-            */
-
             if (!Storage::disk(self::DISK)->exists($file->path)) {
                 throw new \RuntimeException('Portfolio file missing from storage: ' . $file->path);
             }
 
-            $extension = strtolower(pathinfo($file->path, PATHINFO_EXTENSION));
+            $extension    = strtolower(pathinfo($file->path, PATHINFO_EXTENSION));
+            $absolutePath = Storage::disk(self::DISK)->path($file->path);
 
             /*
-            |------------------------------------------------------------------
-            | PARSE HOLDINGS
-            |------------------------------------------------------------------
+            | ZIP files: extract contained portfolio files and queue each one
+            | separately through this same pipeline.
             */
+            if ($extension === 'zip') {
+                $this->handleZipExtraction($file, $absolutePath);
+                return;
+            }
 
             $parseResult = $parser->parse($file);
             $holdings    = $parseResult['rows'];
             $parseErrors = $parseResult['errors'];
 
             Log::info('ProcessPortfolioFile: parsed.', [
-                'id'          => $file->id,
-                'rows_found'  => count($holdings),
-                'parse_errors'=> $parseErrors,
+                'id'           => $file->id,
+                'rows_found'   => count($holdings),
+                'parse_errors' => $parseErrors,
             ]);
-
-            /*
-            |------------------------------------------------------------------
-            | PERSIST ASSETS (inside a transaction)
-            |------------------------------------------------------------------
-            */
 
             $portfolioId = $file->portfolio_id;
 
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator
             ) {
-
-                /*
-                |--------------------------------------------------------------
-                | DELETE OLD ASSETS FOR THIS FILE'S PORTFOLIO (re-process safe)
-                |--------------------------------------------------------------
-                */
-
                 if ($portfolioId) {
                     PortfolioAsset::where('portfolio_id', $portfolioId)->delete();
                 }
@@ -163,12 +115,7 @@ class ProcessPortfolioFile implements ShouldQueue
                 $assetModels = collect();
 
                 foreach ($holdings as $row) {
-
-                    // Score each asset individually
-                    $assetScore = $assetScorer->score(
-                        $row['asset_type'],
-                        $row['name']
-                    );
+                    $assetScore = $assetScorer->score($row['asset_type'], $row['name']);
 
                     $asset = PortfolioAsset::create([
                         'portfolio_id'   => $portfolioId,
@@ -190,30 +137,14 @@ class ProcessPortfolioFile implements ShouldQueue
                     $assetModels->push($asset);
                 }
 
-                /*
-                |--------------------------------------------------------------
-                | RECALCULATE PORTFOLIO TOTALS
-                |--------------------------------------------------------------
-                */
-
                 if ($portfolioId && $assetModels->isNotEmpty()) {
-
-                    /** @var Portfolio $portfolio */
                     $portfolio = Portfolio::find($portfolioId);
-
                     if ($portfolio) {
                         $portfolio->recalculateMetrics();
                     }
                 }
 
-                /*
-                |--------------------------------------------------------------
-                | GENERATE IMMEDIATE RISK SCORE SNAPSHOT
-                |--------------------------------------------------------------
-                */
-
                 if ($assetModels->isNotEmpty()) {
-
                     $result = $calculator->calculate($assetModels);
 
                     RiskScore::create([
@@ -239,12 +170,6 @@ class ProcessPortfolioFile implements ShouldQueue
                 }
             });
 
-            /*
-            |------------------------------------------------------------------
-            | MARK PROCESSED
-            |------------------------------------------------------------------
-            */
-
             $file->update([
                 'status'       => PortfolioFile::STATUS_PROCESSED,
                 'processed_at' => now(),
@@ -262,13 +187,6 @@ class ProcessPortfolioFile implements ShouldQueue
             ]);
 
         } catch (\Throwable $e) {
-
-            /*
-            |------------------------------------------------------------------
-            | MARK FAILED
-            |------------------------------------------------------------------
-            */
-
             $file->update([
                 'status' => PortfolioFile::STATUS_FAILED,
                 'meta'   => array_merge($file->meta ?? [], [
@@ -286,5 +204,128 @@ class ProcessPortfolioFile implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    private function handleZipExtraction(PortfolioFile $file, string $absolutePath): void
+    {
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('', true);
+
+        mkdir($tempDir, 0755, true);
+
+        try {
+            $zip    = new \ZipArchive();
+            $result = $zip->open($absolutePath);
+
+            if ($result !== true) {
+                throw new \Exception("Failed to open ZIP archive (ZipArchive error code: {$result}).");
+            }
+
+            $zip->extractTo($tempDir);
+            $zip->close();
+
+            $extractedCount = 0;
+            $skippedCount   = 0;
+            $realTempDir    = realpath($tempDir);
+
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $extractedFile) {
+                if ($extractedFile->isDir()) {
+                    continue;
+                }
+
+                $realFilePath = realpath($extractedFile->getPathname());
+
+                if ($realFilePath === false || !str_starts_with($realFilePath, $realTempDir)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $originalName = $extractedFile->getFilename();
+
+                if (str_starts_with($originalName, '.') || str_starts_with($originalName, '__')) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $ext = strtolower($extractedFile->getExtension());
+
+                if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $directory      = now()->format('Y/m');
+                $storedFilename = Str::uuid()->toString() . '.' . $ext;
+                $storedPath     = $directory . '/' . $storedFilename;
+
+                Storage::disk(self::DISK)->put($storedPath, file_get_contents($realFilePath));
+
+                $childFile = PortfolioFile::create([
+                    'user_id'       => $file->user_id,
+                    'portfolio_id'  => $file->portfolio_id,
+                    'original_name' => $originalName,
+                    'stored_name'   => $storedFilename,
+                    'path'          => $storedPath,
+                    'mime_type'     => self::MIME_MAP[$ext] ?? 'application/octet-stream',
+                    'file_size'     => $extractedFile->getSize(),
+                    'status'        => PortfolioFile::STATUS_PENDING,
+                    'meta'          => [
+                        'uploaded_at'             => now()->toIso8601String(),
+                        'extension'               => $ext,
+                        'extracted_from_zip_id'   => $file->id,
+                        'extracted_from_zip_name' => $file->original_name,
+                    ],
+                ]);
+
+                self::dispatch($childFile);
+                $extractedCount++;
+            }
+
+            $file->update([
+                'status'       => PortfolioFile::STATUS_PROCESSED,
+                'processed_at' => now(),
+                'meta'         => array_merge($file->meta ?? [], [
+                    'processing_completed_at' => now()->toIso8601String(),
+                    'extension'               => 'zip',
+                    'extracted_files_count'   => $extractedCount,
+                    'skipped_files_count'     => $skippedCount,
+                ]),
+            ]);
+
+            Log::info('ZIP archive extracted and queued.', [
+                'portfolio_file_id' => $file->id,
+                'user_id'           => $file->user_id,
+                'extracted'         => $extractedCount,
+                'skipped'           => $skippedCount,
+            ]);
+
+        } finally {
+            $this->cleanupTempDir($tempDir);
+        }
+    }
+
+    private function cleanupTempDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $fileInfo) {
+            if ($fileInfo->isDir()) {
+                @rmdir($fileInfo->getRealPath());
+            } else {
+                @unlink($fileInfo->getRealPath());
+            }
+        }
+
+        @rmdir($dir);
     }
 }

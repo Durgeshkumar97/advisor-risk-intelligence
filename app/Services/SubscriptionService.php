@@ -25,86 +25,39 @@ class SubscriptionService
 
     public function activate(Payment $payment): User
     {
-        /*
-        |----------------------------------------------------------------------
-        | IDEMPOTENCY GUARD
-        |----------------------------------------------------------------------
-        */
-
-        $payment->refresh();
-
-        if ($payment->processed_at) {
-
-            Log::info('SubscriptionService: payment already processed, skipping.', [
-                'payment_id' => $payment->id,
-            ]);
-
-            return $payment->user ?? $this->findOrCreateUser($payment);
-        }
-
-        /*
-        |----------------------------------------------------------------------
-        | USER
-        |----------------------------------------------------------------------
-        */
-
-        $user = $this->findOrCreateUser($payment);
-
-        /*
-        |----------------------------------------------------------------------
-        | PLAN
-        |----------------------------------------------------------------------
-        */
-
         $plan = Plan::find($payment->plan_id);
 
         if (!$plan) {
-
             Log::error('SubscriptionService: plan not found.', [
                 'plan_id'    => $payment->plan_id,
                 'payment_id' => $payment->id,
             ]);
-
-            throw new \RuntimeException(
-                "Plan {$payment->plan_id} not found."
-            );
+            throw new \RuntimeException("Plan {$payment->plan_id} not found.");
         }
 
-        /*
-        |----------------------------------------------------------------------
-        | SUBSCRIPTION (idempotent — skip if already active on same plan)
-        |----------------------------------------------------------------------
-        */
+        $user = $this->findOrCreateUser($payment);
 
-        $alreadyActive = Subscription::query()
-            ->where('user_id', $user->id)
-            ->where('plan_id', $plan->id)
-            ->where('status', 'active')
-            ->exists();
+        $durationDays = $plan->duration_days ?? 30;
+        $startsAt     = now();
+        $endsAt       = $startsAt->copy()->addDays($durationDays);
 
-        if (!$alreadyActive) {
-
-            $durationDays = $plan->duration_days ?? 30;
-
-            Subscription::create([
-                'user_id'    => $user->id,
+        $user->subscriptions()->updateOrCreate(
+            [
+                'provider'                  => 'razorpay',
+                'provider_subscription_id'  => $payment->payment_id,
+            ],
+            [
                 'plan_id'    => $plan->id,
+                'starts_at'  => $startsAt,
+                'ends_at'    => $endsAt,
+                'renewal_at' => $endsAt,
                 'status'     => 'active',
-                'starts_at'  => now(),
-                'ends_at'    => now()->addDays($durationDays),
-                'renewal_at' => now()->addDays($durationDays),
-                'provider'   => 'razorpay',
-            ]);
-        }
-
-        /*
-        |----------------------------------------------------------------------
-        | MARK PAYMENT PROCESSED
-        |----------------------------------------------------------------------
-        */
+            ]
+        );
 
         $payment->update([
             'user_id'      => $user->id,
+            'status'       => Payment::STATUS_PAID,
             'processed_at' => now(),
         ]);
 

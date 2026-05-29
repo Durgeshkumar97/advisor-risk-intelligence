@@ -3,9 +3,10 @@
 @section('content')
 
 @php
-    $mrr = $mrr ?? 0;
-    $arr = $arr ?? 0;
+    $mrr        = $mrr ?? 0;
+    $arr        = $arr ?? 0;
     $conversion = $conversion ?? 0;
+    $plans      = $plans ?? collect();
 @endphp
 
 <div class="dashboard-shell">
@@ -29,13 +30,24 @@
 
             <div class="actions">
 
+                <a href="{{ route('admin.users.index') }}" class="btn btn-outline">
+                    Users
+                </a>
+
+                <a href="{{ route('admin.payments.index') }}" class="btn btn-outline">
+                    Payments
+                </a>
+
+                <a href="{{ route('admin.intakes.index') }}" class="btn btn-outline">
+                    Intakes
+                </a>
+
                 <a href="/" class="btn btn-outline">
                     View Site
                 </a>
 
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
-
                     <button type="submit" class="btn btn-outline">
                         Logout
                     </button>
@@ -50,26 +62,26 @@
 
             <div class="card metric">
                 <small>MRR</small>
-                <h2 class="purple">₹{{ number_format($mrr) }}</h2>
+                <h2 class="purple">&#8377;{{ number_format($mrr) }}</h2>
                 <span>Booked monthly revenue</span>
             </div>
 
             <div class="card metric">
                 <small>ARR</small>
-                <h2>₹{{ number_format($arr) }}</h2>
+                <h2>&#8377;{{ number_format($arr) }}</h2>
                 <span>Annual recurring revenue</span>
             </div>
 
             <div class="card metric">
                 <small>Pipeline MRR</small>
-                <h2 class="green">₹{{ number_format($pipelineMRR ?? 0) }}</h2>
+                <h2 class="green">&#8377;{{ number_format($pipelineMRR ?? 0) }}</h2>
                 <span>Potential from leads</span>
             </div>
 
             <div class="card metric">
                 <small>Conversion</small>
                 <h2 class="yellow">{{ $conversion }}%</h2>
-                <span>Lead → paid</span>
+                <span>Lead &rarr; paid</span>
             </div>
 
             <div class="card metric">
@@ -86,134 +98,196 @@
 
         </div>
 
-        {{-- FILTERS (link to intakes index) --}}
-        <form method="GET" action="{{ route('admin.intakes.index') }}" class="card mt-18">
+        {{-- USER STATUS BAR --}}
+        <div class="card mt-18">
+            <div class="user-status-bar">
 
-            <div class="grid filters-grid">
+                <div class="status-item">
+                    <small>Active Trials</small>
+                    <h2 class="yellow">{{ $activeTrials }}</h2>
+                    <a href="{{ route('admin.users.index') }}" class="status-link">View all</a>
+                </div>
 
-                <select name="plan" class="field">
-                    <option value="all">All Plans</option>
-                    <option value="starter">Starter</option>
-                    <option value="pro">Pro</option>
-                    <option value="team">Team</option>
-                </select>
+                <div class="status-divider"></div>
 
-                <select name="status" class="field">
-                    <option value="all">All Status</option>
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="converted">Converted</option>
-                    <option value="lost">Lost</option>
-                </select>
+                <div class="status-item">
+                    <small>Paid Users</small>
+                    <h2 class="green">{{ $paidUsers }}</h2>
+                    <a href="{{ route('admin.users.index') }}" class="status-link">View all</a>
+                </div>
 
-                <select name="days" class="field">
-                    <option value="">All Time</option>
-                    <option value="1">Today</option>
-                    <option value="7">1 Week</option>
-                    <option value="14">2 Weeks</option>
-                    <option value="30">1 Month</option>
-                    <option value="90">Quarterly</option>
-                </select>
+                <div class="status-divider"></div>
 
-                <input name="search" class="field" placeholder="Search lead / phone / email">
+                <div class="status-item">
+                    <small>Expired</small>
+                    <h2 style="color:#ef4444">{{ $expiredUsers }}</h2>
+                    <a href="{{ route('admin.users.index') }}" class="status-link">View all</a>
+                </div>
+
+                <div class="status-divider"></div>
+
+                <div class="status-item">
+                    <small>Total Leads</small>
+                    <h2>{{ $totalLeads }}</h2>
+                    <a href="{{ route('admin.intakes.index') }}" class="status-link">View all</a>
+                </div>
 
             </div>
+        </div>
 
-            <div style="margin-top:12px;text-align:right;">
-                <button type="submit" class="btn btn-outline" style="padding:10px 20px;">
-                    Search Leads →
-                </button>
-            </div>
+        {{-- FILTERS + MAIN GRID — Alpine.js reactive wrapper --}}
+        <div x-data="{ plan: '', status: '', search: '' }">
 
-        </form>
+            {{-- FILTERS --}}
+            <div class="card mt-18">
 
-        {{-- MAIN GRID --}}
-        <div class="main-grid">
+                <div class="grid filters-grid">
 
-            {{-- LEFT SIDE --}}
-            <div class="stack">
+                    <select x-model="plan" class="field">
+                        <option value="">All Plans</option>
+                        <option value="starter">Starter</option>
+                        <option value="pro">Pro</option>
+                        <option value="team">Team</option>
+                    </select>
 
-                {{-- REVENUE PIPELINE --}}
-                <div class="card">
+                    <select x-model="status" class="field">
+                        <option value="">All Status</option>
+                        <option value="new">New</option>
+                        <option value="trial">Trial</option>
+                        <option value="converted">Converted</option>
+                        <option value="churned">Churned</option>
+                    </select>
 
-                    <div class="head">
-                        <h3>Revenue Pipeline</h3>
-                        <span>{{ $recentLeads?->count() ?? 0 }} active leads</span>
-                    </div>
+                    <select class="field">
+                        <option>Today</option>
+                        <option>1 Week</option>
+                        <option>2 Weeks</option>
+                        <option>1 Month</option>
+                        <option>Quarterly</option>
+                        <option>Half-Yearly</option>
+                        <option>Yearly</option>
+                    </select>
 
-                    <div class="table-wrap">
-                        <table class="table">
-
-                            <thead>
-                                <tr>
-                                    <th>Lead</th>
-                                    <th>Plan</th>
-                                    <th>Stage</th>
-                                    <th>Value</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                            @forelse($recentLeads ?? [] as $lead)
-                                @php
-                                    $planPrice = match($lead->selected_plan ?? '') {
-                                        'pro'  => $proPrice,
-                                        'team' => $teamPrice,
-                                        default => $starterPrice,
-                                    };
-                                    $stagePill = match($lead->status ?? 'new') {
-                                        'contacted' => ['cls' => 'yellow-pill', 'lbl' => 'Contacted'],
-                                        'converted' => ['cls' => 'green-pill',  'lbl' => 'Converted'],
-                                        'lost'      => ['cls' => 'red-pill',    'lbl' => 'Lost'],
-                                        default     => ['cls' => 'blue-pill',   'lbl' => 'New'],
-                                    };
-                                @endphp
-                                <tr>
-                                    <td>
-                                        <a href="{{ route('admin.intakes.show', $lead->id) }}" style="color:#fff;text-decoration:none;">
-                                            <strong>{{ $lead->name }}</strong>
-                                        </a><br>
-                                        <small>{{ $lead->phone }}</small>
-                                    </td>
-
-                                    <td>{{ ucfirst($lead->selected_plan ?? '—') }}</td>
-
-                                    <td>
-                                        <span class="pill {{ $stagePill['cls'] }}">{{ $stagePill['lbl'] }}</span>
-                                    </td>
-
-                                    <td>₹{{ number_format($planPrice) }}</td>
-
-                                    <td>
-                                        <a href="{{ route('admin.intakes.show', $lead->id) }}" class="green-text" style="text-decoration:none;font-size:13px;">
-                                            View →
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="muted center">No leads found.</td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-
-                        </table>
-                    </div>
+                    <input
+                        x-model="search"
+                        class="field"
+                        placeholder="Search name / phone / email">
 
                 </div>
 
-                {{-- UPGRADE OPPORTUNITIES --}}
-                <div class="card">
+            </div>
 
-                    <div class="head">
-                        <h3>Upgrade Opportunities</h3>
-                        <span>High intent leads</span>
+            {{-- MAIN GRID --}}
+            <div class="main-grid">
+
+                {{-- LEFT SIDE --}}
+                <div class="stack">
+
+                    {{-- REVENUE PIPELINE --}}
+                    <div class="card">
+
+                        <div class="head">
+                            <h3>Revenue Pipeline</h3>
+                            <span>{{ $recentLeads?->count() ?? 0 }} leads</span>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table class="table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Lead</th>
+                                        <th>Plan</th>
+                                        <th>Stage</th>
+                                        <th>Value</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                @forelse($recentLeads ?? [] as $lead)
+
+                                @php
+                                    $leadStatus  = $lead->status ?? 'new';
+                                    $statusPill  = match($leadStatus) {
+                                        'converted', 'paid' => 'green-pill',
+                                        'trial'             => 'blue-pill',
+                                        default             => 'yellow-pill',
+                                    };
+                                    $leadValue   = $plans->get($lead->selected_plan, 999);
+                                    $searchStr   = strtolower(($lead->name ?? '') . ' ' . ($lead->phone ?? '') . ' ' . ($lead->email ?? ''));
+                                @endphp
+
+                                <tr
+                                    data-plan="{{ $lead->selected_plan }}"
+                                    data-status="{{ $leadStatus }}"
+                                    data-search="{{ $searchStr }}"
+                                    x-show="
+                                        (plan === '' || plan === $el.dataset.plan) &&
+                                        (status === '' || status === $el.dataset.status) &&
+                                        (search === '' || $el.dataset.search.includes(search.toLowerCase()))
+                                    "
+                                >
+                                    <td>
+                                        <strong>{{ $lead->name }}</strong><br>
+                                        <small>{{ $lead->phone }}</small>
+                                    </td>
+
+                                    <td>{{ ucfirst($lead->selected_plan) }}</td>
+
+                                    <td>
+                                        <span class="pill {{ $statusPill }}">
+                                            {{ ucfirst($leadStatus) }}
+                                        </span>
+                                    </td>
+
+                                    <td>&#8377;{{ number_format($leadValue) }}</td>
+
+                                    <td>
+                                        <a href="{{ route('admin.intakes.index') }}" class="green-text">
+                                            Follow-up
+                                        </a>
+                                    </td>
+                                </tr>
+
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="muted center">No leads found.</td>
+                                </tr>
+                                @endforelse
+                                </tbody>
+
+                            </table>
+                        </div>
+
                     </div>
 
-                    @forelse($recentLeads ?? [] as $lead)
-                        <div class="list-row">
+                    {{-- UPGRADE OPPORTUNITIES --}}
+                    <div class="card">
 
+                        <div class="head">
+                            <h3>Upgrade Opportunities</h3>
+                            <span>High intent leads</span>
+                        </div>
+
+                        @forelse($recentLeads ?? [] as $lead)
+
+                        @php
+                            $uStatus    = $lead->status ?? 'new';
+                            $uSearchStr = strtolower(($lead->name ?? '') . ' ' . ($lead->phone ?? '') . ' ' . ($lead->email ?? ''));
+                        @endphp
+
+                        <div
+                            class="list-row"
+                            data-plan="{{ $lead->selected_plan }}"
+                            data-status="{{ $uStatus }}"
+                            data-search="{{ $uSearchStr }}"
+                            x-show="
+                                (plan === '' || plan === $el.dataset.plan) &&
+                                (status === '' || status === $el.dataset.status) &&
+                                (search === '' || $el.dataset.search.includes(search.toLowerCase()))
+                            "
+                        >
                             <div>
                                 <div class="strong">{{ $lead->name }}</div>
                                 <div class="mini-muted">{{ $lead->phone }}</div>
@@ -227,227 +301,186 @@
                             </div>
 
                         </div>
-                    @empty
+
+                        @empty
                         <div class="muted">No upgrade opportunities.</div>
-                    @endforelse
+                        @endforelse
+
+                    </div>
+
+                    {{-- WEEKLY FUNNEL --}}
+                    <div class="card">
+
+                        <div class="head">
+                            <h3>Weekly Funnel</h3>
+                            <span>Leak detection</span>
+                        </div>
+
+                        <div class="grid funnel-grid center">
+                            <div><small>Visitors</small><h2>112</h2></div>
+                            <div><small>Leads</small><h2>{{ $totalLeads }}</h2></div>
+                            <div><small>Trials</small><h2>{{ $activeTrials }}</h2></div>
+                            <div><small>Paid</small><h2>{{ $paidUsers }}</h2></div>
+                        </div>
+
+                    </div>
 
                 </div>
 
-                {{-- WEEKLY FUNNEL --}}
-                <div class="card">
+                {{-- RIGHT SIDE --}}
+                <div class="stack">
 
-                    <div class="head">
-                        <h3>Weekly Funnel</h3>
-                        <span>Leak detection</span>
-                    </div>
-
-                    <div class="grid funnel-grid center">
-                        <div><small>Visitors</small><h2>112</h2></div>
-                        <div><small>Leads</small><h2>18</h2></div>
-                        <div><small>Trials</small><h2>6</h2></div>
-                        <div><small>Paid</small><h2>1</h2></div>
-                    </div>
-
-                </div>
-
-            </div>
-            
-            {{-- RIGHT SIDE --}}
-            <div class="stack">
-
-                {{-- THREAT RADAR --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>AI Threat Radar V2</h3>
-                        <span>{{ now()->format('h:i A') }}</span>
-                    </div>
-
-                    <div class="mini-grid">
-
-                        <div class="mini-box">
-                            <small>Threat Score</small>
-                            <h2>{{ $threatScore ?? 0 }}</h2>
+                    {{-- THREAT RADAR --}}
+                    <div class="card">
+                        <div class="head">
+                            <h3>AI Threat Radar V2</h3>
+                            <span>{{ now()->format('h:i A') }}</span>
                         </div>
 
-                        <div class="mini-box">
-                            <small>Risk Level</small>
-                            @php $riskColorStyle = 'color:' . ($riskColor ?? '#22c55e'); @endphp
-                            <h2 style="{{ $riskColorStyle }}">
-                                {{ $riskLevel ?? 'LOW' }}
-                            </h2>
-                        </div>
+                        <div class="mini-grid">
 
-                        <div class="mini-box">
-                            <small>Top Attacker IP</small>
-                            <h2 class="small-title">
-                                {{ optional($topAttacker)->ip ?? 'None' }}
-                            </h2>
-                        </div>
-
-                        <div class="mini-box">
-                            <small>Attempts</small>
-                            <h2>{{ optional($topAttacker)->total ?? 0 }}</h2>
-                        </div>
-
-                        <div class="mini-box full">
-                            <small>AI Recommendation</small>
-                            <div class="mini-copy">
-                                {{ $aiRecommendation ?? 'Normal monitoring only.' }}
+                            <div class="mini-box">
+                                <small>Threat Score</small>
+                                <h2>{{ $threatScore ?? 0 }}</h2>
                             </div>
+
+                            <div class="mini-box">
+                                <small>Risk Level</small>
+                                <h2 style="color:{{ $riskColor ?? '#22c55e' }}">
+                                    {{ $riskLevel ?? 'LOW' }}
+                                </h2>
+                            </div>
+
+                            <div class="mini-box">
+                                <small>Top Attacker IP</small>
+                                <h2 class="small-title">
+                                    {{ optional($topAttacker)->ip ?? 'None' }}
+                                </h2>
+                            </div>
+
+                            <div class="mini-box">
+                                <small>Attempts</small>
+                                <h2>{{ optional($topAttacker)->total ?? 0 }}</h2>
+                            </div>
+
+                            <div class="mini-box full">
+                                <small>AI Recommendation</small>
+                                <div class="mini-copy">
+                                    {{ $aiRecommendation ?? 'Normal monitoring only.' }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {{-- SECURITY EVENTS --}}
+                    <div class="card">
+                        <div class="head">
+                            <h3>Recent Security Events</h3>
+                            <span>{{ $recentSecurityEvents?->count() ?? 0 }}</span>
                         </div>
 
-                    </div>
-                </div>
+                        <div class="stack-sm">
 
-                {{-- SECURITY EVENTS --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Recent Security Events</h3>
-                        <span>{{ $recentSecurityEvents?->count() ?? 0 }}</span>
-                    </div>
-
-                    <div class="stack-sm">
-
-                        @forelse($recentSecurityEvents ?? [] as $event)
+                            @forelse($recentSecurityEvents ?? [] as $event)
                             <div class="event-box">
                                 <div class="strong small">
                                     {{ strtoupper($event->type ?? 'UNKNOWN') }}
                                 </div>
-
                                 <div class="mini-muted">
-                                    {{ $event->ip ?? 'N/A' }} • {{ $event->created_at ?? '' }}
+                                    {{ $event->ip ?? 'N/A' }} &bull; {{ $event->created_at ?? '' }}
                                 </div>
                             </div>
-                        @empty
+                            @empty
                             <div class="muted">No recent events.</div>
-                        @endforelse
+                            @endforelse
 
-                    </div>
-                </div>
-
-                {{-- QUICK SECURITY STATS --}}
-                <div class="card">
-                    <div class="mini-grid">
-
-                        <div class="mini-box">
-                            <small>Threat Attempts Today</small>
-                            <h2>{{ $threatAttemptsToday ?? 0 }}</h2>
                         </div>
-
-                        <div class="mini-box">
-                            <small>Unknown IP Alerts</small>
-                            <h2>{{ $unknownIpAlerts ?? 0 }}</h2>
-                        </div>
-
-                        <div class="mini-box">
-                            <small>Last Login Time</small>
-                            <h2 class="small-title">
-                                {{ $lastLogin ?? 'N/A' }}
-                            </h2>
-                        </div>
-
-                        <div class="mini-box">
-                            <small>Status</small>
-                            <h2 class="green">{{ $riskLevel ?? 'LOW' }}</h2>
-                        </div>
-
-                    </div>
-                </div>
-
-                {{-- RENEWALS --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Renewals At Risk</h3>
-                        <span>7 days</span>
                     </div>
 
-                    <h2 class="orange big-number">
-                        ₹{{ number_format($renewalValue ?? 0) }}
-                    </h2>
+                    {{-- QUICK SECURITY STATS --}}
+                    <div class="card">
+                        <div class="mini-grid">
 
-                    <p class="subtitle-sm">
-                        {{ $expiringSoon ?? 0 }} accounts need conversion push
-                    </p>
-                </div>
-
-                {{-- FOUNDER PRIORITIES --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Founder Priorities</h3>
-                        <span>Today stack</span>
-                    </div>
-
-                    <div class="stack-sm">
-                        <label class="task p1"><input type="checkbox"><span><strong>1.</strong> Close first Pro user</span></label>
-                        <label class="task p2"><input type="checkbox"><span><strong>2.</strong> Improve landing conversion copy</span></label>
-                        <label class="task p2"><input type="checkbox"><span><strong>3.</strong> Enable Razorpay auto capture</span></label>
-                        <label class="task p3"><input type="checkbox"><span><strong>4.</strong> Polish dashboard styling</span></label>
-                    </div>
-                </div>
-
-                {{-- RECENT PAYMENTS --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Recent Payments</h3>
-                        <span>₹{{ number_format($totalRevenue ?? 0) }} total</span>
-                    </div>
-
-                    <div class="stack-sm">
-                        @forelse($recentPayments ?? [] as $payment)
-                            <div class="list-row">
-                                <div>
-                                    <div class="strong" style="font-size:14px;">{{ $payment->user?->name ?? 'Unknown' }}</div>
-                                    <div class="mini-muted">{{ $payment->plan?->name ?? '—' }} · {{ $payment->paid_at?->format('d M Y') }}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="green" style="font-weight:700;">₹{{ number_format($payment->amount) }}</div>
-                                </div>
+                            <div class="mini-box">
+                                <small>Threat Attempts Today</small>
+                                <h2>{{ $threatAttemptsToday ?? 0 }}</h2>
                             </div>
-                        @empty
-                            <div class="muted" style="font-size:13px;">No payments yet.</div>
-                        @endforelse
-                    </div>
-                </div>
 
-                {{-- RECENT SIGNUPS --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Recent Signups</h3>
-                        <span>{{ $newUsersWeek ?? 0 }} this week</span>
-                    </div>
-
-                    <div class="stack-sm">
-                        @forelse($recentSignups ?? [] as $user)
-                            <div class="list-row">
-                                <div>
-                                    <div class="strong" style="font-size:14px;">{{ $user->name }}</div>
-                                    <div class="mini-muted">{{ $user->email }}</div>
-                                </div>
-                                <div class="text-right mini-muted" style="font-size:12px;white-space:nowrap;">
-                                    {{ $user->created_at->diffForHumans() }}
-                                </div>
+                            <div class="mini-box">
+                                <small>Unknown IP Alerts</small>
+                                <h2>{{ $unknownIpAlerts ?? 0 }}</h2>
                             </div>
-                        @empty
-                            <div class="muted" style="font-size:13px;">No recent signups.</div>
-                        @endforelse
+
+                            <div class="mini-box">
+                                <small>Last Login Time</small>
+                                <h2 class="small-title">
+                                    {{ $lastLogin ? \Illuminate\Support\Carbon::parse($lastLogin)->format('d M h:i A') : 'N/A' }}
+                                </h2>
+                            </div>
+
+                            <div class="mini-box">
+                                <small>Status</small>
+                                <h2 class="green">{{ $riskLevel ?? 'LOW' }}</h2>
+                            </div>
+
+                        </div>
                     </div>
+
+                    {{-- RENEWALS --}}
+                    <div class="card">
+                        <div class="head">
+                            <h3>Renewals At Risk</h3>
+                            <span>7 days</span>
+                        </div>
+
+                        <h2 class="orange big-number">
+                            &#8377;{{ number_format($renewalValue ?? 0) }}
+                        </h2>
+
+                        <p class="subtitle-sm">
+                            {{ $expiringSoon ?? 0 }} accounts need conversion push
+                        </p>
+                    </div>
+
+                    {{-- FOUNDER PRIORITIES --}}
+                    <div class="card">
+                        <div class="head">
+                            <h3>Founder Priorities</h3>
+                            <span>Today stack</span>
+                        </div>
+
+                        <div class="stack-sm">
+                            <label class="task p1"><input type="checkbox"><span><strong>1.</strong> Close first Pro user</span></label>
+                            <label class="task p2"><input type="checkbox"><span><strong>2.</strong> Improve landing conversion copy</span></label>
+                            <label class="task p2"><input type="checkbox"><span><strong>3.</strong> Enable Razorpay auto capture</span></label>
+                            <label class="task p3"><input type="checkbox"><span><strong>4.</strong> Polish dashboard styling</span></label>
+                        </div>
+                    </div>
+
+                    {{-- NOTES --}}
+                    <div class="card">
+                        <div class="head">
+                            <h3>Strategic Notes</h3>
+                            <span>{{ now()->format('h:i A') }}</span>
+                        </div>
+
+                        <textarea class="note">- Push yearly plan
+- Build referral engine
+- Add case studies
+- Improve onboarding</textarea>
+                    </div>
+
                 </div>
 
-                {{-- NOTES --}}
-                <div class="card">
-                    <div class="head">
-                        <h3>Strategic Notes</h3>
-                        <span>{{ now()->format('h:i A') }}</span>
-                    </div>
+            </div>{{-- end main-grid --}}
 
-                    <textarea class="note">- Push yearly plan
-            - Build referral engine
-            - Add case studies
-            - Improve onboarding</textarea>
-                </div>
+        </div>{{-- end Alpine wrapper --}}
 
-            </div>
-  
+    </div>{{-- end container-xl --}}
+
+</div>{{-- end dashboard-shell --}}
+
 <style>
 :root{
     --bg:#020817;
@@ -507,6 +540,7 @@
     display:flex;
     gap:12px;
     align-items:center;
+    flex-wrap:wrap;
 }
 
 .btn{
@@ -517,11 +551,18 @@
     font-weight:700;
     color:#fff;
     text-decoration:none;
+    white-space:nowrap;
 }
 
 .btn-outline{
     background:transparent;
     border:1px solid rgba(255,255,255,.14);
+    transition:.2s ease;
+}
+
+.btn-outline:hover{
+    border-color:rgba(255,255,255,.30);
+    background:rgba(255,255,255,.05);
 }
 
 .grid{
@@ -623,8 +664,8 @@
 .table td{
     padding:14px 0;
     border-top:1px solid rgba(255,255,255,.05);
-} 
-  
+}
+
 .pill{
     padding:4px 10px;
     border-radius:999px;
@@ -632,10 +673,9 @@
     font-weight:700;
 }
 
-.green-pill{background:rgba(34,197,94,.15);color:#22c55e;}
-.yellow-pill{background:rgba(251,191,36,.15);color:#fbbf24;}
-.blue-pill{background:rgba(59,130,246,.15);color:#93c5fd;}
-.red-pill{background:rgba(239,68,68,.15);color:#fca5a5;}
+.green-pill  { background:rgba(34,197,94,.15);  color:#22c55e; }
+.blue-pill   { background:rgba(56,189,248,.15);  color:#38bdf8; }
+.yellow-pill { background:rgba(250,204,21,.15);  color:#facc15; }
 
 .list-row{
     display:flex;
@@ -695,47 +735,59 @@
 .blue{color:#38bdf8}
 .orange{color:#f97316}
 
-/* Utility Classes */
+.green-text{color:#22c55e}
+.muted{color:var(--soft)}
+.mini-muted{color:var(--soft);font-size:12px}
+.text-sm{font-size:13px}
+.small-title{font-size:14px !important}
+.big-number{font-size:40px}
+.center{text-align:center}
+.text-right{text-align:right}
+.font-bold{font-weight:700}
+.strong{font-weight:700}
+.mt-18{margin-top:18px}
+.small{font-size:12px}
+.mini-copy{font-size:13px;color:var(--soft);margin-top:6px}
 
-.green-text{
-    color:#22c55e;
+/* USER STATUS BAR */
+.user-status-bar{
+    display:flex;
+    align-items:center;
+    gap:0;
+    flex-wrap:wrap;
 }
 
-.muted{
-    color:var(--soft);
-}
-
-.mini-muted{
-    color:var(--soft);
-    font-size:12px;
-}
-
-.text-sm{
-    font-size:13px;
-}
-
-.small-title{
-    font-size:14px !important;
-}
-
-.big-number{
-    font-size:40px;
-}
-
-.center{
+.status-item{
+    flex:1;
+    min-width:120px;
     text-align:center;
+    padding:4px 16px;
 }
 
-.text-right{
-    text-align:right;
+.status-item small{
+    color:var(--soft);
+    font-size:11px;
+    display:block;
+    margin-bottom:6px;
 }
 
-.font-bold{
-    font-weight:700;
+.status-item h2{
+    margin:0 0 6px;
+    font-size:28px;
 }
 
-.mt-18{
-    margin-top:18px;
+.status-link{
+    font-size:11px;
+    color:#38bdf8;
+    text-decoration:none;
+}
+
+.status-link:hover{text-decoration:underline}
+
+.status-divider{
+    width:1px;
+    height:60px;
+    background:var(--line);
 }
 
 @media(max-width:1150px){
@@ -745,6 +797,7 @@
 @media(max-width:640px){
     .page-title{font-size:34px}
     .mini-grid{grid-template-columns:1fr}
+    .status-divider{display:none}
 }
 </style>
 
