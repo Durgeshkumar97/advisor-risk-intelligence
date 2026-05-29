@@ -93,31 +93,31 @@ class PortfolioUploadService
                 'portfolio_id' => $portfolioId,
 
                 'original_name' =>
-                    $file->getClientOriginalName(),
+                $file->getClientOriginalName(),
 
                 'stored_name' =>
-                    basename($storedPath),
+                basename($storedPath),
 
                 'path' => $storedPath,
 
                 'mime_type' =>
-                    $file->getMimeType(),
+                $file->getMimeType(),
 
                 'file_size' =>
-                    $file->getSize(),
+                $file->getSize(),
 
                 'status' =>
-                    PortfolioFile::STATUS_PENDING,
+                PortfolioFile::STATUS_PENDING,
 
                 'meta' => [
 
                     'uploaded_at' =>
-                        now()->toIso8601String(),
+                    now()->toIso8601String(),
 
                     'extension' =>
-                        strtolower(
-                            $file->getClientOriginalExtension()
-                        ),
+                    strtolower(
+                        $file->getClientOriginalExtension()
+                    ),
                 ],
             ]);
 
@@ -152,23 +152,22 @@ class PortfolioUploadService
                 [
 
                     'portfolio_file_id' =>
-                        $portfolioFile->id,
+                    $portfolioFile->id,
 
                     'user_id' => $userId,
 
                     'portfolio_id' =>
-                        $portfolioId,
+                    $portfolioId,
 
                     'original_name' =>
-                        $file->getClientOriginalName(),
+                    $file->getClientOriginalName(),
 
                     'stored_path' =>
-                        $storedPath,
+                    $storedPath,
                 ]
             );
 
             return $portfolioFile;
-
         } catch (\Throwable $e) {
 
             DB::rollBack();
@@ -197,16 +196,16 @@ class PortfolioUploadService
                     'user_id' => $userId,
 
                     'portfolio_id' =>
-                        $portfolioId,
+                    $portfolioId,
 
                     'file_name' =>
-                        $file->getClientOriginalName(),
+                    $file->getClientOriginalName(),
 
                     'message' =>
-                        $e->getMessage(),
+                    $e->getMessage(),
 
                     'trace' =>
-                        $e->getTraceAsString(),
+                    $e->getTraceAsString(),
                 ]
             );
 
@@ -294,7 +293,6 @@ class PortfolioUploadService
             }
 
             return $storedPath;
-
         } catch (\Throwable $e) {
 
             Log::error(
@@ -304,10 +302,10 @@ class PortfolioUploadService
                     'user_id' => $userId,
 
                     'file_name' =>
-                        $file->getClientOriginalName(),
+                    $file->getClientOriginalName(),
 
                     'message' =>
-                        $e->getMessage(),
+                    $e->getMessage(),
                 ]
             );
 
@@ -332,7 +330,7 @@ class PortfolioUploadService
 
             if (
                 Storage::disk(self::DISK)
-                    ->exists($path)
+                ->exists($path)
             ) {
 
                 Storage::disk(self::DISK)
@@ -345,7 +343,6 @@ class PortfolioUploadService
                     ]
                 );
             }
-
         } catch (\Throwable $e) {
 
             Log::warning(
@@ -355,7 +352,7 @@ class PortfolioUploadService
                     'path' => $path,
 
                     'message' =>
-                        $e->getMessage(),
+                    $e->getMessage(),
                 ]
             );
         }
@@ -415,7 +412,7 @@ class PortfolioUploadService
             [
 
                 'portfolio_file_id' =>
-                    $portfolioFile->id,
+                $portfolioFile->id,
 
                 'status' => $status,
             ]
@@ -439,16 +436,15 @@ class PortfolioUploadService
 
             portfolioFile: $portfolioFile,
 
-            status:
-                PortfolioFile::STATUS_FAILED,
+            status: PortfolioFile::STATUS_FAILED,
 
             meta: [
 
                 'failed_at' =>
-                    now()->toIso8601String(),
+                now()->toIso8601String(),
 
                 'error_message' =>
-                    $errorMessage,
+                $errorMessage,
             ],
         );
     }

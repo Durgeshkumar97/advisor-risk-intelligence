@@ -42,6 +42,7 @@ portfolio-risk-ifa-v1/
 ## 📊 FILE STATISTICS
 
 ### New Files Created (6 files)
+
 ```
 1. StorePortfolioUploadRequest.php
    - Lines: 202
@@ -83,6 +84,7 @@ TOTAL NEW: ~700 lines, ~24 KB
 ```
 
 ### Updated Files (3 files)
+
 ```
 1. PortfolioUploadController.php
    - Changed: Dependency injection, service usage, error handling
@@ -103,6 +105,7 @@ TOTAL NEW: ~700 lines, ~24 KB
 ```
 
 ### Documentation Files (4 files)
+
 ```
 1. QUICK_REFERENCE.md
    - Quick overview of what's done
@@ -224,7 +227,9 @@ TOTAL DOCS: ~37 KB (all readable)
 ## ✨ WHAT EACH FILE DOES
 
 ### Request Validation
+
 **File**: `StorePortfolioUploadRequest.php`
+
 - Validates incoming form data
 - Checks file type (pdf, csv, xlsx, xls)
 - Verifies file size (max 20MB)
@@ -232,7 +237,9 @@ TOTAL DOCS: ~37 KB (all readable)
 - Provides custom error messages
 
 ### Service Layer
+
 **File**: `PortfolioUploadService.php`
+
 - Handles core business logic
 - Stores files to disk
 - Creates database records
@@ -241,27 +248,35 @@ TOTAL DOCS: ~37 KB (all readable)
 - Logs all operations
 
 ### Exception Handling
+
 **File**: `PortfolioUploadException.php`
+
 - Custom exception class
 - Stores context (user_id, file_name, path)
 - Factory methods for different error types
 - Supports recovery strategies
 
 ### Data Transfer
+
 **File**: `UploadedPortfolioDTO.php`
+
 - Type-safe data container
 - Structured data passing
 - Factory methods for creation
 - Conversion to array for DB
 
 ### Event System
+
 **Files**: `PortfolioFileUploaded.php` & `LogPortfolioFileUpload.php`
+
 - Event fires on upload completion
 - Listener captures event details
 - Structured logging of metadata
 
 ### Queue Processing
+
 **File**: `ProcessPortfolioFile.php`
+
 - Runs in background queue
 - Updates file status
 - Retries on failure (3 attempts)
@@ -269,7 +284,9 @@ TOTAL DOCS: ~37 KB (all readable)
 - Handles errors gracefully
 
 ### Controller
+
 **File**: `PortfolioUploadController.php`
+
 - HTTP entry point
 - Injects dependencies
 - Uses validation request
@@ -278,7 +295,9 @@ TOTAL DOCS: ~37 KB (all readable)
 - Returns user responses
 
 ### Model
+
 **File**: `PortfolioFile.php`
+
 - Database model
 - Status constants & checks
 - User & portfolio relationships
@@ -298,6 +317,7 @@ TOTAL DOCS: ~37 KB (all readable)
 - ✅ Fully documented
 
 ### Deploy Now
+
 ```bash
 git add .
 git commit -m "Refactor PortfolioUploadController to production standards"
@@ -305,11 +325,13 @@ git push origin main
 ```
 
 ### Start Queue Worker
+
 ```bash
 php artisan queue:work
 ```
 
 ### Monitor
+
 ```bash
 tail -f storage/logs/laravel.log
 ```
@@ -319,19 +341,20 @@ tail -f storage/logs/laravel.log
 ## 📋 NEXT STEPS (OPTIONAL)
 
 1. **Delete Duplicate** (Optional)
-   ```bash
-   git rm app/Http/Controllers/User/PortfolioUploadController.php
-   ```
+
+    ```bash
+    git rm app/Http/Controllers/User/PortfolioUploadController.php
+    ```
 
 2. **Implement File Processing** (When Ready)
-   - Edit: `app/Jobs/ProcessPortfolioFile.php`
-   - Add logic to `processFile()` method
-   - Replace `sleep(2)` with real parsing
+    - Edit: `app/Jobs/ProcessPortfolioFile.php`
+    - Add logic to `processFile()` method
+    - Replace `sleep(2)` with real parsing
 
 3. **Add More Listeners** (When Needed)
-   - Send email notifications
-   - Update portfolio metrics
-   - Sync external systems
+    - Send email notifications
+    - Update portfolio metrics
+    - Sync external systems
 
 ---
 

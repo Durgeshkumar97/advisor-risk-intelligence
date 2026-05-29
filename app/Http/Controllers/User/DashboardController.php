@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Portfolio;
 use App\Models\Subscription;
 use App\Models\RiskScore;
 
@@ -104,6 +105,16 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | PORTFOLIOS
+        |--------------------------------------------------------------------------
+        */
+
+        $portfolios = Portfolio::where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
         | VIEW
         |--------------------------------------------------------------------------
         */
@@ -118,6 +129,7 @@ class DashboardController extends Controller
             'riskLevel' => $riskLevel,
             'recommendation' => $recommendation,
             'nextAction' => $nextAction,
+            'portfolios' => $portfolios,
         ]);
     }
 }

@@ -152,7 +152,7 @@
                         font-size:.95rem;
                     ">
                     Supported formats:
-                    CSV, XLSX, PDF
+                    CSV, XLSX, PDF, ZIP
                 </p>
 
             </div>
@@ -229,7 +229,7 @@
                         type="file"
                         name="file"
                         id="fileInput"
-                        accept=".csv,.xlsx,.xls,.pdf"
+                        accept=".csv,.xlsx,.xls,.pdf,.zip"
                         required
 
                         style="

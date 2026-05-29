@@ -1478,6 +1478,145 @@ html:not(.app-ready) .reveal {
 }
 
 /* =====================================
+   DASHBOARD EXPIRY WARNING
+===================================== */
+
+.dashboard-expiry-warning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md);
+  background: rgba(249, 115, 22, 0.10);
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  color: #f97316;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dashboard-expiry-warning a {
+  color: #f97316;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.dashboard-expiry-expired {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #ef4444;
+}
+
+.dashboard-expiry-expired a {
+  color: #ef4444;
+}
+
+/* =====================================
+   DASHBOARD RISK GAUGE
+===================================== */
+
+.dashboard-gauge {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.dashboard-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-gauge-fill-low    { background: #22c55e; }
+.dashboard-gauge-fill-medium { background: #f59e0b; }
+.dashboard-gauge-fill-high   { background: #ef4444; }
+
+/* =====================================
+   DASHBOARD PORTFOLIOS SECTION
+===================================== */
+
+.dashboard-portfolios-section {
+  margin-top: 2.5rem;
+}
+
+.dashboard-section-heading {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-portfolio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--paper-3);
+  margin-bottom: 0.75rem;
+  transition: border-color var(--transition-fast);
+}
+
+.dashboard-portfolio-row:hover {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--paper-3));
+}
+
+[data-theme="light"] .dashboard-portfolio-row {
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+[data-theme="dark"] .dashboard-portfolio-row {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-portfolio-name {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.dashboard-portfolio-meta {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+  margin-top: 0.25rem;
+}
+
+.dashboard-portfolio-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.dashboard-portfolio-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.dashboard-portfolio-empty {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--paper-3);
+  border-radius: var(--radius-md);
+}
+
+.dashboard-portfolio-empty a {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* =====================================
    DASHBOARD ACTIONS
 ===================================== */
 

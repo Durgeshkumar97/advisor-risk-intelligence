@@ -83,7 +83,7 @@ class StorePortfolioUploadRequest extends FormRequest
                 |--------------------------------------------------------------------------
                 */
 
-                'mimes:pdf,csv,xlsx,xls',
+                'mimes:pdf,csv,xlsx,xls,zip',
 
                 /*
                 |--------------------------------------------------------------------------
@@ -166,19 +166,19 @@ class StorePortfolioUploadRequest extends FormRequest
         return [
 
             'file.required' =>
-                'Please select a file to upload.',
+            'Please select a file to upload.',
 
             'file.file' =>
-                'The uploaded file must be valid.',
+            'The uploaded file must be valid.',
 
             'file.mimes' =>
-                'Only PDF, CSV, XLSX, and XLS files are allowed.',
+            'Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.',
 
             'file.max' =>
-                'File size must not exceed 20MB.',
+            'File size must not exceed 20MB.',
 
             'portfolio_id.integer' =>
-                'Invalid portfolio selected.',
+            'Invalid portfolio selected.',
         ];
     }
 

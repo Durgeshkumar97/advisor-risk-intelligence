@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProcessPortfolioFile implements ShouldQueue
 {
@@ -34,6 +35,15 @@ class ProcessPortfolioFile implements ShouldQueue
     public int $maxExceptions = 3;
 
     private const DISK = 'portfolios';
+
+    private const ALLOWED_EXTENSIONS = ['csv', 'xlsx', 'xls', 'pdf'];
+
+    private const MIME_MAP = [
+        'csv'  => 'text/csv',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls'  => 'application/vnd.ms-excel',
+        'pdf'  => 'application/pdf',
+    ];
 
     /*
     |--------------------------------------------------------------------------
@@ -170,6 +180,17 @@ class ProcessPortfolioFile implements ShouldQueue
 
             /*
             |------------------------------------------------------------------
+            | ZIP: EXTRACT AND QUEUE CONTAINED FILES
+            |------------------------------------------------------------------
+            */
+
+            if ($extension === 'zip') {
+                $this->handleZipExtraction($file, $absolutePath);
+                return;
+            }
+
+            /*
+            |------------------------------------------------------------------
             | TODO: ACTUAL PARSING ENGINE
             |------------------------------------------------------------------
             |
@@ -276,5 +297,234 @@ class ProcessPortfolioFile implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ZIP EXTRACTION
+    |--------------------------------------------------------------------------
+    |
+    | Extracts the ZIP archive to a secure temp directory, then for each valid
+    | portfolio file inside (CSV/XLSX/XLS/PDF), stores it on the portfolios
+    | disk and dispatches a new ProcessPortfolioFile job so it flows through
+    | the same processing pipeline as a directly uploaded file.
+    |
+    */
+
+    private function handleZipExtraction(
+        PortfolioFile $file,
+        string $absolutePath
+    ): void {
+
+        $tempDir = sys_get_temp_dir()
+            . DIRECTORY_SEPARATOR
+            . 'portfolio_zip_'
+            . uniqid('', true);
+
+        mkdir($tempDir, 0755, true);
+
+        try {
+
+            /*
+            |--------------------------------------------------------------
+            | OPEN ARCHIVE
+            |--------------------------------------------------------------
+            */
+
+            $zip = new \ZipArchive();
+
+            $result = $zip->open($absolutePath);
+
+            if ($result !== true) {
+
+                throw new \Exception(
+                    "Failed to open ZIP archive (ZipArchive error code: {$result})."
+                );
+            }
+
+            $zip->extractTo($tempDir);
+            $zip->close();
+
+            /*
+            |--------------------------------------------------------------
+            | ITERATE EXTRACTED FILES
+            |--------------------------------------------------------------
+            */
+
+            $extractedCount = 0;
+            $skippedCount   = 0;
+            $realTempDir    = realpath($tempDir);
+
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator(
+                    $tempDir,
+                    \RecursiveDirectoryIterator::SKIP_DOTS
+                )
+            );
+
+            foreach ($iterator as $extractedFile) {
+
+                if ($extractedFile->isDir()) {
+                    continue;
+                }
+
+                /*
+                |----------------------------------------------------------
+                | ZIP-SLIP GUARD — ensure path is within temp dir
+                |----------------------------------------------------------
+                */
+
+                $realFilePath = realpath(
+                    $extractedFile->getPathname()
+                );
+
+                if (
+                    $realFilePath === false
+                    || !str_starts_with($realFilePath, $realTempDir)
+                ) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                /*
+                |----------------------------------------------------------
+                | SKIP HIDDEN / SYSTEM FILES
+                |----------------------------------------------------------
+                */
+
+                $originalName = $extractedFile->getFilename();
+
+                if (str_starts_with($originalName, '.') || str_starts_with($originalName, '__')) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                /*
+                |----------------------------------------------------------
+                | ALLOWED EXTENSIONS ONLY
+                |----------------------------------------------------------
+                */
+
+                $ext = strtolower($extractedFile->getExtension());
+
+                if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                /*
+                |----------------------------------------------------------
+                | STORE ON PORTFOLIOS DISK
+                |----------------------------------------------------------
+                */
+
+                $directory      = now()->format('Y/m');
+                $storedFilename = Str::uuid()->toString() . '.' . $ext;
+                $storedPath     = $directory . '/' . $storedFilename;
+
+                Storage::disk(self::DISK)->put(
+                    $storedPath,
+                    file_get_contents($realFilePath)
+                );
+
+                /*
+                |----------------------------------------------------------
+                | CREATE DATABASE RECORD
+                |----------------------------------------------------------
+                */
+
+                $childFile = PortfolioFile::create([
+                    'user_id'       => $file->user_id,
+                    'portfolio_id'  => $file->portfolio_id,
+                    'original_name' => $originalName,
+                    'stored_name'   => $storedFilename,
+                    'path'          => $storedPath,
+                    'mime_type'     => self::MIME_MAP[$ext] ?? 'application/octet-stream',
+                    'file_size'     => $extractedFile->getSize(),
+                    'status'        => PortfolioFile::STATUS_PENDING,
+                    'meta'          => [
+                        'uploaded_at'             => now()->toIso8601String(),
+                        'extension'               => $ext,
+                        'extracted_from_zip_id'   => $file->id,
+                        'extracted_from_zip_name' => $file->original_name,
+                    ],
+                ]);
+
+                /*
+                |----------------------------------------------------------
+                | QUEUE FOR PROCESSING
+                |----------------------------------------------------------
+                */
+
+                self::dispatch($childFile);
+
+                $extractedCount++;
+            }
+
+            /*
+            |--------------------------------------------------------------
+            | MARK ZIP AS PROCESSED
+            |--------------------------------------------------------------
+            */
+
+            $file->update([
+                'status'       => PortfolioFile::STATUS_PROCESSED,
+                'processed_at' => now(),
+                'meta'         => array_merge($file->meta ?? [], [
+                    'processing_completed_at' => now()->toIso8601String(),
+                    'extension'               => 'zip',
+                    'extracted_files_count'   => $extractedCount,
+                    'skipped_files_count'     => $skippedCount,
+                ]),
+            ]);
+
+            Log::info('ZIP archive extracted and queued.', [
+                'portfolio_file_id' => $file->id,
+                'user_id'           => $file->user_id,
+                'extracted'         => $extractedCount,
+                'skipped'           => $skippedCount,
+            ]);
+        } finally {
+
+            /*
+            |--------------------------------------------------------------
+            | CLEANUP TEMP DIRECTORY
+            |--------------------------------------------------------------
+            */
+
+            $this->cleanupTempDir($tempDir);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEANUP TEMP DIRECTORY
+    |--------------------------------------------------------------------------
+    */
+
+    private function cleanupTempDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(
+                $dir,
+                \RecursiveDirectoryIterator::SKIP_DOTS
+            ),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $fileInfo) {
+
+            if ($fileInfo->isDir()) {
+                @rmdir($fileInfo->getRealPath());
+            } else {
+                @unlink($fileInfo->getRealPath());
+            }
+        }
+
+        @rmdir($dir);
     }
 }

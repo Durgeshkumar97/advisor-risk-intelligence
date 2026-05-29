@@ -23,8 +23,7 @@ class PortfolioUploadController extends Controller
 
     public function __construct(
         private readonly PortfolioUploadService $uploadService
-    ) {
-    }
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -104,8 +103,7 @@ class PortfolioUploadController extends Controller
 
                     file: $request->getFile(),
 
-                    portfolioId:
-                        $request->getPortfolioId(),
+                    portfolioId: $request->getPortfolioId(),
                 );
 
             /*
@@ -132,7 +130,6 @@ class PortfolioUploadController extends Controller
                     'success',
                     'Portfolio uploaded successfully. Processing started.'
                 );
-
         } catch (PortfolioUploadException $e) {
 
             /*
@@ -156,11 +153,10 @@ class PortfolioUploadController extends Controller
                 ->withErrors([
 
                     'file' =>
-                        $e->getUserMessage(),
+                    $e->getUserMessage(),
                 ])
 
                 ->withInput();
-
         } catch (\Throwable $e) {
 
             /*
@@ -186,7 +182,7 @@ class PortfolioUploadController extends Controller
                 ->withErrors([
 
                     'file' =>
-                        'Upload failed. Please try again.',
+                    'Upload failed. Please try again.',
                 ])
 
                 ->withInput();
