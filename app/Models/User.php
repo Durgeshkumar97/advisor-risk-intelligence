@@ -19,6 +19,7 @@ class User extends Authenticatable
         'login_token',
         'login_method',
         'onboarding_completed',
+        'email_reports',
         'last_login_at',
     ];
 
@@ -34,6 +35,7 @@ class User extends Authenticatable
             'email_verified_at'    => 'datetime',
             'last_login_at'        => 'datetime',
             'onboarding_completed' => 'boolean',
+            'email_reports'        => 'boolean',
             'is_admin'             => 'boolean',
             'password'             => 'hashed',
         ];

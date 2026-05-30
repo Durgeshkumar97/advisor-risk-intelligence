@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\RiskReportMail;
 use App\Models\Portfolio;
 use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
@@ -9,6 +10,7 @@ use App\Models\RiskScore;
 use App\Services\RiskEngine\AssetRiskScorer;
 use App\Services\RiskEngine\PortfolioParser;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,6 +19,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -170,9 +173,17 @@ class ProcessPortfolioFile implements ShouldQueue
                 }
             });
 
+            $riskScore = RiskScore::where('user_id', $file->user_id)
+                ->where('portfolio_id', $portfolioId)
+                ->latest()
+                ->first();
+
+            $reportPath = $riskScore ? $this->generatePdfReport($file, $riskScore, $portfolioId) : null;
+
             $file->update([
                 'status'       => PortfolioFile::STATUS_PROCESSED,
                 'processed_at' => now(),
+                'report_path'  => $reportPath,
                 'meta'         => array_merge($file->meta ?? [], [
                     'processing_completed_at' => now()->toIso8601String(),
                     'extension'               => $extension,
@@ -185,6 +196,10 @@ class ProcessPortfolioFile implements ShouldQueue
                 'id'             => $file->id,
                 'holdings_saved' => count($holdings),
             ]);
+
+            if ($reportPath) {
+                $this->dispatchReportEmails($file, $riskScore);
+            }
 
         } catch (\Throwable $e) {
             $file->update([
@@ -203,6 +218,33 @@ class ProcessPortfolioFile implements ShouldQueue
             ]);
 
             throw $e;
+        }
+    }
+
+    private function generatePdfReport(PortfolioFile $file, RiskScore $riskScore, ?int $portfolioId): string
+    {
+        $assets    = $portfolioId
+            ? PortfolioAsset::where('portfolio_id', $portfolioId)->orderByDesc('risk_score')->get()
+            : collect();
+
+        $portfolio = $portfolioId ? Portfolio::find($portfolioId) : null;
+
+        $pdf  = Pdf::loadView('reports.risk-report', compact('portfolio', 'riskScore', 'assets', 'file'));
+        $path = 'reports/' . now()->format('Y/m') . '/' . Str::uuid()->toString() . '.pdf';
+
+        Storage::disk(self::DISK)->put($path, $pdf->output());
+
+        return $path;
+    }
+
+    private function dispatchReportEmails(PortfolioFile $file, RiskScore $riskScore): void
+    {
+        $file->loadMissing(['user', 'portfolio']);
+
+        Mail::to(env('REPORTS_NOTIFY_EMAIL'))->queue(new RiskReportMail($file, $riskScore));
+
+        if ($file->user->email_reports && $file->user->email !== env('REPORTS_NOTIFY_EMAIL')) {
+            Mail::to($file->user->email)->queue(new RiskReportMail($file, $riskScore));
         }
     }
 

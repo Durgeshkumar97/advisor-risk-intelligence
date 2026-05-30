@@ -92,6 +92,20 @@
                 @error('email')<div class="field-error">{{ $message }}</div>@enderror
             </div>
 
+            <div class="field-group" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 1rem;background:var(--paper-2,rgba(255,255,255,.03));border:1px solid var(--paper-3,rgba(255,255,255,.08));border-radius:12px;">
+                <div>
+                    <div style="font-size:.875rem;font-weight:600;">Report emails</div>
+                    <div class="field-hint" style="margin-top:.2rem;">Receive your risk report PDF by email after each portfolio upload.</div>
+                </div>
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;flex-shrink:0;">
+                    <input type="hidden" name="email_reports" value="0">
+                    <input type="checkbox" name="email_reports" value="1" id="email_reports"
+                           {{ $user->email_reports ?? true ? 'checked' : '' }}
+                           style="width:18px;height:18px;cursor:pointer;accent-color:#2563eb;">
+                    <span style="font-size:.8rem;color:var(--ink-3);">On</span>
+                </label>
+            </div>
+
             <button type="submit" class="btn-save">Save Profile</button>
 
         </form>

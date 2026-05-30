@@ -63,4 +63,35 @@ class FileController extends Controller
             $file->original_name
         );
     }
+
+    public function report(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = Auth::user();
+        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+        if (!$file->report_path || !Storage::disk(self::DISK)->exists($file->report_path)) {
+            abort(404, 'Report not available.');
+        }
+
+        return Storage::disk(self::DISK)->response(
+            $file->report_path,
+            'RiskSignal-Risk-Report.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    public function reportDownload(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = Auth::user();
+        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+        if (!$file->report_path || !Storage::disk(self::DISK)->exists($file->report_path)) {
+            abort(404, 'Report not available.');
+        }
+
+        return Storage::disk(self::DISK)->download(
+            $file->report_path,
+            'RiskSignal-Risk-Report-' . $file->id . '.pdf'
+        );
+    }
 }

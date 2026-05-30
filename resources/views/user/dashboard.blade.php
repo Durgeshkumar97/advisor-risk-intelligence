@@ -327,6 +327,7 @@
                         <th style="text-align:left;padding:.6rem .5rem;color:var(--ink-3);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">File</th>
                         <th style="text-align:left;padding:.6rem .5rem;color:var(--ink-3);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Status</th>
                         <th style="text-align:left;padding:.6rem .5rem;color:var(--ink-3);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Uploaded</th>
+                        <th style="text-align:left;padding:.6rem .5rem;color:var(--ink-3);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Report</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -357,6 +358,21 @@
                         </td>
                         <td style="padding:.75rem .5rem;color:var(--ink-3);font-size:.82rem;white-space:nowrap;">
                             {{ $file->created_at->format('d M Y, h:i A') }}
+                        </td>
+                        <td style="padding:.75rem .5rem;white-space:nowrap;">
+                            @if($file->report_path)
+                            <a href="{{ route('report.view', $file->id) }}"
+                               target="_blank"
+                               style="color:var(--gold);font-size:.8rem;font-weight:600;text-decoration:none;margin-right:.6rem;">
+                                View
+                            </a>
+                            <a href="{{ route('report.download', $file->id) }}"
+                               style="color:var(--ink-3);font-size:.8rem;font-weight:600;text-decoration:none;">
+                                Download
+                            </a>
+                            @else
+                            <span style="color:var(--ink-3);font-size:.78rem;">—</span>
+                            @endif
                         </td>
                     </tr>
                     @endforeach

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use App\Models\Subscription;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -64,7 +63,6 @@ class SubscriptionController extends Controller
 
             return redirect()->route('subscription.index')
                 ->with('success', 'Your subscription has been cancelled. You retain access until ' . $endDate . '.');
-
         } catch (\Throwable $e) {
             Log::error('Subscription cancellation failed.', [
                 'user_id'         => $user->id,

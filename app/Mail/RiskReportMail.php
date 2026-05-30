@@ -2,24 +2,43 @@
 
 namespace App\Mail;
 
+use App\Models\PortfolioFile;
+use App\Models\RiskScore;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
-class RiskReportMail extends Mailable
+class RiskReportMail extends Mailable implements ShouldQueue
 {
-    public $user;
-    public $score;
-    public $level;
+    use Queueable, SerializesModels;
 
-    public function __construct($user, $score, $level)
+    public function __construct(
+        public readonly PortfolioFile $portfolioFile,
+        public readonly RiskScore $riskScore
+    ) {}
+
+    public function envelope(): Envelope
     {
-        $this->user = $user;
-        $this->score = $score;
-        $this->level = $level;
+        $name = $this->portfolioFile->portfolio?->name ?? $this->portfolioFile->original_name;
+
+        return new Envelope(subject: 'Your Risk Report — ' . $name);
     }
 
-    public function build()
+    public function content(): Content
     {
-        return $this->subject('Your Daily Risk Signal')
-            ->view('emails.risk');
+        return new Content(markdown: 'emails.risk-report');
+    }
+
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromStorageDisk('portfolios', $this->portfolioFile->report_path)
+                ->as('RiskSignal-Risk-Report.pdf')
+                ->withMime('application/pdf'),
+        ];
     }
 }

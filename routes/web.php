@@ -202,11 +202,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    Route::post('/upgrade', [SubscriptionController::class, 'upgrade'])
-        ->name('upgrade');
+    Route::get('/subscription', [SubscriptionController::class, 'index'])
+        ->name('subscription.index');
+
+    Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel'])
+        ->name('subscription.cancel');
 
     Route::get('/file/{id}', [FileController::class, 'view'])
         ->name('file.view');
+
+    Route::get('/report/{id}', [FileController::class, 'report'])
+        ->name('report.view');
+
+    Route::get('/report/{id}/download', [FileController::class, 'reportDownload'])
+        ->name('report.download');
 });
 
 /*
