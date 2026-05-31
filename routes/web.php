@@ -98,26 +98,6 @@ Route::post('/payment/failure', [PaymentController::class, 'failure'])
     ->middleware('throttle:15,1')
     ->name('payment.failure');
 
-/*------------PORTFOLIO UPLOAD ----------------------------------------*/
-Route::middleware(['auth'])->group(function () {
-
-    Route::get(
-        '/portfolio/upload',
-        [PortfolioUploadController::class, 'index']
-    )->name('portfolio.upload');
-
-    /*
-    |--------------------------------------------------------------------------
-    | PORTFOLIO FILE SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    Route::post(
-        '/portfolio/upload',
-        [PortfolioUploadController::class, 'store']
-    )->name('portfolio.upload.store');
-});
-
 /*
 |--------------------------------------------------------------------------
 | WEBHOOK — Razorpay server-to-server (HMAC verified inside controller)
@@ -280,6 +260,26 @@ Route::middleware('auth')->group(function () {
 | ADMIN PANEL
 |--------------------------------------------------------------------------
 */
+
+/*
+|----------------------------------------------------------------------
+| ADMIN AUTH — login/logout (no admin middleware; these are the gate)
+|----------------------------------------------------------------------
+*/
+Route::prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'showLogin'])
+        ->middleware('guest')
+        ->name('login');
+
+    Route::post('/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'login'])
+        ->middleware(['guest', 'throttle:10,1'])
+        ->name('login.submit');
+
+    Route::post('/logout', [\App\Http\Controllers\Admin\AdminAuthController::class, 'logout'])
+        ->middleware('auth')
+        ->name('logout');
+});
 
 Route::middleware(['admin'])
     ->prefix('admin')
