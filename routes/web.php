@@ -196,6 +196,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/report/{id}/download', [FileController::class, 'reportDownload'])
         ->name('report.download');
+
+    Route::get('/report/{id}/bundle', [FileController::class, 'bundleDownload'])
+        ->name('file.bundle.download');
 });
 
 /*

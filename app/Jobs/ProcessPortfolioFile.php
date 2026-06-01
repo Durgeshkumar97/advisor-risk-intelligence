@@ -12,11 +12,13 @@ use App\Services\RiskEngine\PortfolioParser;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -25,6 +27,7 @@ use Illuminate\Support\Str;
 
 class ProcessPortfolioFile implements ShouldQueue
 {
+    use Batchable;
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
@@ -42,6 +45,10 @@ class ProcessPortfolioFile implements ShouldQueue
         'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'xls'  => 'application/vnd.ms-excel',
         'pdf'  => 'application/pdf',
+    ];
+    private const GENERIC_BASENAMES  = [
+        'book1', 'untitled', 'sheet1', 'empty', 'portfolio',
+        'data', 'export', 'file', 'document', 'upload',
     ];
 
     public function __construct(
@@ -251,7 +258,6 @@ class ProcessPortfolioFile implements ShouldQueue
     private function handleZipExtraction(PortfolioFile $file, string $absolutePath): void
     {
         $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('', true);
-
         mkdir($tempDir, 0755, true);
 
         try {
@@ -265,13 +271,15 @@ class ProcessPortfolioFile implements ShouldQueue
             $zip->extractTo($tempDir);
             $zip->close();
 
-            $extractedCount = 0;
-            $skippedCount   = 0;
-            $realTempDir    = realpath($tempDir);
-
-            $iterator = new \RecursiveIteratorIterator(
+            $realTempDir = realpath($tempDir);
+            $iterator    = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS)
             );
+
+            $childFiles  = [];
+            $skipReasons = [];
+            $nameCounts  = [];
+            $nameIndex   = 0;
 
             foreach ($iterator as $extractedFile) {
                 if ($extractedFile->isDir()) {
@@ -281,23 +289,39 @@ class ProcessPortfolioFile implements ShouldQueue
                 $realFilePath = realpath($extractedFile->getPathname());
 
                 if ($realFilePath === false || !str_starts_with($realFilePath, $realTempDir)) {
-                    $skippedCount++;
+                    $skipReasons[$extractedFile->getFilename()] = 'Security: path traversal detected';
                     continue;
                 }
 
                 $originalName = $extractedFile->getFilename();
 
                 if (str_starts_with($originalName, '.') || str_starts_with($originalName, '__')) {
-                    $skippedCount++;
                     continue;
                 }
 
                 $ext = strtolower($extractedFile->getExtension());
 
                 if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
-                    $skippedCount++;
+                    $skipReasons[$originalName] = 'Unsupported file type: .' . $ext;
                     continue;
                 }
+
+                if ($extractedFile->getSize() === 0) {
+                    $skipReasons[$originalName] = 'File is empty (0 bytes)';
+                    continue;
+                }
+
+                $nameIndex++;
+                $clientName              = $this->deriveClientName($originalName, $nameIndex);
+                $nameCounts[$clientName] = ($nameCounts[$clientName] ?? 0) + 1;
+                $finalName               = $nameCounts[$clientName] === 1
+                    ? $clientName
+                    : $clientName . ' ' . $nameCounts[$clientName];
+
+                $portfolio = Portfolio::create([
+                    'user_id' => $file->user_id,
+                    'name'    => $finalName,
+                ]);
 
                 $directory      = now()->format('Y/m');
                 $storedFilename = Str::uuid()->toString() . '.' . $ext;
@@ -307,7 +331,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
                 $childFile = PortfolioFile::create([
                     'user_id'       => $file->user_id,
-                    'portfolio_id'  => $file->portfolio_id,
+                    'portfolio_id'  => $portfolio->id,
                     'original_name' => $originalName,
                     'stored_name'   => $storedFilename,
                     'path'          => $storedPath,
@@ -319,34 +343,70 @@ class ProcessPortfolioFile implements ShouldQueue
                         'extension'               => $ext,
                         'extracted_from_zip_id'   => $file->id,
                         'extracted_from_zip_name' => $file->original_name,
+                        'client_name'             => $finalName,
                     ],
                 ]);
 
-                self::dispatch($childFile);
-                $extractedCount++;
+                $childFiles[] = $childFile;
+            }
+
+            if (empty($childFiles)) {
+                $file->update([
+                    'status' => PortfolioFile::STATUS_FAILED,
+                    'meta'   => array_merge($file->meta ?? [], [
+                        'failed_at'     => now()->toIso8601String(),
+                        'error_message' => 'No valid client files found in ZIP archive.',
+                        'skip_reasons'  => $skipReasons,
+                    ]),
+                ]);
+
+                Log::warning('ZIP extraction: no valid files found.', [
+                    'portfolio_file_id' => $file->id,
+                    'skip_reasons'      => $skipReasons,
+                ]);
+
+                return;
             }
 
             $file->update([
-                'status'       => PortfolioFile::STATUS_PROCESSED,
-                'processed_at' => now(),
-                'meta'         => array_merge($file->meta ?? [], [
-                    'processing_completed_at' => now()->toIso8601String(),
-                    'extension'               => 'zip',
-                    'extracted_files_count'   => $extractedCount,
-                    'skipped_files_count'     => $skippedCount,
+                'meta' => array_merge($file->meta ?? [], [
+                    'extension'             => 'zip',
+                    'extracted_files_count' => count($childFiles),
+                    'skip_reasons'          => $skipReasons,
                 ]),
             ]);
 
-            Log::info('ZIP archive extracted and queued.', [
+            $parentId = $file->id;
+            $jobs     = array_map(fn($cf) => new self($cf), $childFiles);
+
+            Bus::batch($jobs)
+                ->finally(function () use ($parentId) {
+                    AssembleBundleZip::dispatch($parentId);
+                })
+                ->dispatch();
+
+            Log::info('ZIP archive extracted and batch queued.', [
                 'portfolio_file_id' => $file->id,
                 'user_id'           => $file->user_id,
-                'extracted'         => $extractedCount,
-                'skipped'           => $skippedCount,
+                'child_count'       => count($childFiles),
+                'skipped'           => count($skipReasons),
             ]);
 
         } finally {
             $this->cleanupTempDir($tempDir);
         }
+    }
+
+    private function deriveClientName(string $filename, int $index): string
+    {
+        $base = pathinfo($filename, PATHINFO_FILENAME);
+        $name = mb_convert_case(trim(str_replace(['-', '_'], ' ', $base)), MB_CASE_TITLE, 'UTF-8');
+
+        if ($name === '' || in_array(strtolower($name), self::GENERIC_BASENAMES, true)) {
+            return 'Client ' . $index;
+        }
+
+        return $name;
     }
 
     private function cleanupTempDir(string $dir): void

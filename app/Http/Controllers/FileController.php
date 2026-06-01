@@ -94,4 +94,22 @@ class FileController extends Controller
             'RiskSignal-Risk-Report-' . $file->id . '.pdf'
         );
     }
+
+    public function bundleDownload(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = Auth::user();
+        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+        if (!$file->bundle_report_path || !Storage::disk(self::DISK)->exists($file->bundle_report_path)) {
+            abort(404, 'Bundle not available.');
+        }
+
+        $rawBase  = pathinfo($file->original_name ?? '', PATHINFO_FILENAME);
+        $safeBase = trim(preg_replace('/[^a-zA-Z0-9_\-]/', '_', $rawBase ?: ($user->name ?? 'reports')), '_') ?: 'reports';
+
+        return Storage::disk(self::DISK)->download(
+            $file->bundle_report_path,
+            $safeBase . '_reports_' . now()->format('Y-m-d') . '.zip'
+        );
+    }
 }

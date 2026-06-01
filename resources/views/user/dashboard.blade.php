@@ -360,7 +360,12 @@
                             {{ $file->created_at->format('d M Y, h:i A') }}
                         </td>
                         <td style="padding:.75rem .5rem;white-space:nowrap;">
-                            @if($file->report_path)
+                            @if($file->bundle_report_path)
+                            <a href="{{ route('file.bundle.download', $file->id) }}"
+                               style="color:var(--gold);font-size:.8rem;font-weight:600;text-decoration:none;">
+                                Download All Reports (ZIP)
+                            </a>
+                            @elseif($file->report_path)
                             <a href="{{ route('report.view', $file->id) }}"
                                target="_blank"
                                style="color:var(--gold);font-size:.8rem;font-weight:600;text-decoration:none;margin-right:.6rem;">

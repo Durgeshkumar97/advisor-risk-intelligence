@@ -38,6 +38,8 @@ class PortfolioFile extends Model
 
         'report_path',
 
+        'bundle_report_path',
+
         'mime_type',
 
         'file_size',
