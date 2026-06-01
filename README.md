@@ -357,56 +357,6 @@ php artisan queue:work
 
 ---
 
-## Configuration
-
-Key `.env` settings:
-
-```env
-# App
-APP_NAME="RiskSignal"
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://risksignal.in
-
-# Database
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=risksignal
-DB_USERNAME=
-DB_PASSWORD=
-
-# Queue / session / cache
-QUEUE_CONNECTION=database
-SESSION_DRIVER=database
-CACHE_STORE=file
-
-# Mail (Hostinger SMTP)
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.hostinger.com
-MAIL_PORT=587
-MAIL_USERNAME=support@risksignal.in
-MAIL_PASSWORD=
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=support@risksignal.in
-MAIL_FROM_NAME="${APP_NAME}"
-
-# Internal copy of every report
-REPORTS_NOTIFY_EMAIL=founder@risksignal.in
-
-# Razorpay
-RAZORPAY_KEY=
-RAZORPAY_SECRET=
-RAZORPAY_WEBHOOK_SECRET=
-
-# Risk engine tuning (0.80 calm → 1.30 volatile)
-RISK_MARKET_MULTIPLIER=1.05
-```
-
-> Local development should use `APP_ENV=local`, `APP_DEBUG=true`, `SESSION_DRIVER=file`, and `SESSION_SECURE_COOKIE=false`. The production values above require HTTPS and a sessions table.
-
----
-
 ## Deployment
 
 ### Server Prerequisites
