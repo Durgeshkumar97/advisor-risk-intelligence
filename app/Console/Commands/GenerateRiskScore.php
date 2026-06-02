@@ -52,12 +52,22 @@ class GenerateRiskScore extends Command
         $users = User::whereIn('id', $activeUserIds)->get();
         $this->info("Processing {$users->count()} active subscriber(s).");
 
+        // Pre-load the most-recent portfolio with assets for every user in one query,
+        // avoiding 2N queries (1 portfolio lookup + 1 assets load) inside the loop.
+        $portfolios = Portfolio::with('assets')
+            ->whereIn('user_id', $activeUserIds)
+            ->whereHas('assets')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->unique('user_id')
+            ->keyBy('user_id');
+
         $sent   = 0;
         $failed = 0;
 
         foreach ($users as $user) {
             try {
-                $this->processUser($user, $calculator);
+                $this->processUser($user, $calculator, $portfolios->get($user->id));
                 $sent++;
             } catch (\Throwable $e) {
                 $failed++;
@@ -88,26 +98,9 @@ class GenerateRiskScore extends Command
     |--------------------------------------------------------------------------
     */
 
-    private function processUser(User $user, PortfolioRiskCalculator $calculator): void
+    private function processUser(User $user, PortfolioRiskCalculator $calculator, ?Portfolio $portfolio): void
     {
-        /*
-        |----------------------------------------------------------------------
-        | LOAD PORTFOLIO ASSETS
-        |----------------------------------------------------------------------
-        |
-        | Prefer the user's most recently updated portfolio with assets.
-        | If no assets found, fall back to a market-signal-only score.
-        |
-        */
-
-        $portfolio = Portfolio::where('user_id', $user->id)
-            ->whereHas('assets')
-            ->orderByDesc('updated_at')
-            ->first();
-
-        $assets = $portfolio
-            ? $portfolio->assets()->get()
-            : collect();
+        $assets = $portfolio ? $portfolio->assets : collect();
 
         /*
         |----------------------------------------------------------------------

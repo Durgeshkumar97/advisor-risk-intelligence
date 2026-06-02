@@ -10,13 +10,13 @@ RiskSignal is a proprietary software platform that helps financial advisors stre
 
 RiskSignal enables advisors and advisory firms to:
 
-* Upload and manage client portfolio data
-* Perform automated portfolio risk analysis
-* Generate standardized risk reports
-* Manage client reporting workflows
-* Monitor portfolio review activities
-* Manage subscriptions and billing
-* Access administrative management tools
+- Upload and manage client portfolio data
+- Perform automated portfolio risk analysis
+- Generate standardized risk reports
+- Manage client reporting workflows
+- Monitor portfolio review activities
+- Manage subscriptions and billing
+- Access administrative management tools
 
 The platform is designed to reduce manual portfolio review effort while improving consistency, scalability, and reporting efficiency.
 
@@ -39,10 +39,10 @@ The platform is designed to reduce manual portfolio review effort while improvin
 
 ## Requirements
 
-* PHP 8.2+
-* Composer
-* Node.js 18+
-* MySQL
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- MySQL
 
 ---
 
@@ -96,13 +96,13 @@ Application configuration is managed through environment variables.
 
 Typical configuration categories include:
 
-* Application settings
-* Database configuration
-* Mail configuration
-* Queue configuration
-* Cache configuration
-* Payment provider credentials
-* Storage configuration
+- Application settings
+- Database configuration
+- Mail configuration
+- Queue configuration
+- Cache configuration
+- Payment provider credentials
+- Storage configuration
 
 Never commit sensitive credentials or environment files to source control.
 
@@ -110,15 +110,15 @@ Never commit sensitive credentials or environment files to source control.
 
 ## Core Capabilities
 
-* Portfolio data ingestion
-* Automated portfolio risk analysis
-* Risk report generation
-* Advisor dashboard workflows
-* Subscription management
-* Payment processing
-* Administrative management tools
-* Background job processing
-* Secure file handling
+- Portfolio data ingestion
+- Automated portfolio risk analysis
+- Risk report generation
+- Advisor dashboard workflows
+- Subscription management
+- Payment processing
+- Administrative management tools
+- Background job processing
+- Secure file handling
 
 ---
 
@@ -128,12 +128,12 @@ RiskSignal contains proprietary business logic and confidential intellectual pro
 
 Security practices include:
 
-* Authentication and authorization controls
-* Protected application resources
-* Secure storage practices
-* Environment-based secret management
-* Payment gateway verification
-* Logging and monitoring controls
+- Authentication and authorization controls
+- Protected application resources
+- Secure storage practices
+- Environment-based secret management
+- Payment gateway verification
+- Logging and monitoring controls
 
 Detailed implementation information is intentionally excluded from this document.
 

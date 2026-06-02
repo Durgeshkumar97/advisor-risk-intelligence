@@ -89,24 +89,25 @@ class SendDailyWhatsApp extends Command
             return Command::SUCCESS;
         }
 
+        $userIds = $users->pluck('id');
+
+        // Pre-load the latest risk score per user in one query instead of N queries.
+        $latestRiskScores = RiskScore::whereIn('user_id', $userIds)
+            ->whereIn('id', function ($q) use ($userIds) {
+                $q->selectRaw('MAX(id)')
+                  ->from('risk_scores')
+                  ->whereIn('user_id', $userIds)
+                  ->groupBy('user_id');
+            })
+            ->get()
+            ->keyBy('user_id');
+
         $dispatched = 0;
         $skipped    = 0;
 
         foreach ($users as $user) {
 
-            /*
-            |------------------------------------------------------------------
-            | LOAD LATEST RISK SCORE
-            |------------------------------------------------------------------
-            |
-            | Use the most recent risk score for this user — not limited to
-            | today's date, because new subscribers may not have an 8 AM score.
-            |
-            */
-
-            $riskScore = RiskScore::where('user_id', $user->id)
-                ->orderByDesc('generated_at')
-                ->first();
+            $riskScore = $latestRiskScores->get($user->id);
 
             if (!$riskScore) {
                 $skipped++;

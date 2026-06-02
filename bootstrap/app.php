@@ -27,6 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'webhook/razorpay',
+        ]);
+
     })
 
     ->withSchedule(function (Schedule $schedule): void {
