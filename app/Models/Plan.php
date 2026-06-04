@@ -25,6 +25,7 @@ class Plan extends Model
         'priority_support',
         'multi_advisor',
         'trial_days',
+        'monthly_client_limit',
         'is_active',
     ];
 
@@ -37,8 +38,9 @@ class Plan extends Model
     protected $casts = [
         'price'              => 'decimal:2',
         'duration_days'      => 'integer',
-        'portfolio_limit'    => 'integer',
-        'trial_days'         => 'integer',
+        'portfolio_limit'       => 'integer',
+        'monthly_client_limit'  => 'integer',
+        'trial_days'            => 'integer',
         'daily_reports'      => 'boolean',
         'client_script'      => 'boolean',
         'whatsapp_delivery'  => 'boolean',

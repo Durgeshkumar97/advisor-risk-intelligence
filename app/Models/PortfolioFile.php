@@ -119,4 +119,19 @@ class PortfolioFile extends Model
     {
         return $this->status === self::STATUS_FAILED;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUERIES
+    |--------------------------------------------------------------------------
+    */
+
+    public static function monthlyClientCount(int $userId): int
+    {
+        return static::where('user_id', $userId)
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->whereRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.extension')), '') != 'zip'")
+            ->count();
+    }
 }

@@ -154,9 +154,9 @@
 
             <div>
                 <div style="color:var(--ink-3);font-size:.8rem;margin-bottom:.2rem;">
-                    Portfolios
+                    Clients / mo
                 </div>
-                <div>Up to {{ $plan->portfolio_limit ?? 1 }}</div>
+                <div>{{ $plan->monthly_client_limit ?? 50 }}</div>
             </div>
 
             <div>

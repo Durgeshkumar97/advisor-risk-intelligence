@@ -22,14 +22,14 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        $plan           = $subscription?->plan;
-        $planName       = $plan?->name ?? null;
-        $portfolioLimit = $plan?->portfolio_limit ?? 0;
-        $expiryDate     = $subscription?->ends_at ?? $subscription?->trial_ends_at;
+        $plan               = $subscription?->plan;
+        $planName           = $plan?->name ?? null;
+        $monthlyClientLimit = $plan?->monthly_client_limit ?? 0;
+        $monthlyClientCount = PortfolioFile::monthlyClientCount($user->id);
+        $monthlyResetDate   = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+        $expiryDate         = $subscription?->ends_at ?? $subscription?->trial_ends_at;
 
         $daysLeft = $subscription?->daysRemaining() ?? 0;
-
-        $portfolioCount = Portfolio::where('user_id', $user->id)->count();
 
         $recentFiles = PortfolioFile::with('portfolio')
             ->where('user_id', $user->id)
@@ -73,8 +73,9 @@ class DashboardController extends Controller
             'user'            => $user,
             'subscription'    => $subscription,
             'planName'        => $planName,
-            'portfolioLimit'  => $portfolioLimit,
-            'portfolioCount'  => $portfolioCount,
+            'monthlyClientLimit' => $monthlyClientLimit,
+            'monthlyClientCount' => $monthlyClientCount,
+            'monthlyResetDate'   => $monthlyResetDate,
             'expiryDate'      => $expiryDate,
             'recentFiles'     => $recentFiles,
             'daysLeft'        => $daysLeft,

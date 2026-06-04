@@ -45,9 +45,10 @@ class PortfolioUploadController extends Controller
                 ->with('error', 'An active subscription is required to upload portfolios.');
         }
 
-        $plan            = $subscription->plan;
-        $portfolioLimit  = $plan->portfolio_limit ?? 1;
-        $portfolioCount  = Portfolio::where('user_id', $user->id)->count();
+        $plan               = $subscription->plan;
+        $monthlyClientLimit = $plan->monthly_client_limit ?? 50;
+        $monthlyClientCount = PortfolioFile::monthlyClientCount($user->id);
+        $monthlyResetDate   = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
 
         $portfolios = Portfolio::query()
             ->where('user_id', $user->id)
@@ -61,11 +62,12 @@ class PortfolioUploadController extends Controller
             ->get();
 
         return view('portfolio.upload', [
-            'portfolios'     => $portfolios,
-            'files'          => $files,
-            'portfolioCount' => $portfolioCount,
-            'portfolioLimit' => $portfolioLimit,
-            'planName'       => $plan->name ?? 'Unknown',
+            'portfolios'         => $portfolios,
+            'files'              => $files,
+            'monthlyClientCount' => $monthlyClientCount,
+            'monthlyClientLimit' => $monthlyClientLimit,
+            'monthlyResetDate'   => $monthlyResetDate,
+            'planName'           => $plan->name ?? 'Unknown',
         ]);
     }
 
@@ -87,6 +89,26 @@ class PortfolioUploadController extends Controller
         if (!$subscription || (!$subscription->isActive() && !$subscription->isTrial() && !$subscription->isInGracePeriod())) {
             return redirect()->route('pricing')
                 ->with('error', 'An active subscription is required to upload portfolios.');
+        }
+
+        // Monthly client limit check.
+        // NOTE: race window — concurrent uploads from the same user could both pass this check simultaneously.
+        $limit        = $subscription->plan?->monthly_client_limit ?? 50;
+        $currentCount = PortfolioFile::monthlyClientCount($user->id);
+        $resetDate    = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+
+        if (strtolower($request->getFile()->getClientOriginalExtension()) === 'zip') {
+            $peekCount = $this->peekZipClientCount($request->getFile()->getRealPath());
+            if ($peekCount > 0 && $currentCount + $peekCount > $limit) {
+                $remaining = max(0, $limit - $currentCount);
+                return back()
+                    ->withErrors(['file' => "Monthly limit reached ({$currentCount}/{$limit} clients used this month). This ZIP has {$peekCount} client(s) but only {$remaining} slot(s) remain. Resets {$resetDate}."])
+                    ->withInput();
+            }
+        } elseif ($currentCount >= $limit) {
+            return back()
+                ->withErrors(['file' => "Monthly limit reached ({$currentCount}/{$limit} clients used this month). Resets {$resetDate}."])
+                ->withInput();
         }
 
         try {
@@ -130,6 +152,38 @@ class PortfolioUploadController extends Controller
     | DESTROY — delete a portfolio file (storage + DB record)
     |--------------------------------------------------------------------------
     */
+
+    private function peekZipClientCount(string $zipPath): int
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            return 0;
+        }
+
+        $allowed = ['csv', 'xlsx', 'xls', 'pdf'];
+        $count   = 0;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if (!$stat || $stat['size'] === 0) {
+                continue;
+            }
+            $name = $stat['name'];
+            if (str_ends_with($name, '/')) {
+                continue;
+            }
+            $base = basename($name);
+            if (str_starts_with($base, '.') || str_starts_with($base, '__')) {
+                continue;
+            }
+            if (in_array(strtolower(pathinfo($base, PATHINFO_EXTENSION)), $allowed, true)) {
+                $count++;
+            }
+        }
+
+        $zip->close();
+        return $count;
+    }
 
     public function destroy(int $id): RedirectResponse
     {

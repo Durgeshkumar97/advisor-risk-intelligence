@@ -183,9 +183,9 @@
                     @endif
                 </div>
 
-                @if($portfolioLimit > 0)
+                @if($monthlyClientLimit > 0)
                 <div class="dashboard-meta" style="font-size:.8rem;margin-top:.35rem;">
-                    Portfolios: {{ $portfolioCount }} / {{ $portfolioLimit }} used
+                    Clients this month: {{ $monthlyClientCount }} / {{ $monthlyClientLimit }} &nbsp;·&nbsp; resets {{ $monthlyResetDate }}
                 </div>
                 @endif
 

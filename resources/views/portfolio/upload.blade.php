@@ -29,7 +29,7 @@
             <p style="color:var(--ink-3);font-size:.9rem;line-height:1.5;">
                 Securely upload portfolio files for AI-powered risk analysis.
                 &nbsp;·&nbsp;
-                <strong>{{ $portfolioCount }} / {{ $portfolioLimit }}</strong> portfolios used.
+                <strong>{{ $monthlyClientCount }} / {{ $monthlyClientLimit }}</strong> clients this month &nbsp;·&nbsp; resets {{ $monthlyResetDate }}
             </p>
 
         </div>

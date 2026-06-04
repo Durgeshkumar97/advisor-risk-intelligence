@@ -55,7 +55,7 @@
                 line-height:2.2;
                 color:var(--ink-2);
             ">
-                <li>✅ &nbsp;1 portfolio</li>
+                <li>✅ &nbsp;50 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
                 <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
                 <li>✅ &nbsp;Client conversation script</li>
@@ -119,7 +119,7 @@
                 line-height:2.2;
                 color:var(--ink-2);
             ">
-                <li>✅ &nbsp;Up to 5 portfolios</li>
+                <li>✅ &nbsp;Up to 250 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
                 <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
                 <li>✅ &nbsp;Client conversation script</li>
@@ -160,7 +160,7 @@
                 line-height:2.2;
                 color:var(--ink-2);
             ">
-                <li>✅ &nbsp;Up to 25 portfolios</li>
+                <li>✅ &nbsp;Up to 1,000 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
                 <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
                 <li>✅ &nbsp;Client conversation script</li>
