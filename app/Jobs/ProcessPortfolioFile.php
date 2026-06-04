@@ -204,8 +204,15 @@ class ProcessPortfolioFile implements ShouldQueue
                 'holdings_saved' => count($holdings),
             ]);
 
-            if ($reportPath) {
-                $this->dispatchReportEmails($file, $riskScore);
+            if ($reportPath && empty($file->meta['extracted_from_zip_id'] ?? null)) {
+                try {
+                    $this->dispatchReportEmails($file, $riskScore);
+                } catch (\Throwable $e) {
+                    Log::error('ProcessPortfolioFile: failed to dispatch report emails.', [
+                        'id'      => $file->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
             }
 
         } catch (\Throwable $e) {

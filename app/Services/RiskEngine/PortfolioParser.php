@@ -55,7 +55,7 @@ class PortfolioParser
 
     private const ALIASES = [
         'name' => [
-            'name', 'scheme name', 'fund name', 'stock name',
+            'name', 'asset name', 'scheme name', 'fund name', 'stock name',
             'security name', 'security', 'company', 'instrument',
             'scrip name', 'description', 'scheme',
         ],

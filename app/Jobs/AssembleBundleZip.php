@@ -34,14 +34,19 @@ class AssembleBundleZip implements ShouldQueue
             return;
         }
 
-        $children = $this->waitForChildrenCompletion();
+        $children = PortfolioFile::whereRaw(
+            'CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, "$.extracted_from_zip_id")) AS UNSIGNED) = ?',
+            [$this->parentFileId]
+        )->get();
+
         if ($children->isEmpty()) {
-            Log::warning('AssembleBundleZip: no children found after wait.', ['id' => $this->parentFileId]);
+            Log::warning('AssembleBundleZip: no children found.', ['id' => $this->parentFileId]);
             return;
         }
 
-        $withReport = $children->filter(fn($c) => $c->isProcessed() && $c->report_path);
-        $without    = $children->reject(fn($c) => $c->isProcessed() && $c->report_path);
+        $skipReasons = $parent->meta['skip_reasons'] ?? [];
+        $withReport  = $children->filter(fn($c) => $c->isProcessed() && $c->report_path);
+        $without     = $children->reject(fn($c) => $c->isProcessed() && $c->report_path);
 
         $tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . Str::uuid()->toString() . '-bundle.zip';
 
@@ -68,14 +73,14 @@ class AssembleBundleZip implements ShouldQueue
                 'meta'               => array_merge($parent->meta ?? [], [
                     'processing_completed_at' => now()->toIso8601String(),
                     'bundle_processed_count'  => $withReport->count(),
-                    'bundle_failed_count'     => $without->count(),
+                    'bundle_failed_count'     => $without->count() + \count($skipReasons),
                 ]),
             ]);
 
             Log::info('AssembleBundleZip: bundle created.', [
                 'parent_id' => $this->parentFileId,
                 'processed' => $withReport->count(),
-                'failed'    => $without->count(),
+                'failed'    => $without->count() + \count($skipReasons),
             ]);
 
             $parent->loadMissing('user');
@@ -89,51 +94,6 @@ class AssembleBundleZip implements ShouldQueue
         } finally {
             @unlink($tempZipPath);
         }
-    }
-
-    private function waitForChildrenCompletion()
-    {
-        $maxAttempts = 30;
-        $delayMs = 500;
-
-        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-            $children = PortfolioFile::where('meta->extracted_from_zip_id', $this->parentFileId)->get();
-
-            if ($children->isEmpty()) {
-                if ($attempt < $maxAttempts) {
-                    usleep($delayMs * 1000);
-                    continue;
-                }
-                return collect();
-            }
-
-            $allProcessedOrFailed = $children->every(fn($c) => $c->isProcessed() || $c->isFailed());
-
-            if ($allProcessedOrFailed) {
-                Log::info('AssembleBundleZip: all children completed.', [
-                    'parent_id' => $this->parentFileId,
-                    'attempts'  => $attempt,
-                    'count'     => $children->count(),
-                ]);
-                return $children;
-            }
-
-            if ($attempt < $maxAttempts) {
-                Log::debug('AssembleBundleZip: waiting for children completion.', [
-                    'parent_id'   => $this->parentFileId,
-                    'attempt'     => $attempt,
-                    'max_attempts' => $maxAttempts,
-                ]);
-                usleep($delayMs * 1000);
-            }
-        }
-
-        Log::warning('AssembleBundleZip: timeout waiting for children.', [
-            'parent_id' => $this->parentFileId,
-            'attempts'  => $maxAttempts,
-        ]);
-
-        return PortfolioFile::where('meta->extracted_from_zip_id', $this->parentFileId)->get();
     }
 
     private function buildSummary(PortfolioFile $parent, $withReport, $without): string
