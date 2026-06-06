@@ -54,7 +54,9 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => 'password_reset_tokens',
-            'expire' => 60,
+            // 24 h — welcome set-password email needs a longer window than the
+            // default 60 min; applies to all password resets (acceptable at launch).
+            'expire' => 1440,
             'throttle' => 60,
         ],
     ],

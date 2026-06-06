@@ -6,9 +6,11 @@ use App\Models\Payment;
 use App\Models\Portfolio;
 use App\Models\User;
 use App\Notifications\PaymentSuccessNotification;
+use App\Notifications\WelcomeSetPasswordNotification;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class CreateUserFromPaymentAction
@@ -94,16 +96,23 @@ class CreateUserFromPaymentAction
 
         /*
         |----------------------------------------------------------------------
-        | QUEUE WELCOME NOTIFICATION (magic link inside)
+        | QUEUE NOTIFICATIONS
         |----------------------------------------------------------------------
         |
-        | PaymentSuccessNotification embeds the login_token so the user can
-        | access their dashboard with one click, even after the browser closes.
-        | Also dispatches the WhatsApp welcome job if the user has a phone.
+        | 1. PaymentSuccessNotification — payment receipt with plan/amount.
+        | 2. WelcomeSetPasswordNotification — set-password link so the user
+        |    can log back in after the current browser session ends.
+        |    Uses Laravel's password-reset broker (password_reset_tokens).
         |
         */
 
         $user->notify(new PaymentSuccessNotification($payment));
+
+        $resetToken     = Password::broker()->createToken($user);
+        $setPasswordUrl = route('password.reset', ['token' => $resetToken])
+                          . '?email=' . urlencode($user->email);
+
+        $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
 
         Log::info('CreateUserFromPaymentAction: new user created from payment.', [
             'user_id'    => $user->id,
