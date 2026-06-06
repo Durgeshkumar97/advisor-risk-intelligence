@@ -6,9 +6,11 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\WelcomeSetPasswordNotification;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 
 class SubscriptionService
 {
@@ -36,6 +38,13 @@ class SubscriptionService
         }
 
         $user = $this->findOrCreateUser($payment);
+
+        if ($user->wasRecentlyCreated) {
+            $resetToken     = Password::broker()->createToken($user);
+            $setPasswordUrl = route('password.reset', ['token' => $resetToken])
+                              . '?email=' . urlencode($user->email);
+            $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
+        }
 
         $durationDays = $plan->duration_days ?? 30;
         $startsAt     = now();
