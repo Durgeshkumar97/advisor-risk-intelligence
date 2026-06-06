@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Jobs\SendWhatsAppMessage;
 use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,6 +21,10 @@ class PaymentSuccessNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $planName     = $this->payment->plan->name;
+        $amount       = number_format((float) $this->payment->amount, 0);
+        $dashboardUrl = route('dashboard');
+
         return (new MailMessage)
             ->subject('Welcome to RiskSignal — Your subscription is live')
             ->greeting("Welcome aboard, {$notifiable->name}!")
