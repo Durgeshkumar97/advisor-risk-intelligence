@@ -54,7 +54,7 @@
             ">
                 <li>📊 &nbsp;Your dashboard is ready — view your risk score anytime</li>
                 <li>📁 &nbsp;Upload your portfolio to personalise your reports</li>
-                <li>💬 &nbsp;Daily WhatsApp signal delivered at <strong>4:30 PM</strong></li>
+                <li>📧 &nbsp;Daily risk signal delivered by email each morning</li>
                 <li>📝 &nbsp;Each report includes a ready-to-use client conversation script</li>
                 <li>📧 &nbsp;A confirmation email is on its way to your inbox</li>
             </ul>

@@ -18,7 +18,7 @@
         </h1>
 
         <p style="color:var(--ink-3);font-size:1rem;line-height:1.6;">
-            All plans include daily risk signals, WhatsApp delivery,
+            All plans include daily risk signals delivered by email,
             and a 7-day free trial. No credit card required to start.
         </p>
 
@@ -57,7 +57,7 @@
             ">
                 <li>✅ &nbsp;50 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
+                <li>✅ &nbsp;Daily email signal each morning</li>
                 <li>✅ &nbsp;Client conversation script</li>
                 <li>✅ &nbsp;7-day free trial</li>
                 <li style="opacity:.4;">✗ &nbsp;Branded PDF reports</li>
@@ -121,7 +121,7 @@
             ">
                 <li>✅ &nbsp;Up to 250 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
+                <li>✅ &nbsp;Daily email signal each morning</li>
                 <li>✅ &nbsp;Client conversation script</li>
                 <li>✅ &nbsp;Branded PDF reports</li>
                 <li>✅ &nbsp;Priority support (2-hour response)</li>
@@ -162,7 +162,7 @@
             ">
                 <li>✅ &nbsp;Up to 1,000 clients / month</li>
                 <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;WhatsApp delivery at 4:30 PM</li>
+                <li>✅ &nbsp;Daily email signal each morning</li>
                 <li>✅ &nbsp;Client conversation script</li>
                 <li>✅ &nbsp;Branded PDF reports</li>
                 <li>✅ &nbsp;Priority support (2-hour response)</li>

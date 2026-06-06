@@ -409,7 +409,6 @@
                     <label
                         class="option-label {{ old('access_type', 'email') === 'email' ? 'selected' : '' }}"
                         id="label-email"
-                        onclick="selectOption('email')"
                     >
                         <input type="radio" name="access_type" value="email"
                             {{ old('access_type', 'email') === 'email' ? 'checked' : '' }}
@@ -428,70 +427,6 @@
                         <div class="radio-circle"></div>
                     </label>
 
-                    {{-- WHATSAPP --}}
-                    <label
-                        class="option-label {{ old('access_type') === 'whatsapp' ? 'selected' : '' }}"
-                        id="label-whatsapp"
-                        onclick="selectOption('whatsapp')"
-                    >
-                        <input type="radio" name="access_type" value="whatsapp"
-                            {{ old('access_type') === 'whatsapp' ? 'checked' : '' }}
-                            id="opt-whatsapp">
-                        <div class="option-icon">💬</div>
-                        <div class="option-content">
-                            <div class="option-title">
-                                WhatsApp
-                                <span class="option-badge badge-coming-soon">Coming Soon</span>
-                            </div>
-                            <div class="option-desc">
-                                Get a concise signal directly on WhatsApp at 4:30 PM.
-                                We'll notify you when this goes live.
-                            </div>
-                        </div>
-                        <div class="radio-circle"></div>
-                    </label>
-
-                </div>
-
-                {{-- PHONE INPUT — shown only when WhatsApp is selected --}}
-                <div id="phone-group" style="display:none; margin-top:16px;">
-                    <label for="phone" style="
-                        display:block;
-                        font-size:11px;
-                        font-weight:800;
-                        letter-spacing:.1em;
-                        text-transform:uppercase;
-                        color:var(--soft);
-                        margin-bottom:8px;
-                    ">Your WhatsApp Number</label>
-                    <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        placeholder="e.g. 9876543210"
-                        value="{{ old('phone') }}"
-                        style="
-                            width:100%;
-                            padding:14px 16px;
-                            border-radius:12px;
-                            border:1.5px solid var(--line);
-                            background:rgba(255,255,255,.04);
-                            color:var(--text);
-                            font-size:15px;
-                            font-family:inherit;
-                            outline:none;
-                            transition:.2s ease;
-                        "
-                        onfocus="this.style.borderColor='rgba(255,255,255,.3)'"
-                        onblur="this.style.borderColor='var(--line)'"
-                    >
-                    <p style="font-size:12px;color:var(--muted);margin-top:6px;">
-                        We'll send your daily 4:30 PM risk signal here.
-                        &nbsp;Include country code for non-Indian numbers.
-                    </p>
-                    @error('phone')
-                        <p style="font-size:12px;color:#fca5a5;margin-top:6px;">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 <div class="divider"></div>
@@ -540,44 +475,12 @@
         </div>
 
         <div class="footer-note">
-            You can change your delivery preference anytime from your profile.<br>
             Questions? Reply to your welcome email — we respond within 2 hours.
         </div>
 
     </div>
 
     <script>
-        function selectOption(value) {
-            // update radio inputs
-            document.getElementById('opt-email').checked     = (value === 'email');
-            document.getElementById('opt-whatsapp').checked  = (value === 'whatsapp');
-
-            // update label highlight
-            document.getElementById('label-email').classList.toggle('selected',    value === 'email');
-            document.getElementById('label-whatsapp').classList.toggle('selected', value === 'whatsapp');
-
-            // show phone input only when WhatsApp is chosen
-            const phoneGroup = document.getElementById('phone-group');
-            const phoneInput = document.getElementById('phone');
-            if (value === 'whatsapp') {
-                phoneGroup.style.display = 'block';
-                phoneInput.required = true;
-            } else {
-                phoneGroup.style.display = 'none';
-                phoneInput.required = false;
-                phoneInput.value = '';
-            }
-        }
-
-        // on page load: if old('access_type') === 'whatsapp', show the phone group
-        document.addEventListener('DOMContentLoaded', function () {
-            const checked = document.querySelector('input[name="access_type"]:checked');
-            if (checked && checked.value === 'whatsapp') {
-                selectOption('whatsapp');
-            }
-        });
-
-        // disable double-submit
         document.getElementById('onboarding-form').addEventListener('submit', function () {
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;

@@ -21,10 +21,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('risk:generate')
             ->dailyAt('08:00');
 
-        $schedule->command('whatsapp:signal')
-            ->dailyAt('16:30')
-            ->withoutOverlapping()
-            ->runInBackground();
+        // WhatsApp delivery disabled — classes intact, re-add this entry to re-enable
+        // $schedule->command('whatsapp:signal')
+        //     ->dailyAt('16:30')
+        //     ->withoutOverlapping()
+        //     ->runInBackground();
 
         $schedule->call(function () {
             \App\Models\Payment::query()

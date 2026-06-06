@@ -199,7 +199,7 @@
                                             </tr>
                                         </table>
                                         <p style="margin:10px 0 0;color:#64748b;font-size:11px;">
-                                            Copy and send directly to clients via WhatsApp or email.
+                                            Copy and send directly to clients by email or message.
                                         </p>
                                     </td>
                                 </tr>

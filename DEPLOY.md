@@ -180,7 +180,7 @@ RISK_MARKET_MULTIPLIER=1.05
 
 ---
 
-## 6. WhatsApp Setup (Meta Cloud API)
+## 6. WhatsApp Setup (Meta Cloud API) — DEPRECATED — not in use
 
 ### Step-by-step
 

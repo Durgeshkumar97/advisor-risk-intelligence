@@ -87,7 +87,7 @@
             <div class="form-group">
 
                 <label for="phone" class="form-label">
-                    WhatsApp Number
+                    Phone Number
                 </label>
 
                 <input
@@ -96,7 +96,7 @@
                     name="phone"
                     value="{{ old('phone') }}"
                     class="form-input"
-                    placeholder="Enter active WhatsApp number"
+                    placeholder="e.g. 9876543210"
                     autocomplete="tel"
                     inputmode="numeric"
                     maxlength="15"

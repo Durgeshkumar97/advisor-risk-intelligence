@@ -163,13 +163,7 @@
                 <div style="color:var(--ink-3);font-size:.8rem;margin-bottom:.2rem;">
                     Delivery
                 </div>
-                <div>
-                    @if($plan->whatsapp_delivery ?? false)
-                        WhatsApp + Email
-                    @else
-                        Email only
-                    @endif
-                </div>
+                <div>Email delivery</div>
             </div>
 
         </div>

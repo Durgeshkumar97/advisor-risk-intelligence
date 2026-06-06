@@ -150,8 +150,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding', function (\Illuminate\Http\Request $request) {
 
         $request->validate([
-            'access_type' => 'required|in:email,whatsapp',
-            'phone'       => 'nullable|string|min:10|max:20|required_if:access_type,whatsapp',
+            'access_type' => 'required|in:email',
+            'phone'       => 'nullable|string|min:10|max:20',
         ]);
 
         $user = \Illuminate\Support\Facades\Auth::user();

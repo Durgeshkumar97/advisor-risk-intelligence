@@ -21,7 +21,7 @@ class StoreIfaTrialRequest extends FormRequest
             'email' => ['bail', 'required', 'string', 'email:rfc', 'max:200'],
             'whatsapp' => [
                 'bail',
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 'regex:/^[0-9+()\-\s]+$/',
@@ -42,7 +42,7 @@ class StoreIfaTrialRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'whatsapp.regex' => 'Enter a valid WhatsApp number.',
+            'whatsapp.regex' => 'Enter a valid phone number.',
         ];
     }
 

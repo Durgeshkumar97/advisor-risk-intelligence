@@ -27,7 +27,7 @@ class PaymentSuccessNotification extends Notification implements ShouldQueue
             ->greeting("Welcome aboard, {$notifiable->name}!")
             ->line("Your **{$planName}** subscription has been activated.")
             ->line("**Amount Paid:** ₹{$amount}")
-            ->line('You will start receiving daily risk signals at **4:30 PM on WhatsApp** and at 8:00 AM by email.')
+            ->line('You will start receiving your daily risk signal by email each morning.')
             ->action('Open Your Dashboard', $dashboardUrl)
             ->line('Each report includes your portfolio risk score, top risk flags, and a ready-to-use client conversation script.')
             ->line('If you face any issue, reply to this email — we respond within 2 hours.')

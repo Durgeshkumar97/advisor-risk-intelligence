@@ -25,7 +25,7 @@
                 When markets fall, clients panic.<br>
                 RiskSignal helps advisors retain trust and AUM.<br>
                 <em style="color:var(--gold);">
-                    Daily WhatsApp risk summary + ready client script in plain English. Delivered before client calls.
+                    Daily Email risk summary + ready client script in plain English. Delivered before client calls.
                 </em>
             </h1>
 
@@ -37,7 +37,7 @@
             ">
                 Risk signal for IFAs managing ₹5L–₹25L portfolios.
                 One page. Three risks. One client script.
-                Delivered on WhatsApp at 4:30 PM.
+                Delivered straight to your inbox.
             </p>
 
             <!-- CTA -->
@@ -385,7 +385,7 @@
         <h3 style="margin-bottom:.4rem;">Subscribe</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);line-height:1.5;">
-            Enter WhatsApp. Upload portfolio. Done in 60 seconds.
+            Sign up and upload your portfolio. Done in 60 seconds.
         </p>
     </div>
 
@@ -393,10 +393,10 @@
     <div class="reveal reveal-pop reveal-delay-2" style="text-align:center;padding:1.25rem;">
         <div style="font-family:var(--serif);font-size:2.4rem;color:var(--paper-3);margin-bottom:.5rem;">2</div>
 
-        <h3 style="margin-bottom:.4rem;">risk engine</h3>
+        <h3 style="margin-bottom:.4rem;">Risk engine</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);margin-bottom:.6rem;">
-            Processes market signals after close
+            Analyzes your portfolio and market signals
         </p>
     </div>
 
@@ -404,10 +404,10 @@
     <div class="reveal reveal-pop reveal-delay-3" style="text-align:center;padding:1.25rem;">
         <div style="font-family:var(--serif);font-size:2.4rem;color:var(--paper-3);margin-bottom:.5rem;">3</div>
 
-        <h3 style="margin-bottom:.4rem;">4:30 PM delivery</h3>
+        <h3 style="margin-bottom:.4rem;">Email delivery</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);line-height:1.5;">
-            WhatsApp report + client script. Ready to use instantly.
+            Risk report + client script in your inbox. Ready to use instantly.
         </p>
     </div>
 </section>
@@ -569,7 +569,7 @@
             <a href="#free-trial" class="btn-primary">Get Today’s Free Sample Report →</a>
 
             <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
-                Delivered on WhatsApp today at 4:30 PM.
+                Delivered straight to your inbox.
             </div>
 
             <div style="margin-top:1rem;">
@@ -637,7 +637,7 @@
             </div>
 
             <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-2);">
-                No login. No dashboards. Delivered on WhatsApp.
+                No login. No dashboards. Delivered by Email.
             </div>
         </div>
 
@@ -679,7 +679,7 @@
                         </li>
                         <li style="position:relative;padding-left:1.2rem;">
                             <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            WhatsApp delivery (4:30 PM)
+                            Email delivery
                         </li>
                     </ul>
                 </div>
@@ -829,7 +829,7 @@
             </h2>
 
             <div style="font-size:.9rem;color:var(--ink-2);line-height:1.5;">
-                Get your first report on WhatsApp at 4:30 PM today.
+                Get your first report by Email.
             </div>
 
             <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-3);">
@@ -884,8 +884,8 @@
 
                 <input
                     type="tel"
-                    name="whatsapp"
-                    placeholder="WhatsApp number"
+                    name="Phone"
+                    placeholder="Phone number"
                     required
                     style="
                         padding:.9rem 1rem;
@@ -946,7 +946,7 @@
                     text-align:center;
                     margin-top:.4rem;
                 ">
-                    No login · No dashboard · Delivered on WhatsApp
+                    No login · No dashboard · Delivered by Email
                 </p>
 
             </div>

@@ -53,20 +53,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('subscriptions:expire')
             ->dailyAt('00:05');
 
-        /*
-        |--------------------------------------------------------------------------
-        | DAILY WHATSAPP RISK SIGNAL (4:30 PM IST)
-        |--------------------------------------------------------------------------
-        |
-        | Sends WhatsApp messages to active subscribers who have a phone number.
-        | Reads the most recent risk score (generated at 8 AM) — no recalculation.
-        |
-        */
-
-        $schedule->command('whatsapp:signal')
-            ->dailyAt('16:30')
-            ->withoutOverlapping()
-            ->runInBackground();
+        // WhatsApp delivery disabled — see app/Console/Commands/SendDailyWhatsApp.php
+        // $schedule->command('whatsapp:signal')
+        //     ->dailyAt('16:30')
+        //     ->withoutOverlapping()
+        //     ->runInBackground();
 
         /*
         |--------------------------------------------------------------------------

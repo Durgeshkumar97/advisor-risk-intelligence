@@ -38,7 +38,7 @@
                 <ul>
                     <li>Name and contact information</li>
                     <li>Email address</li>
-                    <li>WhatsApp or mobile number</li>
+                    <li>Mobile number (optional)</li>
                     <li>Firm or business details</li>
                     <li>Portfolio and uploaded document data</li>
                     <li>Subscription and transaction metadata</li>

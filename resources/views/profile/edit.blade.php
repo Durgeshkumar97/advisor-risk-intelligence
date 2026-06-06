@@ -77,11 +77,11 @@
             </div>
 
             <div class="field-group">
-                <label class="field-label" for="phone">WhatsApp / Phone Number</label>
+                <label class="field-label" for="phone">Phone Number</label>
                 <input class="field-input" id="phone" type="tel" name="phone"
                        value="{{ old('phone', $user->phone) }}"
                        placeholder="e.g. 9876543210" autocomplete="tel">
-                <div class="field-hint">Used for daily WhatsApp risk signal delivery. Leave blank to skip.</div>
+                <div class="field-hint">Optional. Leave blank to skip.</div>
                 @error('phone')<div class="field-error">{{ $message }}</div>@enderror
             </div>
 

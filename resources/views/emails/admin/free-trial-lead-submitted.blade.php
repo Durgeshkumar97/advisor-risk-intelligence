@@ -20,7 +20,7 @@
                 <td style="padding:10px 0;border-top:1px solid #e2e8f0;">{{ $advisorName }}</td>
             </tr>
             <tr>
-                <td style="padding:10px 0;border-top:1px solid #e2e8f0;font-weight:700;">WhatsApp</td>
+                <td style="padding:10px 0;border-top:1px solid #e2e8f0;font-weight:700;">Phone</td>
                 <td style="padding:10px 0;border-top:1px solid #e2e8f0;">{{ $whatsapp }}</td>
             </tr>
             <tr>
