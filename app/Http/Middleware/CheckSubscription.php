@@ -80,6 +80,17 @@ class CheckSubscription
 
         /*
         |--------------------------------------------------------------------------
+        | TRIAL EXPIRED
+        |--------------------------------------------------------------------------
+        */
+
+        if ($subscription->status === 'trial' && $subscription->trial_ends_at?->isPast()) {
+            return redirect()->route('subscription.index')
+                ->with('error', 'Your 14-day trial has expired. Choose a plan to continue.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | GRACE PERIOD (3 DAYS)
         |--------------------------------------------------------------------------
         */

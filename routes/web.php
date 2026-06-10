@@ -177,16 +177,21 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// Subscription management stays auth-only so expired/trial users can upgrade.
 Route::middleware(['auth'])->group(function () {
-
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
 
     Route::get('/subscription', [SubscriptionController::class, 'index'])
         ->name('subscription.index');
 
     Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('subscription.cancel');
+});
+
+// Dashboard and file routes require an active or in-trial subscription.
+Route::middleware(['auth', 'paid'])->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::get('/file/{id}', [FileController::class, 'view'])
         ->name('file.view');
@@ -207,7 +212,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/portfolios', [PortfolioController::class, 'index'])
         ->name('portfolio.manage');
@@ -228,7 +233,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/portfolio/upload', [PortfolioUploadController::class, 'index'])
         ->name('portfolio.upload');

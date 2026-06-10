@@ -80,6 +80,11 @@ class Subscription extends Model
             return true;
         }
 
+        // Treat an elapsed trial as expired immediately, without waiting for the cron.
+        if ($this->status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isPast()) {
+            return true;
+        }
+
         return $this->ends_at && $this->ends_at->isPast();
     }
 

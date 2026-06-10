@@ -23,7 +23,7 @@ class PlanSeeder extends Seeder
                 'branded_pdf' => false,
                 'priority_support' => false,
                 'multi_advisor' => false,
-                'trial_days' => 7,
+                'trial_days' => 14,
                 'is_active' => true,
             ],
 
@@ -39,7 +39,7 @@ class PlanSeeder extends Seeder
                 'branded_pdf' => true,
                 'priority_support' => true,
                 'multi_advisor' => false,
-                'trial_days' => 7,
+                'trial_days' => 14,
                 'is_active' => true,
             ],
 
