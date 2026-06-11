@@ -53,6 +53,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('subscriptions:expire')
             ->dailyAt('00:05');
 
+        /*
+        |--------------------------------------------------------------------------
+        | PURGE SOFT-DELETED USERS PAST 30-DAY RETENTION (daily at 02:00)
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('users:purge')
+            ->dailyAt('02:00')
+            ->withoutOverlapping();
+
         // WhatsApp delivery disabled — see app/Console/Commands/SendDailyWhatsApp.php
         // $schedule->command('whatsapp:signal')
         //     ->dailyAt('16:30')
