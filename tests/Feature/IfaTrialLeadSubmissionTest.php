@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\AdminFreeTrialLeadSubmittedMail;
 use App\Models\ClientIntake;
+use App\Models\Plan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -16,6 +17,7 @@ class IfaTrialLeadSubmissionTest extends TestCase
     public function test_new_ifa_trial_lead_is_stored_and_admin_email_is_queued(): void
     {
         Mail::fake();
+        $this->createStarterPlan();
 
         config()->set('risksignal.lead_notifications.admin_email', 'owner@risksignal.test');
         config()->set('risksignal.lead_notifications.queue', 'mail');
@@ -58,6 +60,7 @@ class IfaTrialLeadSubmissionTest extends TestCase
     public function test_duplicate_ifa_trial_lead_does_not_queue_admin_email(): void
     {
         Mail::fake();
+        $this->createStarterPlan();
 
         config()->set('risksignal.lead_notifications.admin_email', 'owner@risksignal.test');
 
@@ -84,5 +87,18 @@ class IfaTrialLeadSubmissionTest extends TestCase
         $this->assertDatabaseCount('client_intakes', 1);
 
         Mail::assertNothingQueued();
+    }
+
+    private function createStarterPlan(): void
+    {
+        Plan::query()->create([
+            'name' => 'Starter',
+            'slug' => 'starter',
+            'price' => 0,
+            'duration_days' => 30,
+            'portfolio_limit' => 1,
+            'trial_days' => 14,
+            'is_active' => true,
+        ]);
     }
 }

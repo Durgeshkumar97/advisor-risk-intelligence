@@ -34,6 +34,8 @@
     .btn-cancel:hover{background:rgba(255,255,255,.06);}
     .btn-delete-confirm{padding:.7rem 1.4rem;border-radius:10px;background:#ef4444;border:none;color:#fff;font-weight:700;font-size:.875rem;cursor:pointer;font-family:inherit;}
     .btn-delete-confirm:hover{background:#dc2626;}
+    .btn-delete-confirm:disabled{opacity:.45;cursor:not-allowed;}
+    [x-cloak]{display:none!important;}
 </style>
 @endpush
 
@@ -173,10 +175,10 @@
 
         <div class="section-title" style="color:#fca5a5;">Delete Account</div>
         <div class="section-sub">
-            Once deleted, all your portfolios, files, and subscription data will be permanently removed. This cannot be undone.
+            Your account will be deactivated and recoverable for 30 days. Your RiskSignal data stays attached during the recovery window.
         </div>
 
-        <button type="button" class="btn-danger-outline" onclick="document.getElementById('deleteModal').classList.add('open')">
+        <button type="button" class="btn-danger-outline" x-data x-on:click="$dispatch('open-delete-modal')">
             Delete My Account
         </button>
 
@@ -194,12 +196,26 @@
 {{-- ================================================================
    DELETE CONFIRMATION MODAL
 ================================================================ --}}
-<div class="modal-overlay" id="deleteModal">
+<div
+    class="modal-overlay"
+    id="deleteModal"
+    x-data="{ open: {{ $errors->userDeletion->isNotEmpty() ? 'true' : 'false' }}, confirmation: '' }"
+    x-on:open-delete-modal.window="open = true"
+    x-bind:class="{ 'open': open }"
+    x-cloak>
     <div class="modal-box">
-        <div class="modal-title" style="color:#fca5a5;">⚠️ Delete account?</div>
+        <div class="modal-title" style="color:#fca5a5;">Delete account?</div>
         <div class="modal-sub">
-            All your data — portfolios, files, subscription, risk scores — will be permanently deleted. Enter your password to confirm.
+            Your account will be deactivated and scheduled for permanent deletion after 30 days. Type DELETE to continue.
         </div>
+
+        @if(($user->hasActiveSubscription() || $user->isTrial()) && $user->subscription)
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fcd34d;padding:.75rem .9rem;border-radius:10px;font-size:.84rem;line-height:1.5;margin-bottom:1rem;">
+                <strong>Warning:</strong> You have an active {{ $user->subscription->plan?->name ?? 'RiskSignal' }} subscription.<br>
+                Deleting your account will NOT automatically cancel Razorpay billing.<br>
+                Email <a href="mailto:support@risksignal.in" style="color:#fde68a;text-decoration:underline;">support@risksignal.in</a> to cancel billing first.
+            </div>
+        @endif
 
         @if($errors->userDeletion->has('password'))
             <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#fca5a5;padding:.6rem .9rem;border-radius:8px;font-size:.82rem;margin-bottom:1rem;">
@@ -216,11 +232,16 @@
                 <input class="field-input" id="delete_password" type="password" name="password" placeholder="Confirm your password">
             </div>
 
+            <div class="field-group">
+                <label class="field-label" for="delete_confirmation">Type DELETE to continue</label>
+                <input class="field-input" id="delete_confirmation" type="text" x-model="confirmation" autocomplete="off" placeholder="DELETE">
+            </div>
+
             <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="document.getElementById('deleteModal').classList.remove('open')">
+                <button type="button" class="btn-cancel" x-on:click="open = false; confirmation = ''">
                     Cancel
                 </button>
-                <button type="submit" class="btn-delete-confirm">
+                <button type="submit" class="btn-delete-confirm" x-bind:disabled="confirmation !== 'DELETE'">
                     Yes, Delete Account
                 </button>
             </div>
@@ -228,11 +249,5 @@
         </form>
     </div>
 </div>
-
-@if($errors->userDeletion->isNotEmpty())
-@push('scripts')
-<script>document.getElementById('deleteModal').classList.add('open');</script>
-@endpush
-@endif
 
 @endsection

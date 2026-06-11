@@ -48,13 +48,15 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
-
+        // TODO: scheduled command to permanently delete users
+        // whose deleted_at is older than 30 days.
         $user->delete();
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return Redirect::to('/')->with('success', 'Your account has been deactivated and is scheduled for permanent deletion in 30 days. Email support@risksignal.in within 30 days to recover it.');
     }
 }

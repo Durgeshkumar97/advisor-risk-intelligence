@@ -263,6 +263,14 @@
 
             @endif
 
+            @if(session('restored_account'))
+
+            <div class="alert alert-success">
+                {{ session('restored_account') }}
+            </div>
+
+            @endif
+
             {{-- ERROR --}}
             @if(session('error'))
 

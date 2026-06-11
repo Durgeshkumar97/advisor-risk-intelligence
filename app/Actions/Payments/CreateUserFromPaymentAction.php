@@ -7,6 +7,7 @@ use App\Models\Portfolio;
 use App\Models\User;
 use App\Notifications\PaymentSuccessNotification;
 use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\UserAccountRecoveryService;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,10 @@ use Illuminate\Support\Str;
 
 class CreateUserFromPaymentAction
 {
+    public function __construct(
+        private readonly UserAccountRecoveryService $accounts,
+    ) {}
+
     public function execute(Payment $payment): User
     {
         /*
@@ -27,15 +32,28 @@ class CreateUserFromPaymentAction
         |
         */
 
-        $existingUser = User::where('email', $payment->email)->first();
+        $loginToken = Str::random(60);
 
-        if ($existingUser) {
+        $result = $this->accounts->findRestoreOrCreateUserByEmail(
+            $payment->email,
+            [
+                'name'        => $payment->name ?? 'Advisor',
+                'password'    => Hash::make(Str::random(32)),
+                'login_token' => $loginToken,
+            ],
+            [
+                'name' => $payment->name ?? 'Advisor',
+            ],
+        );
 
-            if (!$payment->user_id) {
-                $payment->update(['user_id' => $existingUser->id]);
-            }
+        $user = $result['user'];
 
-            return $existingUser;
+        if (!$payment->user_id) {
+            $payment->update(['user_id' => $user->id]);
+        }
+
+        if (! $result['created']) {
+            return $user;
         }
 
         /*
@@ -49,15 +67,6 @@ class CreateUserFromPaymentAction
         | to set a password first.
         |
         */
-
-        $loginToken = Str::random(60);
-
-        $user = User::create([
-            'name'        => $payment->name ?? 'Advisor',
-            'email'       => $payment->email,
-            'password'    => Hash::make(Str::random(32)),
-            'login_token' => $loginToken,
-        ]);
 
         /*
         |----------------------------------------------------------------------

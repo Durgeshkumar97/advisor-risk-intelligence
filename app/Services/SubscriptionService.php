@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\UserAccountRecoveryService;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Password;
 
 class SubscriptionService
 {
+    public function __construct(
+        private readonly UserAccountRecoveryService $accounts,
+    ) {}
+
     /*
     |--------------------------------------------------------------------------
     | ACTIVATE
@@ -87,12 +92,20 @@ class SubscriptionService
 
     private function findOrCreateUser(Payment $payment): User
     {
-        return User::firstOrCreate(
-            ['email' => $payment->email],
+        $result = $this->accounts->findRestoreOrCreateUserByEmail(
+            $payment->email,
             [
                 'name'     => $payment->name ?? 'Advisor',
                 'password' => Hash::make(str()->random(32)),
-            ]
+            ],
+            [
+                'name' => $payment->name ?? 'Advisor',
+            ],
         );
+
+        $user = $result['user'];
+        $user->wasRecentlyCreated = $result['created'];
+
+        return $user;
     }
 }

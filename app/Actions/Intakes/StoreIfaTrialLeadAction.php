@@ -6,6 +6,7 @@ use App\Models\ClientIntake;
 use App\Models\Plan;
 use App\Models\User;
 use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\UserAccountRecoveryService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,10 @@ use Throwable;
 
 class StoreIfaTrialLeadAction
 {
+    public function __construct(
+        private readonly UserAccountRecoveryService $accounts,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $validated
      */
@@ -37,7 +42,28 @@ class StoreIfaTrialLeadAction
                 &$newUser,
                 &$setPasswordUrl,
             ): ?ClientIntake {
+                $plan = Plan::where('slug', 'starter')->firstOrFail();
+
                 if ($this->duplicateExists($validated)) {
+                    $existingUser = User::withTrashed()
+                        ->where('email', Str::lower($validated['email']))
+                        ->first();
+
+                    if ($existingUser?->trashed()) {
+                        $result = $this->restoreOrCreateTrialUser($validated);
+                        $user = $result['user'];
+
+                        $this->ensureTrialSubscription($user, $plan);
+
+                        Log::info('Duplicate IFA free trial lead restored soft-deleted user.', [
+                            'email_hash' => $this->hashValue($validated['email']),
+                            'user_id' => $user->id,
+                            'user_was_restored' => $result['restored'],
+                        ]);
+
+                        return null;
+                    }
+
                     Log::info('Duplicate IFA free trial lead ignored.', [
                         'email_hash'    => $this->hashValue($validated['email']),
                         'whatsapp_hash' => $this->hashValue($validated['whatsapp']),
@@ -47,8 +73,6 @@ class StoreIfaTrialLeadAction
                 }
 
                 $documentPath = $this->storeDocument($document);
-
-                $plan = Plan::where('slug', 'starter')->firstOrFail();
 
                 $intake = ClientIntake::query()->create([
                     'submission_uuid'   => (string) Str::uuid(),
@@ -67,22 +91,12 @@ class StoreIfaTrialLeadAction
                     'ai_status'         => 'pending',
                 ]);
 
-                $user = User::firstOrCreate(
-                    ['email' => $validated['email']],
-                    [
-                        'name'     => $validated['advisor_name'],
-                        'password' => Hash::make(str()->random(32)),
-                    ]
-                );
+                $result = $this->restoreOrCreateTrialUser($validated);
+                $user = $result['user'];
 
-                $user->subscriptions()->create([
-                    'plan_id'          => $plan->id,
-                    'status'           => 'trial',
-                    'trial_started_at' => now(),
-                    'trial_ends_at'    => now()->addDays($plan->trial_days),
-                ]);
+                $this->ensureTrialSubscription($user, $plan);
 
-                if ($user->wasRecentlyCreated) {
+                if ($result['created']) {
                     $resetToken     = Password::broker()->createToken($user);
                     $setPasswordUrl = route('password.reset', ['token' => $resetToken])
                         . '?email=' . urlencode($user->email);
@@ -94,7 +108,8 @@ class StoreIfaTrialLeadAction
                     'submission_uuid'  => $intake->submission_uuid,
                     'email_hash'       => $this->hashValue($intake->email),
                     'user_id'          => $user->id,
-                    'user_was_created' => $user->wasRecentlyCreated,
+                    'user_was_created' => $result['created'],
+                    'user_was_restored' => $result['restored'],
                 ]);
 
                 return $intake;
@@ -148,6 +163,45 @@ class StoreIfaTrialLeadAction
         }
 
         return $path;
+    }
+
+    private function hasActiveOrTrialSubscription(User $user): bool
+    {
+        return $user->subscriptions()
+            ->whereIn('status', ['active', 'trial'])
+            ->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array{user: User, created: bool, restored: bool}
+     */
+    private function restoreOrCreateTrialUser(array $validated): array
+    {
+        return $this->accounts->findRestoreOrCreateUserByEmail(
+            $validated['email'],
+            [
+                'name'     => $validated['advisor_name'],
+                'password' => Hash::make(str()->random(32)),
+            ],
+            [
+                'name' => $validated['advisor_name'],
+            ],
+        );
+    }
+
+    private function ensureTrialSubscription(User $user, Plan $plan): void
+    {
+        if ($this->hasActiveOrTrialSubscription($user)) {
+            return;
+        }
+
+        $user->subscriptions()->create([
+            'plan_id'          => $plan->id,
+            'status'           => 'trial',
+            'trial_started_at' => now(),
+            'trial_ends_at'    => now()->addDays($plan->trial_days),
+        ]);
     }
 
     private function hashValue(mixed $value): ?string

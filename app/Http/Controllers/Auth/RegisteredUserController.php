@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserAccountRecoveryService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -28,21 +30,44 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, UserAccountRecoveryService $accounts): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $email = Str::lower($validated['email']);
+        $existingUser = User::withTrashed()
+            ->where('email', $email)
+            ->first();
 
-        event(new Registered($user));
+        if ($existingUser !== null && ! $existingUser->trashed()) {
+            throw ValidationException::withMessages([
+                'email' => __('validation.unique', ['attribute' => 'email']),
+            ]);
+        }
+
+        $password = Hash::make($validated['password']);
+
+        $result = $accounts->findRestoreOrCreateUserByEmail(
+            $email,
+            [
+                'name' => $validated['name'],
+                'password' => $password,
+            ],
+            [
+                'name' => $validated['name'],
+                'password' => $password,
+            ],
+        );
+
+        $user = $result['user'];
+
+        if ($result['created']) {
+            event(new Registered($user));
+        }
 
         Auth::login($user);
 
