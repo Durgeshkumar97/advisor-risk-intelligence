@@ -633,53 +633,58 @@
             <div class="eyebrow">Simple, honest pricing</div>
             <h2 style="margin-top:.4rem;">Flat monthly subscription</h2>
             <div style="margin-top:.6rem;font-size:.9rem;color:var(--ink-3);">
-                Daily delivery · No per-client limits
+                Email delivery · Unlimited portfolio types · Monthly client limits by plan
             </div>
-
             <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-2);">
-                No login. No dashboards. Delivered by Email.
+                No credit card required to start.
             </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2rem;max-width:1000px;margin:auto;align-items:stretch;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;max-width:1100px;margin:auto;align-items:stretch;">
 
             {{-- STARTER --}}
             <div class="card card-hover" style="padding:2rem;display:flex;flex-direction:column;justify-content:space-between;">
-
                 <div>
                     <div class="eyebrow">Starter</div>
-
-                    <h2 style="font-size:2.2rem;margin:.5rem 0;">₹999</h2>
-                    <p style="color:var(--ink-3);margin-bottom:1rem;">per month</p>
-
-                    <p style="margin-bottom:1rem;font-size:.9rem;">
-                        1 portfolio type
-                    </p>
+                    <div style="display:flex;align-items:baseline;gap:.4rem;margin:.5rem 0;">
+                        <h2 style="font-size:2.2rem;margin:0;">₹999</h2>
+                        <span style="color:var(--ink-3);font-size:.9rem;">/ month</span>
+                    </div>
 
                     <hr style="margin:1rem 0;opacity:.2;">
 
-                    <ul style="
-                        list-style:none;
-                        padding:0;
-                        margin:0;
-                        font-size:.9rem;
-                        line-height:1.9;
-                    ">
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Daily risk report
+                    <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>50 clients / month</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Plain English summary
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily risk signals</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Client script
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily email signal each morning</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Email delivery
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Client conversation script</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>14-day free trial</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
+                            <span style="font-weight:700;">✗</span>
+                            <span>Branded PDF reports</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
+                            <span style="font-weight:700;">✗</span>
+                            <span>Priority support</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
+                            <span style="font-weight:700;">✗</span>
+                            <span>Multi-advisor access</span>
                         </li>
                     </ul>
                 </div>
@@ -687,7 +692,7 @@
                 <a href="{{ route('checkout.show', ['plan' => 'starter']) }}"
                     class="btn-outline"
                     style="margin-top:2rem;text-align:center;">
-                    Start plan →
+                    Get Started
                 </a>
             </div>
 
@@ -702,8 +707,6 @@
                 flex-direction:column;
                 justify-content:space-between;
             ">
-
-                <!-- TOP CENTER BADGE -->
                 <div style="
                     position:absolute;
                     top:-12px;
@@ -717,98 +720,125 @@
                     letter-spacing:.05em;
                     border-radius:6px;
                     white-space:nowrap;
-                ">
-                    MOST POPULAR
-                </div>
+                ">MOST POPULAR</div>
 
-                <div style="margin-top:.5rem;">
-
-                    <h3 style="margin-bottom:.2rem;text-align:center;">PRO</h3>
-
-                    <h2 style="font-size:2.6rem;margin:.3rem 0;text-align:center;">₹2,499</h2>
-
-                    <div style="font-size:.75rem;color:var(--ink-3);margin-bottom:.5rem;text-align:center;">
+                <div>
+                    <div class="eyebrow" style="text-align:center;">Pro</div>
+                    <div style="display:flex;align-items:baseline;gap:.4rem;margin:.5rem 0;justify-content:center;">
+                        <h2 style="font-size:2.6rem;margin:0;">₹2,499</h2>
+                        <span style="color:var(--ink-3);font-size:.9rem;">/ month</span>
+                    </div>
+                    <div style="text-align:center;font-size:.75rem;color:var(--ink-3);margin-bottom:.5rem;">
                         <span style="text-decoration:line-through;">₹4,999</span>
                     </div>
 
-                    <p style="color:var(--ink-3);margin-bottom:1rem;text-align:center;">
-                        per month
-                    </p>
-
-                    <p style="margin-bottom:1rem;font-size:.9rem;text-align:center;">
-                        Up to 3 portfolio types
-                    </p>
-
                     <hr style="margin:1rem 0;opacity:.2;">
 
-                    <ul style="
-                        list-style:none;
-                        padding:0;
-                        margin:0;
-                        font-size:.9rem;
-                        line-height:1.9;
-                    ">
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Up to 3 daily reports
+                    <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Up to 250 clients / month</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Portfolio-wise signals
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily risk signals</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Monthly outlook
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily email signal each morning</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Branded PDF
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Client conversation script</span>
                         </li>
-                        <li style="position:relative;padding-left:1.2rem;">
-                            <span style="position:absolute;left:0;color:var(--gold);">•</span>
-                            Priority support
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Branded PDF reports</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Priority support (2-hour response)</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>14-day free trial</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
+                            <span style="font-weight:700;">✗</span>
+                            <span>Multi-advisor access</span>
                         </li>
                     </ul>
-
                 </div>
 
                 <a href="{{ route('checkout.show', ['plan' => 'pro']) }}"
                     class="btn-primary"
                     style="margin-top:2rem;text-align:center;">
-                    Start plan
+                    Get Pro →
                 </a>
             </div>
 
             {{-- TEAM --}}
             <div class="card card-hover" style="padding:2rem;display:flex;flex-direction:column;justify-content:space-between;">
-
                 <div>
                     <div class="eyebrow">Team</div>
-
-                    <h2 style="font-size:2.2rem;margin:.5rem 0;">₹4,999</h2>
-                    <p style="color:var(--ink-3);margin-bottom:1rem;">per month</p>
-
-                    <p style="margin-bottom:1rem;font-size:.9rem;">
-                        Multi-advisor setup
-                    </p>
+                    <div style="display:flex;align-items:baseline;gap:.4rem;margin:.5rem 0;">
+                        <h2 style="font-size:2.2rem;margin:0;">₹4,999</h2>
+                        <span style="color:var(--ink-3);font-size:.9rem;">/ month</span>
+                    </div>
 
                     <hr style="margin:1rem 0;opacity:.2;">
 
-                    <ul style="line-height:2;font-size:.9rem;">
-                        <li>• Everything in Pro</li>
-                        <li>• Multiple advisors</li>
-                        <li>• Custom thresholds</li>
-                        <li>• Strategy support</li>
+                    <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Up to 1,000 clients / month</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily risk signals</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Daily email signal each morning</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Client conversation script</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Branded PDF reports</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Priority support (2-hour response)</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>Multi-advisor access</span>
+                        </li>
+                        <li style="display:flex;align-items:center;gap:.6rem;">
+                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span>14-day free trial</span>
+                        </li>
                     </ul>
                 </div>
 
                 <a href="{{ route('checkout.show', ['plan' => 'team']) }}"
                     class="btn-outline"
                     style="margin-top:2rem;text-align:center;">
-                    Start plan
+                    Get Team →
                 </a>
             </div>
 
+        </div>
+
+        {{-- FOOTER TRUST LINE --}}
+        <div style="text-align:center;margin-top:2.5rem;font-size:.8rem;color:var(--ink-3);">
+            🔒 Secure payment via Razorpay &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees
+        </div>
+        <div style="text-align:center;margin-top:.5rem;font-size:.8rem;color:var(--ink-3);">
+            Questions? Email <a href="mailto:support@risksignal.in" style="color:var(--gold);text-decoration:none;">support@risksignal.in</a>
         </div>
 
     </div>
