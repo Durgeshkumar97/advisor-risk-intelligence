@@ -179,7 +179,6 @@
 
         <ul style="list-style:none;padding:0;margin:0;font-size:.9rem;line-height:2.2;">
             <li>{{ ($plan->daily_reports ?? false) ? '✅' : '✗' }} &nbsp;Daily risk reports</li>
-            <li>{{ ($plan->whatsapp_delivery ?? false) ? '✅' : '✗' }} &nbsp;WhatsApp delivery</li>
             <li>{{ ($plan->client_script ?? false) ? '✅' : '✗' }} &nbsp;Client conversation script</li>
             <li>{{ ($plan->branded_pdf ?? false) ? '✅' : '✗' }} &nbsp;Branded PDF reports</li>
             <li>{{ ($plan->priority_support ?? false) ? '✅' : '✗' }} &nbsp;Priority support</li>
