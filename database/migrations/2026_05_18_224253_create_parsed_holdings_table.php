@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('uploaded_file_id')
-                ->constrained()
+                ->constrained('portfolio_files')
                 ->cascadeOnDelete();
 
             $table->enum('asset_type', [
