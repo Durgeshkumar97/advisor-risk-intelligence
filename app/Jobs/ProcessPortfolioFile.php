@@ -33,9 +33,9 @@ class ProcessPortfolioFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $timeout      = 300;
-    public int $tries        = 3;
-    public int $backoff      = 60;
+    public int $timeout       = 300;
+    public int $tries         = 3;
+    public int $backoff       = 60;
     public int $maxExceptions = 3;
 
     private const DISK               = 'portfolios';
@@ -87,6 +87,7 @@ class ProcessPortfolioFile implements ShouldQueue
                 'filename' => $file->original_name,
             ]);
 
+
             if (!Storage::disk(self::DISK)->exists($file->path)) {
                 throw new \RuntimeException('Portfolio file missing from storage: ' . $file->path);
             }
@@ -94,10 +95,6 @@ class ProcessPortfolioFile implements ShouldQueue
             $extension    = strtolower(pathinfo($file->path, PATHINFO_EXTENSION));
             $absolutePath = Storage::disk(self::DISK)->path($file->path);
 
-            /*
-            | ZIP files: extract contained portfolio files and queue each one
-            | separately through this same pipeline.
-            */
             if ($extension === 'zip') {
                 $this->handleZipExtraction($file, $absolutePath);
                 return;
@@ -114,9 +111,12 @@ class ProcessPortfolioFile implements ShouldQueue
             ]);
 
             $portfolioId = $file->portfolio_id;
+            $riskScore   = null;
+            $reportPath  = null;
 
             DB::transaction(function () use (
-                $file, $holdings, $portfolioId, $assetScorer, $calculator
+                $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors,
+                &$riskScore, &$reportPath
             ) {
                 if ($portfolioId) {
                     PortfolioAsset::where('portfolio_id', $portfolioId)->delete();
@@ -157,7 +157,7 @@ class ProcessPortfolioFile implements ShouldQueue
                 if ($assetModels->isNotEmpty()) {
                     $result = $calculator->calculate($assetModels);
 
-                    RiskScore::create([
+                    $riskScore = RiskScore::create([
                         'user_id'      => $file->user_id,
                         'portfolio_id' => $portfolioId,
                         'score'        => $result['score'],
@@ -178,33 +178,32 @@ class ProcessPortfolioFile implements ShouldQueue
                         'asset_count' => count($assetModels),
                     ]);
                 }
+
+                // PDF inside transaction — render failure rolls back RiskScore + assets
+                $reportPath = $riskScore
+                    ? $this->generatePdfReport($file, $riskScore, $portfolioId)
+                    : null;
+
+                $file->update([
+                    'status'       => PortfolioFile::STATUS_PROCESSED,
+                    'processed_at' => now(),
+                    'report_path'  => $reportPath,
+                    'meta'         => array_merge($file->meta ?? [], [
+                        'processing_completed_at' => now()->toIso8601String(),
+                        'extension'               => $extension,
+                        'holdings_parsed'         => count($holdings),
+                        'parse_errors'            => $parseErrors,
+                    ]),
+                ]);
             });
-
-            $riskScore = RiskScore::where('user_id', $file->user_id)
-                ->where('portfolio_id', $portfolioId)
-                ->latest()
-                ->first();
-
-            $reportPath = $riskScore ? $this->generatePdfReport($file, $riskScore, $portfolioId) : null;
-
-            $file->update([
-                'status'       => PortfolioFile::STATUS_PROCESSED,
-                'processed_at' => now(),
-                'report_path'  => $reportPath,
-                'meta'         => array_merge($file->meta ?? [], [
-                    'processing_completed_at' => now()->toIso8601String(),
-                    'extension'               => $extension,
-                    'holdings_parsed'         => count($holdings),
-                    'parse_errors'            => $parseErrors,
-                ]),
-            ]);
 
             Log::info('ProcessPortfolioFile: completed.', [
                 'id'             => $file->id,
                 'holdings_saved' => count($holdings),
             ]);
 
-            if ($reportPath && empty($file->meta['extracted_from_zip_id'] ?? null)) {
+            // Email outside transaction — safe to queue after commit
+            if ($reportPath && empty($file->fresh()->meta['extracted_from_zip_id'] ?? null)) {
                 try {
                     $this->dispatchReportEmails($file, $riskScore);
                 } catch (\Throwable $e) {
@@ -216,6 +215,11 @@ class ProcessPortfolioFile implements ShouldQueue
             }
 
         } catch (\Throwable $e) {
+            // Orphan PDF cleanup — DB rolled back but disk file remains if PDF was written
+            if (!empty($reportPath) && Storage::disk(self::DISK)->exists($reportPath)) {
+                Storage::disk(self::DISK)->delete($reportPath);
+            }
+
             $file->update([
                 'status' => PortfolioFile::STATUS_FAILED,
                 'meta'   => array_merge($file->meta ?? [], [
@@ -237,7 +241,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
     private function generatePdfReport(PortfolioFile $file, RiskScore $riskScore, ?int $portfolioId): string
     {
-        $assets    = $portfolioId
+        $assets = $portfolioId
             ? PortfolioAsset::where('portfolio_id', $portfolioId)->orderByDesc('risk_score')->get()
             : collect();
 
