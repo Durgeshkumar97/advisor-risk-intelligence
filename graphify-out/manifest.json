@@ -1,0 +1,1492 @@
+{
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\settings.json": {
+    "mtime": 1781342452.6969106,
+    "ast_hash": "7bf81dca0376bde3a32244b82bc7cbc0",
+    "semantic_hash": "7bf81dca0376bde3a32244b82bc7cbc0"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\hooks.json": {
+    "mtime": 1781342453.040547,
+    "ast_hash": "a8642de21d29953a3459297c133c4bd6",
+    "semantic_hash": "a8642de21d29953a3459297c133c4bd6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\_ide_helper.php": {
+    "mtime": 1776786920.036266,
+    "ast_hash": "70e5ffa70117d2a712db831b8cca3e5b",
+    "semantic_hash": "70e5ffa70117d2a712db831b8cca3e5b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Intakes\\QueueAdminFreeTrialLeadNotificationAction.php": {
+    "mtime": 1779427487.1649163,
+    "ast_hash": "7a795ecadc529e241a4a648aab4d06fb",
+    "semantic_hash": "7a795ecadc529e241a4a648aab4d06fb"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Intakes\\StoreIfaTrialLeadAction.php": {
+    "mtime": 1781160806.734494,
+    "ast_hash": "134d0198a4588dd04c94a7fb9295a686",
+    "semantic_hash": "134d0198a4588dd04c94a7fb9295a686"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Payments\\CompletePaymentAction.php": {
+    "mtime": 1778848519.668686,
+    "ast_hash": "e5862884f87422dfae2fa40f4b9fe125",
+    "semantic_hash": "e5862884f87422dfae2fa40f4b9fe125"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Payments\\CreateRazorpayOrderAction.php": {
+    "mtime": 1778844000.8065212,
+    "ast_hash": "56ecac9fc2f674870a228ed950e70723",
+    "semantic_hash": "56ecac9fc2f674870a228ed950e70723"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Payments\\CreateSubscriptionFromPaymentAction.php": {
+    "mtime": 1780077196.9775677,
+    "ast_hash": "d1f01189d8021515d5c7f0a80ef3e0ec",
+    "semantic_hash": "d1f01189d8021515d5c7f0a80ef3e0ec"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Payments\\CreateUserFromPaymentAction.php": {
+    "mtime": 1781160727.5443468,
+    "ast_hash": "d4b47d1a042471704dec855b55d3f457",
+    "semantic_hash": "d4b47d1a042471704dec855b55d3f457"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Actions\\Payments\\VerifyRazorpayPayment.php": {
+    "mtime": 1780078030.1842718,
+    "ast_hash": "27350a1a91b543a6af26bf01fc4c4a1e",
+    "semantic_hash": "27350a1a91b543a6af26bf01fc4c4a1e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Console\\Commands\\ExpireSubscriptions.php": {
+    "mtime": 1780077196.9795673,
+    "ast_hash": "c61f8508c0377adfa74fd41fcb473884",
+    "semantic_hash": "c61f8508c0377adfa74fd41fcb473884"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Console\\Commands\\GenerateRiskScore.php": {
+    "mtime": 1780385681.3905864,
+    "ast_hash": "85b0f193fbc0f3ee6ad8194485582066",
+    "semantic_hash": "85b0f193fbc0f3ee6ad8194485582066"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Console\\Commands\\PurgeDeletedUsers.php": {
+    "mtime": 1781181913.339517,
+    "ast_hash": "bac3a0bf5a2fd9d8d5b256a8a088ade9",
+    "semantic_hash": "bac3a0bf5a2fd9d8d5b256a8a088ade9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Console\\Commands\\SendDailyWhatsApp.php": {
+    "mtime": 1780385681.391587,
+    "ast_hash": "c25b92f32619c21aac39a8a740d1923d",
+    "semantic_hash": "c25b92f32619c21aac39a8a740d1923d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\DTOs\\UploadedPortfolioDTO.php": {
+    "mtime": 1780077212.3194635,
+    "ast_hash": "f53ab583d72a983bb7f398c8087b7e0c",
+    "semantic_hash": "f53ab583d72a983bb7f398c8087b7e0c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Enums\\PaymentStatus.php": {
+    "mtime": 1780077212.3194635,
+    "ast_hash": "c53dd9f9f93b76aeea5e0efce80c1896",
+    "semantic_hash": "c53dd9f9f93b76aeea5e0efce80c1896"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Enums\\SubscriptionStatus.php": {
+    "mtime": 1780077212.3204632,
+    "ast_hash": "c752310de4be7be93d6fcfbe36f1e442",
+    "semantic_hash": "c752310de4be7be93d6fcfbe36f1e442"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Events\\PaymentConfirmed.php": {
+    "mtime": 1778478190.3624172,
+    "ast_hash": "48bb596281fbb896d999e5bcf65a309b",
+    "semantic_hash": "48bb596281fbb896d999e5bcf65a309b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Events\\PortfolioFileUploaded.php": {
+    "mtime": 1780077050.0338516,
+    "ast_hash": "5fa8d132241b0e7db395dca8adc185df",
+    "semantic_hash": "5fa8d132241b0e7db395dca8adc185df"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Exceptions\\PortfolioUploadException.php": {
+    "mtime": 1780077212.3214898,
+    "ast_hash": "c0ab00ffe1fc7da8ea256b60df029e8a",
+    "semantic_hash": "c0ab00ffe1fc7da8ea256b60df029e8a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Admin\\AdminAuthController.php": {
+    "mtime": 1780077865.8771524,
+    "ast_hash": "cdb1b0761d4769ab1e05c1fac4a6af6d",
+    "semantic_hash": "cdb1b0761d4769ab1e05c1fac4a6af6d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Admin\\AdminDashboardController.php": {
+    "mtime": 1780078009.1169913,
+    "ast_hash": "c94d25ba7754784b40dad1d010fd84a6",
+    "semantic_hash": "c94d25ba7754784b40dad1d010fd84a6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Admin\\AdminIntakeController.php": {
+    "mtime": 1780077994.6898496,
+    "ast_hash": "283e7b29e405cc2932494e5341b80458",
+    "semantic_hash": "283e7b29e405cc2932494e5341b80458"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Admin\\AdminPaymentController.php": {
+    "mtime": 1780077677.4374201,
+    "ast_hash": "44616faa1d102a7d2d0d64df46a0e160",
+    "semantic_hash": "44616faa1d102a7d2d0d64df46a0e160"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Admin\\AdminUserController.php": {
+    "mtime": 1780077675.7398555,
+    "ast_hash": "ac28fd0bff09fce0891d2427da11fa52",
+    "semantic_hash": "ac28fd0bff09fce0891d2427da11fa52"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Api\\LeadController.php": {
+    "mtime": 1780077994.6908495,
+    "ast_hash": "18c003d9342bd6e5424336430fc11ac3",
+    "semantic_hash": "18c003d9342bd6e5424336430fc11ac3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\AuthenticatedSessionController.php": {
+    "mtime": 1774378668.018165,
+    "ast_hash": "0ec72cf98bcff6621d9e1f03ea018f8a",
+    "semantic_hash": "0ec72cf98bcff6621d9e1f03ea018f8a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\ConfirmablePasswordController.php": {
+    "mtime": 1774378668.0187895,
+    "ast_hash": "bda485943308b8e21e667e5f4a287946",
+    "semantic_hash": "bda485943308b8e21e667e5f4a287946"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\EmailVerificationNotificationController.php": {
+    "mtime": 1774378668.0198252,
+    "ast_hash": "68ced5fefa7a2362391bc17048d150a4",
+    "semantic_hash": "68ced5fefa7a2362391bc17048d150a4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\EmailVerificationPromptController.php": {
+    "mtime": 1774378668.0198252,
+    "ast_hash": "c3fcbf0a3661adc8a24fd44fd6a9107b",
+    "semantic_hash": "c3fcbf0a3661adc8a24fd44fd6a9107b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\NewPasswordController.php": {
+    "mtime": 1774378668.0208282,
+    "ast_hash": "806e274e94c7a726e967d5ae9bc29a8b",
+    "semantic_hash": "806e274e94c7a726e967d5ae9bc29a8b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\PasswordController.php": {
+    "mtime": 1774378668.0208282,
+    "ast_hash": "b174129f4c888fcbe29ad3fbe0762fde",
+    "semantic_hash": "b174129f4c888fcbe29ad3fbe0762fde"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\PasswordResetLinkController.php": {
+    "mtime": 1774378668.0208282,
+    "ast_hash": "4c6934c157d0f2e36457b437e08a44b2",
+    "semantic_hash": "4c6934c157d0f2e36457b437e08a44b2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\RegisteredUserController.php": {
+    "mtime": 1781160727.3833804,
+    "ast_hash": "0cbb38b2f8c4b3c5f0404771fbacea0d",
+    "semantic_hash": "0cbb38b2f8c4b3c5f0404771fbacea0d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Auth\\VerifyEmailController.php": {
+    "mtime": 1774378668.022986,
+    "ast_hash": "f7ba8245c1fa0f3e7d8591364c8f8943",
+    "semantic_hash": "f7ba8245c1fa0f3e7d8591364c8f8943"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\CheckoutController.php": {
+    "mtime": 1780078071.1706781,
+    "ast_hash": "091917a031d7d079edd2aa3b3463836c",
+    "semantic_hash": "091917a031d7d079edd2aa3b3463836c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\Controller.php": {
+    "mtime": 1774203464.2788918,
+    "ast_hash": "25a307335c0719bc9a91b3f7babd186d",
+    "semantic_hash": "25a307335c0719bc9a91b3f7babd186d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\FileController.php": {
+    "mtime": 1780242316.2927299,
+    "ast_hash": "d4cb0a245e78f4e66072eb34d9fa6df8",
+    "semantic_hash": "d4cb0a245e78f4e66072eb34d9fa6df8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\IntakeController.php": {
+    "mtime": 1779427569.3178775,
+    "ast_hash": "f7bfe23d91704d161b1c365117bbf49c",
+    "semantic_hash": "f7bfe23d91704d161b1c365117bbf49c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\PageController.php": {
+    "mtime": 1774671002.182785,
+    "ast_hash": "6673ffb88588ac7c103146408015bd0f",
+    "semantic_hash": "6673ffb88588ac7c103146408015bd0f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\PaymentController.php": {
+    "mtime": 1780129221.4964206,
+    "ast_hash": "76419049b39e10053a15bfdf212d318b",
+    "semantic_hash": "76419049b39e10053a15bfdf212d318b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\PortfolioController.php": {
+    "mtime": 1780077677.4384263,
+    "ast_hash": "933b094aeadac2a138a8fbe7f2bca46c",
+    "semantic_hash": "933b094aeadac2a138a8fbe7f2bca46c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\PortfolioUploadController.php": {
+    "mtime": 1780577447.9513147,
+    "ast_hash": "bc1536c96fed4e1c31564a9f719c6ce3",
+    "semantic_hash": "bc1536c96fed4e1c31564a9f719c6ce3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\ProfileController.php": {
+    "mtime": 1781160727.7796495,
+    "ast_hash": "eae12134e3000bf347ec4ee21703e226",
+    "semantic_hash": "eae12134e3000bf347ec4ee21703e226"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\SubscriptionController.php": {
+    "mtime": 1780120280.3177125,
+    "ast_hash": "136a3178362e74a054e2b62cb26a1b79",
+    "semantic_hash": "136a3178362e74a054e2b62cb26a1b79"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\User\\DashboardController.php": {
+    "mtime": 1780577465.2117114,
+    "ast_hash": "e57ec244d25ea0ce269baa54351b3aeb",
+    "semantic_hash": "e57ec244d25ea0ce269baa54351b3aeb"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Controllers\\WebhookController.php": {
+    "mtime": 1780078169.8363142,
+    "ast_hash": "b2b2e1c2bb33799f37e83f0874defd36",
+    "semantic_hash": "b2b2e1c2bb33799f37e83f0874defd36"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\AdminOnly.php": {
+    "mtime": 1776839868.1236715,
+    "ast_hash": "fb6a219ff5125caa9d0b3dd8a02ff286",
+    "semantic_hash": "fb6a219ff5125caa9d0b3dd8a02ff286"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\Authenticate.php": {
+    "mtime": 1777725353.0684197,
+    "ast_hash": "0134fc4448fcefba89a3b9cb2ce7227c",
+    "semantic_hash": "0134fc4448fcefba89a3b9cb2ce7227c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\CheckSubscription.php": {
+    "mtime": 1781075156.1518855,
+    "ast_hash": "4d19bc7e798bec3cf8a6c3b77a608c03",
+    "semantic_hash": "4d19bc7e798bec3cf8a6c3b77a608c03"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\EncryptCookies.php": {
+    "mtime": 1780077196.9937463,
+    "ast_hash": "5f1245183fd72f9e39766433cae2bebb",
+    "semantic_hash": "5f1245183fd72f9e39766433cae2bebb"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\EnsureActiveSubscription.php": {
+    "mtime": 1781075165.8897362,
+    "ast_hash": "b7d0f82831ffbad715e75e7cd288e8a5",
+    "semantic_hash": "b7d0f82831ffbad715e75e7cd288e8a5"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\RedirectIfAuthenticated.php": {
+    "mtime": 1777725449.1529684,
+    "ast_hash": "95ab15556b0f1b3835d187922524d7df",
+    "semantic_hash": "95ab15556b0f1b3835d187922524d7df"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\TrustHosts.php": {
+    "mtime": 1777827301.277411,
+    "ast_hash": "c49b39129899f8b113ab832a0ac5ed01",
+    "semantic_hash": "c49b39129899f8b113ab832a0ac5ed01"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Middleware\\TrustProxies.php": {
+    "mtime": 1777827284.3181603,
+    "ast_hash": "2d92cad7787880dc10e1b1883721eb9f",
+    "semantic_hash": "2d92cad7787880dc10e1b1883721eb9f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Requests\\Auth\\LoginRequest.php": {
+    "mtime": 1781160727.701769,
+    "ast_hash": "e0462bfaf1af82062f8e827122226629",
+    "semantic_hash": "e0462bfaf1af82062f8e827122226629"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Requests\\ProfileUpdateRequest.php": {
+    "mtime": 1780124821.8121665,
+    "ast_hash": "7d6c639e699e9fdb186d8a9e03eecc94",
+    "semantic_hash": "7d6c639e699e9fdb186d8a9e03eecc94"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Requests\\StoreIfaTrialRequest.php": {
+    "mtime": 1780724304.2499378,
+    "ast_hash": "01eaf37937d248a2111f865c63484473",
+    "semantic_hash": "01eaf37937d248a2111f865c63484473"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Http\\Requests\\StorePortfolioUploadRequest.php": {
+    "mtime": 1780077212.3331752,
+    "ast_hash": "759e8f40e2dd039da81b0089c73c1e0c",
+    "semantic_hash": "759e8f40e2dd039da81b0089c73c1e0c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Jobs\\AssembleBundleZip.php": {
+    "mtime": 1780552842.356816,
+    "ast_hash": "5f83d0f8f7f0808bc3fe38e9a687d6d4",
+    "semantic_hash": "5f83d0f8f7f0808bc3fe38e9a687d6d4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Jobs\\ProcessPortfolioFile.php": {
+    "mtime": 1780556877.371243,
+    "ast_hash": "0b293c9477e10668696360b4f179909a",
+    "semantic_hash": "0b293c9477e10668696360b4f179909a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Jobs\\ProcessSuccessfulPayment.php": {
+    "mtime": 1780077690.9475765,
+    "ast_hash": "7bfa3f3e9a01847f59d25e5b44222b08",
+    "semantic_hash": "7bfa3f3e9a01847f59d25e5b44222b08"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Jobs\\SendWhatsAppMessage.php": {
+    "mtime": 1780077675.7408555,
+    "ast_hash": "f08b95a65bdbb92fddc445bf707081e2",
+    "semantic_hash": "f08b95a65bdbb92fddc445bf707081e2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Listeners\\ActivateSubscriptionListener.php": {
+    "mtime": 1778478240.5279524,
+    "ast_hash": "5ec4e2f8a0aaf5d8a7cea927316e3a84",
+    "semantic_hash": "5ec4e2f8a0aaf5d8a7cea927316e3a84"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Listeners\\LogPortfolioFileUpload.php": {
+    "mtime": 1780077050.0680878,
+    "ast_hash": "53a46d02e0a9f0c44c5d88c5f5195944",
+    "semantic_hash": "53a46d02e0a9f0c44c5d88c5f5195944"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Mail\\AdminFreeTrialLeadSubmittedMail.php": {
+    "mtime": 1779427569.3573985,
+    "ast_hash": "1e8b722c4a7dea3263f19be3637c124c",
+    "semantic_hash": "1e8b722c4a7dea3263f19be3637c124c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Mail\\BundleReportMail.php": {
+    "mtime": 1780242277.8033397,
+    "ast_hash": "89683bc3ff009d4a742b6da7d59794c2",
+    "semantic_hash": "89683bc3ff009d4a742b6da7d59794c2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Mail\\DailyRiskSignalMail.php": {
+    "mtime": 1778031814.963974,
+    "ast_hash": "a59f878b7f394da13cbebd1f35342b56",
+    "semantic_hash": "a59f878b7f394da13cbebd1f35342b56"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Mail\\RiskAlertMail.php": {
+    "mtime": 1778031103.985579,
+    "ast_hash": "6345806c5e356f33cc326e5ad6ee7d38",
+    "semantic_hash": "6345806c5e356f33cc326e5ad6ee7d38"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Mail\\RiskReportMail.php": {
+    "mtime": 1780124673.9850867,
+    "ast_hash": "cb20c954709023484b5ab1627ba2e2de",
+    "semantic_hash": "cb20c954709023484b5ab1627ba2e2de"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Admin.php": {
+    "mtime": 1780077212.334431,
+    "ast_hash": "69db5d6f61eeb3f64e57389510026630",
+    "semantic_hash": "69db5d6f61eeb3f64e57389510026630"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\ClientIntake.php": {
+    "mtime": 1775748614.8913474,
+    "ast_hash": "80eae6ee3b851982f2a789349c74ff9c",
+    "semantic_hash": "80eae6ee3b851982f2a789349c74ff9c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Lead.php": {
+    "mtime": 1776615810.3779213,
+    "ast_hash": "a0fa0e2251f27e8044a39fd8d03c5bde",
+    "semantic_hash": "a0fa0e2251f27e8044a39fd8d03c5bde"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Payment.php": {
+    "mtime": 1780077212.334431,
+    "ast_hash": "779c5b73e2d57f88b8d40dcd2d3c5c12",
+    "semantic_hash": "779c5b73e2d57f88b8d40dcd2d3c5c12"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Plan.php": {
+    "mtime": 1780577396.9541385,
+    "ast_hash": "bd69f30d876270a75c93f84938d77204",
+    "semantic_hash": "bd69f30d876270a75c93f84938d77204"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Portfolio.php": {
+    "mtime": 1780077852.0761857,
+    "ast_hash": "197302f2e9cdd4072b1258d9e056fccf",
+    "semantic_hash": "197302f2e9cdd4072b1258d9e056fccf"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\PortfolioAsset.php": {
+    "mtime": 1778041321.7052405,
+    "ast_hash": "ac49714350e727ab1e03d849089fcc80",
+    "semantic_hash": "ac49714350e727ab1e03d849089fcc80"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\PortfolioFile.php": {
+    "mtime": 1780577407.1646178,
+    "ast_hash": "cd6d406effa76a11a69013a786ffc42b",
+    "semantic_hash": "cd6d406effa76a11a69013a786ffc42b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\RiskScore.php": {
+    "mtime": 1780077197.0013986,
+    "ast_hash": "56c85548b9828ea8e025ccd10940fb7f",
+    "semantic_hash": "56c85548b9828ea8e025ccd10940fb7f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\Subscription.php": {
+    "mtime": 1781075145.5419,
+    "ast_hash": "208072a6e06720f44e94630712b2ec50",
+    "semantic_hash": "208072a6e06720f44e94630712b2ec50"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Models\\User.php": {
+    "mtime": 1781160727.1947207,
+    "ast_hash": "46594953482339477945d32daf021e5b",
+    "semantic_hash": "46594953482339477945d32daf021e5b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Notifications\\PaymentSuccessNotification.php": {
+    "mtime": 1780725063.071812,
+    "ast_hash": "129ae936394a43bdf281e7cd0a6239b1",
+    "semantic_hash": "129ae936394a43bdf281e7cd0a6239b1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Notifications\\RiskAlertNotification.php": {
+    "mtime": 1780077212.3364305,
+    "ast_hash": "e3105344ae30fd67c05dc47ae43ba14d",
+    "semantic_hash": "e3105344ae30fd67c05dc47ae43ba14d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Notifications\\WelcomeSetPasswordNotification.php": {
+    "mtime": 1780728920.7534308,
+    "ast_hash": "86b1cb9c400aa77e357784badcb80a27",
+    "semantic_hash": "86b1cb9c400aa77e357784badcb80a27"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Policies\\PortfolioFilePolicy.php": {
+    "mtime": 1780077212.3386507,
+    "ast_hash": "061dd23a7303005033d1f326eb7e3dd6",
+    "semantic_hash": "061dd23a7303005033d1f326eb7e3dd6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Policies\\PortfolioPolicy.php": {
+    "mtime": 1780077212.3386507,
+    "ast_hash": "ec906d6c821339b596393612bd4b9d1f",
+    "semantic_hash": "ec906d6c821339b596393612bd4b9d1f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Providers\\AppServiceProvider.php": {
+    "mtime": 1778571876.9905818,
+    "ast_hash": "0c7a6209656197e35c2c1a1a79b75fd4",
+    "semantic_hash": "0c7a6209656197e35c2c1a1a79b75fd4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Providers\\AuthServiceProvider.php": {
+    "mtime": 1780077212.3386507,
+    "ast_hash": "0f78a5f14bcb78373acc04f98beff00f",
+    "semantic_hash": "0f78a5f14bcb78373acc04f98beff00f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Providers\\EventServiceProvider.php": {
+    "mtime": 1780077197.005399,
+    "ast_hash": "62a49f0cd2bafb2ce8a98642fdbfac59",
+    "semantic_hash": "62a49f0cd2bafb2ce8a98642fdbfac59"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Providers\\RouteServiceProvider.php": {
+    "mtime": 1778478680.9147196,
+    "ast_hash": "c998bc84ccfba76b00e7681e2156c821",
+    "semantic_hash": "c998bc84ccfba76b00e7681e2156c821"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\BillingService.php": {
+    "mtime": 1777704380.7769432,
+    "ast_hash": "f1ba1c0f3eada2019d5cd00ad47ba599",
+    "semantic_hash": "f1ba1c0f3eada2019d5cd00ad47ba599"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\PortfolioUploadService.php": {
+    "mtime": 1780077212.3396525,
+    "ast_hash": "c3682d77becaeaa1384da3dc7d74b29d",
+    "semantic_hash": "c3682d77becaeaa1384da3dc7d74b29d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\RazorpayService.php": {
+    "mtime": 1778478071.5218482,
+    "ast_hash": "92424836e99860f980791301d09b3abe",
+    "semantic_hash": "92424836e99860f980791301d09b3abe"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\RiskEngine\\AssetRiskScorer.php": {
+    "mtime": 1780077675.7418551,
+    "ast_hash": "325793f090be8d6491fc969ee963098d",
+    "semantic_hash": "325793f090be8d6491fc969ee963098d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\RiskEngine\\PortfolioParser.php": {
+    "mtime": 1780552810.388139,
+    "ast_hash": "bf1a2d38a52da2c7a1c632f5ae9e2082",
+    "semantic_hash": "bf1a2d38a52da2c7a1c632f5ae9e2082"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\RiskEngine\\PortfolioRiskCalculator.php": {
+    "mtime": 1780077675.7418551,
+    "ast_hash": "44621103f20b1ccfaa0e0657ce153c9b",
+    "semantic_hash": "44621103f20b1ccfaa0e0657ce153c9b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\SubscriptionService.php": {
+    "mtime": 1781160727.6234124,
+    "ast_hash": "92a213f2d08e175e8b105c1361242438",
+    "semantic_hash": "92a213f2d08e175e8b105c1361242438"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\UserAccountRecoveryService.php": {
+    "mtime": 1781160727.291732,
+    "ast_hash": "1cf05ce46bdcea2802be1806cae8d0cf",
+    "semantic_hash": "1cf05ce46bdcea2802be1806cae8d0cf"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Services\\WhatsApp\\WhatsAppService.php": {
+    "mtime": 1780077675.742855,
+    "ast_hash": "59f30b98ee0d164ae220f924b369e2cc",
+    "semantic_hash": "59f30b98ee0d164ae220f924b369e2cc"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\Support\\Helpers\\payment.php": {
+    "mtime": 1778478348.2524633,
+    "ast_hash": "e1803a2cac60216da2c5e0445df4c724",
+    "semantic_hash": "e1803a2cac60216da2c5e0445df4c724"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\View\\Components\\AppLayout.php": {
+    "mtime": 1778494411.425427,
+    "ast_hash": "fb7547439462db6a36c5358034fd72b5",
+    "semantic_hash": "fb7547439462db6a36c5358034fd72b5"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\app\\View\\Components\\GuestLayout.php": {
+    "mtime": 1778494419.0481346,
+    "ast_hash": "5159724171faca4db9a414cd2238ea33",
+    "semantic_hash": "5159724171faca4db9a414cd2238ea33"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\artisan": {
+    "mtime": 1774203464.2804184,
+    "ast_hash": "e66bb13691f6184c762c196427d8e685",
+    "semantic_hash": "e66bb13691f6184c762c196427d8e685"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\bootstrap\\app.php": {
+    "mtime": 1781180596.4495373,
+    "ast_hash": "8d0ccf6eadcb71c3bd55960b9291cf73",
+    "semantic_hash": "8d0ccf6eadcb71c3bd55960b9291cf73"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\bootstrap\\cache\\packages.php": {
+    "mtime": 1781250454.6162117,
+    "ast_hash": "0e7e8a628b6e3cef4af947b6b6c4b041",
+    "semantic_hash": "0e7e8a628b6e3cef4af947b6b6c4b041"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\bootstrap\\cache\\services.php": {
+    "mtime": 1781250454.6319857,
+    "ast_hash": "e8b68e68a6700bb03e09f6dfac6da49a",
+    "semantic_hash": "e8b68e68a6700bb03e09f6dfac6da49a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\bootstrap\\providers.php": {
+    "mtime": 1774203464.2814512,
+    "ast_hash": "d18593472c5e35d8ab5add4240fc95f6",
+    "semantic_hash": "d18593472c5e35d8ab5add4240fc95f6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\composer.json": {
+    "mtime": 1780317671.5498712,
+    "ast_hash": "9c7ee111efb392d2920961e2f4d532e6",
+    "semantic_hash": "9c7ee111efb392d2920961e2f4d532e6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\app.php": {
+    "mtime": 1776872210.4926817,
+    "ast_hash": "b66892406eec87eb5b058a17aa0fae76",
+    "semantic_hash": "b66892406eec87eb5b058a17aa0fae76"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\auth.php": {
+    "mtime": 1780728940.191332,
+    "ast_hash": "c25f9a525af1b51fd0de4a8f6d09592f",
+    "semantic_hash": "c25f9a525af1b51fd0de4a8f6d09592f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\cache.php": {
+    "mtime": 1774203464.2848115,
+    "ast_hash": "022fdf20e95ddb79949954243e367003",
+    "semantic_hash": "022fdf20e95ddb79949954243e367003"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\database.php": {
+    "mtime": 1775324347.2569628,
+    "ast_hash": "01245abc71d36862d3eec659c6966a3d",
+    "semantic_hash": "01245abc71d36862d3eec659c6966a3d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\filesystems.php": {
+    "mtime": 1780077212.3426535,
+    "ast_hash": "f7009833e7a013696f83b894abb98bd7",
+    "semantic_hash": "f7009833e7a013696f83b894abb98bd7"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\logging.php": {
+    "mtime": 1774203464.2858129,
+    "ast_hash": "8c2daadb3f84863916297f91d5f864e6",
+    "semantic_hash": "8c2daadb3f84863916297f91d5f864e6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\mail.php": {
+    "mtime": 1774203464.2858129,
+    "ast_hash": "56b14578a660ef83c41fa599620bef6b",
+    "semantic_hash": "56b14578a660ef83c41fa599620bef6b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\queue.php": {
+    "mtime": 1774203464.2868128,
+    "ast_hash": "f98ce92e7bf51db1fabaf8a30e12fc5a",
+    "semantic_hash": "f98ce92e7bf51db1fabaf8a30e12fc5a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\risk.php": {
+    "mtime": 1780077859.6595826,
+    "ast_hash": "da6321f0058749e486f76e667dd77c32",
+    "semantic_hash": "da6321f0058749e486f76e667dd77c32"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\risksignal.php": {
+    "mtime": 1779427487.2854135,
+    "ast_hash": "989ae159e46e27c0e43ff2601547de35",
+    "semantic_hash": "989ae159e46e27c0e43ff2601547de35"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\services.php": {
+    "mtime": 1780077857.3835125,
+    "ast_hash": "26ff1d70116e8731fd1afd774ddd8fc9",
+    "semantic_hash": "26ff1d70116e8731fd1afd774ddd8fc9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\config\\session.php": {
+    "mtime": 1776840157.728531,
+    "ast_hash": "c07003c6d7ea71cc7cb00a6165dcfe16",
+    "semantic_hash": "c07003c6d7ea71cc7cb00a6165dcfe16"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\factories\\UserFactory.php": {
+    "mtime": 1774203464.28781,
+    "ast_hash": "e863c5e59a1728c6fd033e87269acda7",
+    "semantic_hash": "e863c5e59a1728c6fd033e87269acda7"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092515_create_users_table.php": {
+    "mtime": 1777964263.4949813,
+    "ast_hash": "7714384884099ade5950944e54f0a853",
+    "semantic_hash": "7714384884099ade5950944e54f0a853"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092516_create_client_intakes_table.php": {
+    "mtime": 1776590716.2321863,
+    "ast_hash": "7f0730178344c0496df64c01d160f386",
+    "semantic_hash": "7f0730178344c0496df64c01d160f386"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092516_create_reports_table.php": {
+    "mtime": 1776590716.501963,
+    "ast_hash": "f34e4213dc01c5ff3eb30bba4926cfbc",
+    "semantic_hash": "f34e4213dc01c5ff3eb30bba4926cfbc"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092516_create_risk_factors_table.php": {
+    "mtime": 1776590716.8109896,
+    "ast_hash": "65554821e5160446d3a3a0c087a2cc93",
+    "semantic_hash": "65554821e5160446d3a3a0c087a2cc93"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092517_create_risk_scores_table.php": {
+    "mtime": 1776590717.0915072,
+    "ast_hash": "f1276e93a35b1c5527f07622aaa3529b",
+    "semantic_hash": "f1276e93a35b1c5527f07622aaa3529b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_092518_create_leads_table.php": {
+    "mtime": 1776615606.9695249,
+    "ast_hash": "538716c8017d3eb8e898b12c80285d36",
+    "semantic_hash": "538716c8017d3eb8e898b12c80285d36"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_19_162639_create_plans_table.php": {
+    "mtime": 1776616018.818226,
+    "ast_hash": "069b1b08ad2ad4e76ea37c8e9711a438",
+    "semantic_hash": "069b1b08ad2ad4e76ea37c8e9711a438"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_22_045808_create_admin_logs_table.php": {
+    "mtime": 1776834470.0186083,
+    "ast_hash": "24f8418298895d85aa3ec28c9304e4d5",
+    "semantic_hash": "24f8418298895d85aa3ec28c9304e4d5"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_22_065723_create_security_events_table.php": {
+    "mtime": 1776841064.6821682,
+    "ast_hash": "232a14107f7119a2dd24dae71677040d",
+    "semantic_hash": "232a14107f7119a2dd24dae71677040d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_25_062153_create_subscriptions_table.php": {
+    "mtime": 1777963764.7123108,
+    "ast_hash": "95c5340057bf316d1b190712729594b4",
+    "semantic_hash": "95c5340057bf316d1b190712729594b4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_28_121553_add_submission_uuid_to_client_intakes_table.php": {
+    "mtime": 1777442208.4852712,
+    "ast_hash": "ff532e30677f1e02d7597a6803995826",
+    "semantic_hash": "ff532e30677f1e02d7597a6803995826"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_29_132121_create_payments_table.php": {
+    "mtime": 1777707580.505075,
+    "ast_hash": "32750efa70666ecb5bf87ac5d524aa75",
+    "semantic_hash": "32750efa70666ecb5bf87ac5d524aa75"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_04_29_201441_add_business_fields_to_client_intakes_table.php": {
+    "mtime": 1777473891.008659,
+    "ast_hash": "d86f911f05b8aad1e331789909471a43",
+    "semantic_hash": "d86f911f05b8aad1e331789909471a43"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_05_123123_add_login_token_to_users_table.php": {
+    "mtime": 1779178438.663632,
+    "ast_hash": "5f28800652935fe607157ee1024a2376",
+    "semantic_hash": "5f28800652935fe607157ee1024a2376"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_05_132110_add_access_fields_to_users_table.php": {
+    "mtime": 1777967486.3984382,
+    "ast_hash": "d7b980179de2eebb3de385110321972c",
+    "semantic_hash": "d7b980179de2eebb3de385110321972c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_06_074124_create_portfolios_table.php": {
+    "mtime": 1778033520.2914414,
+    "ast_hash": "b21f606a391446518c6caf253a209c34",
+    "semantic_hash": "b21f606a391446518c6caf253a209c34"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_06_074219_create_portfolio_assets_table.php": {
+    "mtime": 1778033549.4050016,
+    "ast_hash": "cc006fcc957932bbd98ea5ff70c56f06",
+    "semantic_hash": "cc006fcc957932bbd98ea5ff70c56f06"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_08_171333_add_duration_days_to_plans_table.php": {
+    "mtime": 1778336950.9505913,
+    "ast_hash": "f3fff94d875ef2ea4e4f760b7ac57ca0",
+    "semantic_hash": "f3fff94d875ef2ea4e4f760b7ac57ca0"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_11_113251_create_jobs_table.php": {
+    "mtime": 1778479371.3550303,
+    "ast_hash": "15108e899b264ea9b2208260dce68d5a",
+    "semantic_hash": "15108e899b264ea9b2208260dce68d5a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_13_103534_upgrade_payments_table_structure.php": {
+    "mtime": 1778648750.72144,
+    "ast_hash": "1bf86ae045c3593adbd2a8213419a1fe",
+    "semantic_hash": "1bf86ae045c3593adbd2a8213419a1fe"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_13_103937_alter_payment_status_column.php": {
+    "mtime": 1779178098.0756001,
+    "ast_hash": "0f8b7b7f0cdf71a5030f1b28c0cc96a7",
+    "semantic_hash": "0f8b7b7f0cdf71a5030f1b28c0cc96a7"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_13_104147_cleanup_legacy_payment_columns.php": {
+    "mtime": 1778649115.837733,
+    "ast_hash": "13f121587fdfe7d4610fe3f4c69cc62c",
+    "semantic_hash": "13f121587fdfe7d4610fe3f4c69cc62c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_14_211046_alter_payment_status_enum.php": {
+    "mtime": 1780077212.344652,
+    "ast_hash": "b13d5a83a118e3df1e92ba594a2a77b4",
+    "semantic_hash": "b13d5a83a118e3df1e92ba594a2a77b4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_15_165914_upgrade_risk_scores_table.php": {
+    "mtime": 1779178097.933776,
+    "ast_hash": "e64daa7352f03a485e7a2184d5ac4f74",
+    "semantic_hash": "e64daa7352f03a485e7a2184d5ac4f74"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_18_224252_create_portfolio_files_table.php": {
+    "mtime": 1779179851.206127,
+    "ast_hash": "36532eff8bfb9d099da7980c346d2ee2",
+    "semantic_hash": "36532eff8bfb9d099da7980c346d2ee2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_18_224253_create_parsed_holdings_table.php": {
+    "mtime": 1781260606.9642975,
+    "ast_hash": "d492c51a66b4d000e7d9d153f583a79e",
+    "semantic_hash": "d492c51a66b4d000e7d9d153f583a79e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_22_000000_create_failed_jobs_table.php": {
+    "mtime": 1779427639.9007359,
+    "ast_hash": "113d9f6204922a345c93d59820297ee0",
+    "semantic_hash": "113d9f6204922a345c93d59820297ee0"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_23_000001_add_processed_at_to_payments_table.php": {
+    "mtime": 1780077197.0147102,
+    "ast_hash": "34ae41fdee0777009f76b76d6f2837fc",
+    "semantic_hash": "34ae41fdee0777009f76b76d6f2837fc"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_23_135217_add_user_id_index_to_portfolio_files_table.php": {
+    "mtime": 1780077197.0157099,
+    "ast_hash": "5c5f74a471f0ae252aa37598fcb8a6ed",
+    "semantic_hash": "5c5f74a471f0ae252aa37598fcb8a6ed"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_23_140442_add_user_id_index_to_risk_scores_table.php": {
+    "mtime": 1780077197.0157099,
+    "ast_hash": "1ca2d02365eef843d336ec54e14bcd52",
+    "semantic_hash": "1ca2d02365eef843d336ec54e14bcd52"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_23_200001_add_phone_to_users_table.php": {
+    "mtime": 1780077675.744162,
+    "ast_hash": "ee6fbeaef59da5a492356605f8723387",
+    "semantic_hash": "ee6fbeaef59da5a492356605f8723387"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_25_000001_add_missing_columns_to_leads_table.php": {
+    "mtime": 1780077197.0167134,
+    "ast_hash": "6070d067b3624fa4f15ebb622cfafa49",
+    "semantic_hash": "6070d067b3624fa4f15ebb622cfafa49"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_26_000001_add_processed_at_to_payments_table.php": {
+    "mtime": 1780077212.344652,
+    "ast_hash": "eb81dbb4d44e8ef85c0cec654eae99f9",
+    "semantic_hash": "eb81dbb4d44e8ef85c0cec654eae99f9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_26_000002_allow_processing_payment_status.php": {
+    "mtime": 1780077212.3456519,
+    "ast_hash": "b1d4935d45ecfb8e52419f02aa0ae42a",
+    "semantic_hash": "b1d4935d45ecfb8e52419f02aa0ae42a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_26_000003_drop_legacy_plan_from_payments_table.php": {
+    "mtime": 1780077212.3471558,
+    "ast_hash": "4a05cb5fa7d4734c935bbf9d4443d497",
+    "semantic_hash": "4a05cb5fa7d4734c935bbf9d4443d497"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_27_122009_add_role_to_users_table.php": {
+    "mtime": 1780077212.3471558,
+    "ast_hash": "cc08f84c5bb7834582af6110bfd3a792",
+    "semantic_hash": "cc08f84c5bb7834582af6110bfd3a792"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_28_230759_create_password_reset_tokens_table.php": {
+    "mtime": 1780077212.3471558,
+    "ast_hash": "0c27303bfe069941e0d9faf10bc7e2e1",
+    "semantic_hash": "0c27303bfe069941e0d9faf10bc7e2e1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_30_000001_add_report_path_to_portfolio_files_table.php": {
+    "mtime": 1780124002.7483563,
+    "ast_hash": "98e77569dc521f452c510e425a48baa3",
+    "semantic_hash": "98e77569dc521f452c510e425a48baa3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_30_000002_add_email_reports_to_users_table.php": {
+    "mtime": 1780124005.0195384,
+    "ast_hash": "aec887edc7dc1441353be653ad7a895c",
+    "semantic_hash": "aec887edc7dc1441353be653ad7a895c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_31_000001_add_bundle_report_path_to_portfolio_files_table.php": {
+    "mtime": 1780242132.7974005,
+    "ast_hash": "292067ae7cc92027ee4dc478d6385cb5",
+    "semantic_hash": "292067ae7cc92027ee4dc478d6385cb5"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_05_31_000002_create_job_batches_table.php": {
+    "mtime": 1780242145.448714,
+    "ast_hash": "06a6f39ab32cb1a49cb863ce2ae32d76",
+    "semantic_hash": "06a6f39ab32cb1a49cb863ce2ae32d76"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_06_04_000001_add_monthly_client_limit_to_plans_table.php": {
+    "mtime": 1780577387.73991,
+    "ast_hash": "5977ea0e3413bc6430f4d3cd05db1451",
+    "semantic_hash": "5977ea0e3413bc6430f4d3cd05db1451"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_06_10_000001_update_trial_days_on_starter_pro_plans.php": {
+    "mtime": 1781075122.6440034,
+    "ast_hash": "f0ef8cea39b99e0855ab556012a0d280",
+    "semantic_hash": "f0ef8cea39b99e0855ab556012a0d280"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\migrations\\2026_06_11_000001_add_deleted_at_to_users_table.php": {
+    "mtime": 1781160727.0918343,
+    "ast_hash": "3b645c4c69c87eb648029fea30380be2",
+    "semantic_hash": "3b645c4c69c87eb648029fea30380be2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\seeders\\DatabaseSeeder.php": {
+    "mtime": 1778236649.30312,
+    "ast_hash": "f3dd816f2c9dd696197877e1eff447be",
+    "semantic_hash": "f3dd816f2c9dd696197877e1eff447be"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\database\\seeders\\PlanSeeder.php": {
+    "mtime": 1781075134.7019095,
+    "ast_hash": "64d10a769a893900df635f4c17746633",
+    "semantic_hash": "64d10a769a893900df635f4c17746633"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\package.json": {
+    "mtime": 1775118884.866084,
+    "ast_hash": "7e760acbe41cc553059d040620af26ae",
+    "semantic_hash": "7e760acbe41cc553059d040620af26ae"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\postcss.config.js": {
+    "mtime": 1774668629.3100007,
+    "ast_hash": "470cfd3ee10fbff840b377e769485f3e",
+    "semantic_hash": "470cfd3ee10fbff840b377e769485f3e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\public\\index.php": {
+    "mtime": 1778216483.0200593,
+    "ast_hash": "c45f8b79e4c662391af26874f3009efd",
+    "semantic_hash": "c45f8b79e4c662391af26874f3009efd"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\js\\app.js": {
+    "mtime": 1780077212.3491616,
+    "ast_hash": "4877a9cd56dc92266ee95af09a512dbf",
+    "semantic_hash": "4877a9cd56dc92266ee95af09a512dbf"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\js\\bootstrap.js": {
+    "mtime": 1774203464.2978117,
+    "ast_hash": "78f909acc19aea4717eddca5a87c1ba3",
+    "semantic_hash": "78f909acc19aea4717eddca5a87c1ba3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\dashboard.blade.php": {
+    "mtime": 1780078266.745831,
+    "ast_hash": "5fb9ada8f0c3a6c98d338cebdabcdac1",
+    "semantic_hash": "5fb9ada8f0c3a6c98d338cebdabcdac1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\intakes\\index.blade.php": {
+    "mtime": 1780077675.7446165,
+    "ast_hash": "9439c4f73e7b275f129e11c7aca773b4",
+    "semantic_hash": "9439c4f73e7b275f129e11c7aca773b4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\intakes\\show.blade.php": {
+    "mtime": 1780077675.745623,
+    "ast_hash": "b7fea89b1a30eed44592a5a876b99eaf",
+    "semantic_hash": "b7fea89b1a30eed44592a5a876b99eaf"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\login.blade.php": {
+    "mtime": 1780077197.0219853,
+    "ast_hash": "c6bf4837b580a205c1c603c2c422765f",
+    "semantic_hash": "c6bf4837b580a205c1c603c2c422765f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\payments\\index.blade.php": {
+    "mtime": 1780077675.7466226,
+    "ast_hash": "1ff80a788612418de7f67557726e7e89",
+    "semantic_hash": "1ff80a788612418de7f67557726e7e89"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\users\\index.blade.php": {
+    "mtime": 1780077675.7466226,
+    "ast_hash": "448e977a569f69735002fb3c14d4640e",
+    "semantic_hash": "448e977a569f69735002fb3c14d4640e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\admin\\users\\show.blade.php": {
+    "mtime": 1780077675.7477276,
+    "ast_hash": "652f237b0e937bede9d928bb01568ee8",
+    "semantic_hash": "652f237b0e937bede9d928bb01568ee8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\auth\\login.blade.php": {
+    "mtime": 1780077197.0266845,
+    "ast_hash": "0273f1714beb1fb7061caa91f6f57330",
+    "semantic_hash": "0273f1714beb1fb7061caa91f6f57330"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\auth\\register.blade.php": {
+    "mtime": 1774378668.0271745,
+    "ast_hash": "57e8bee25cc3016f5762ffeac740d744",
+    "semantic_hash": "57e8bee25cc3016f5762ffeac740d744"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\auth\\verify-email.blade.php": {
+    "mtime": 1774378668.0281732,
+    "ast_hash": "4fbb838c84ffeb888b8216b2c8971592",
+    "semantic_hash": "4fbb838c84ffeb888b8216b2c8971592"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\checkout-already-subscribed.blade.php": {
+    "mtime": 1780077675.7477276,
+    "ast_hash": "095013dee6663a0e22a20e3504667f8b",
+    "semantic_hash": "095013dee6663a0e22a20e3504667f8b"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\checkout.blade.php": {
+    "mtime": 1780724414.4973843,
+    "ast_hash": "da0329201170f578b26ed442ff61e8dd",
+    "semantic_hash": "da0329201170f578b26ed442ff61e8dd"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\application-logo.blade.php": {
+    "mtime": 1774378668.0291736,
+    "ast_hash": "1c7db1416aaa6b22f1bdd9035b504b70",
+    "semantic_hash": "1c7db1416aaa6b22f1bdd9035b504b70"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\auth-session-status.blade.php": {
+    "mtime": 1774378668.030174,
+    "ast_hash": "66333bbc268c13c2cfffd33bb035bdd7",
+    "semantic_hash": "66333bbc268c13c2cfffd33bb035bdd7"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\danger-button.blade.php": {
+    "mtime": 1774378668.030174,
+    "ast_hash": "e8fa08dfe9601f609bb41369c7a4f0be",
+    "semantic_hash": "e8fa08dfe9601f609bb41369c7a4f0be"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\dropdown-link.blade.php": {
+    "mtime": 1774378668.030174,
+    "ast_hash": "6473c3211d7da3d19d2ffeb656b9139c",
+    "semantic_hash": "6473c3211d7da3d19d2ffeb656b9139c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\dropdown.blade.php": {
+    "mtime": 1774378668.0311732,
+    "ast_hash": "926c7cf56f7e70ae522091aa10a745ac",
+    "semantic_hash": "926c7cf56f7e70ae522091aa10a745ac"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\input-error.blade.php": {
+    "mtime": 1774378668.0316775,
+    "ast_hash": "cfbf79c518c7e31cb39735b0547611a4",
+    "semantic_hash": "cfbf79c518c7e31cb39735b0547611a4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\input-label.blade.php": {
+    "mtime": 1774378668.0320435,
+    "ast_hash": "ca69dd99d594c253f5aaec3e953d66a9",
+    "semantic_hash": "ca69dd99d594c253f5aaec3e953d66a9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\modal.blade.php": {
+    "mtime": 1774378668.0320435,
+    "ast_hash": "68c78d34c49779a2cd9b6c0d110eee6a",
+    "semantic_hash": "68c78d34c49779a2cd9b6c0d110eee6a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\nav-link.blade.php": {
+    "mtime": 1774378668.0320435,
+    "ast_hash": "90de989cbf1c718a2e6400c06894b854",
+    "semantic_hash": "90de989cbf1c718a2e6400c06894b854"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\primary-button.blade.php": {
+    "mtime": 1774378668.0320435,
+    "ast_hash": "ca9445524382751b6c81974a1c300af1",
+    "semantic_hash": "ca9445524382751b6c81974a1c300af1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\responsive-nav-link.blade.php": {
+    "mtime": 1774378668.0340238,
+    "ast_hash": "129f90421478b6be4a4f9b04c9ee085d",
+    "semantic_hash": "129f90421478b6be4a4f9b04c9ee085d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\secondary-button.blade.php": {
+    "mtime": 1774378668.0340238,
+    "ast_hash": "06336b25f18225bdcc483c98689bafc3",
+    "semantic_hash": "06336b25f18225bdcc483c98689bafc3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\components\\text-input.blade.php": {
+    "mtime": 1774378668.0340238,
+    "ast_hash": "b5403559e0111e625efc6057f337b951",
+    "semantic_hash": "b5403559e0111e625efc6057f337b951"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\emails\\admin\\free-trial-lead-submitted.blade.php": {
+    "mtime": 1780724546.665105,
+    "ast_hash": "eec5da97b6ba827aa221c676d59a1c62",
+    "semantic_hash": "eec5da97b6ba827aa221c676d59a1c62"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\emails\\bundle-report.blade.php": {
+    "mtime": 1780242297.8313086,
+    "ast_hash": "d7bfeeeabce9c17fb2e971efe4131ec8",
+    "semantic_hash": "d7bfeeeabce9c17fb2e971efe4131ec8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\emails\\daily-risk-signal.blade.php": {
+    "mtime": 1780724421.145875,
+    "ast_hash": "b2b2991134c19d0b679b478a5f8d2f82",
+    "semantic_hash": "b2b2991134c19d0b679b478a5f8d2f82"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\emails\\risk-report.blade.php": {
+    "mtime": 1780124652.7127967,
+    "ast_hash": "839092313f464c33734d6bb62c022787",
+    "semantic_hash": "839092313f464c33734d6bb62c022787"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\errors\\404.blade.php": {
+    "mtime": 1780077675.7488334,
+    "ast_hash": "e43b769d972edeb8e06a26a47ad1a9f9",
+    "semantic_hash": "e43b769d972edeb8e06a26a47ad1a9f9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\errors\\429.blade.php": {
+    "mtime": 1776840844.128549,
+    "ast_hash": "6d3e9d3990c0728a223663e58b982f6a",
+    "semantic_hash": "6d3e9d3990c0728a223663e58b982f6a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\errors\\500.blade.php": {
+    "mtime": 1780077675.7498353,
+    "ast_hash": "4d5868cd30f8d821164e7238e4b92905",
+    "semantic_hash": "4d5868cd30f8d821164e7238e4b92905"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\errors\\503.blade.php": {
+    "mtime": 1780077675.7498353,
+    "ast_hash": "c8cd1ad456579c1c22d05eb42a61e848",
+    "semantic_hash": "c8cd1ad456579c1c22d05eb42a61e848"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\home.blade.php": {
+    "mtime": 1781186007.1376762,
+    "ast_hash": "e4c5e3e9ba69607dfd14f44f06a69123",
+    "semantic_hash": "e4c5e3e9ba69607dfd14f44f06a69123"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\layouts\\app.blade.php": {
+    "mtime": 1781160727.8703387,
+    "ast_hash": "06480ee3bcf069ac366a0ae6e367f45a",
+    "semantic_hash": "06480ee3bcf069ac366a0ae6e367f45a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\layouts\\guest.blade.php": {
+    "mtime": 1776174463.279141,
+    "ast_hash": "c2651ad2023f7f6842404e7d3404da52",
+    "semantic_hash": "c2651ad2023f7f6842404e7d3404da52"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\legal\\privacy.blade.php": {
+    "mtime": 1780724433.638657,
+    "ast_hash": "e8df7573dfc26bf789b61f659fa8704e",
+    "semantic_hash": "e8df7573dfc26bf789b61f659fa8704e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\legal\\refund.blade.php": {
+    "mtime": 1778133736.3577425,
+    "ast_hash": "e4893226d3dd12ef689e23457e03115c",
+    "semantic_hash": "e4893226d3dd12ef689e23457e03115c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\legal\\terms.blade.php": {
+    "mtime": 1778133746.3592677,
+    "ast_hash": "e9ffee73994afab22b69098b0fff7d5a",
+    "semantic_hash": "e9ffee73994afab22b69098b0fff7d5a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\navigation.blade.php": {
+    "mtime": 1780077197.032091,
+    "ast_hash": "21835a0fb30190660bbaa3eab5d8a6f0",
+    "semantic_hash": "21835a0fb30190660bbaa3eab5d8a6f0"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\onboarding.blade.php": {
+    "mtime": 1780724383.6832016,
+    "ast_hash": "18db3220c67fa216383b80a5a1584126",
+    "semantic_hash": "18db3220c67fa216383b80a5a1584126"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\payment-success.blade.php": {
+    "mtime": 1780724407.3601103,
+    "ast_hash": "706c44df5bee724b920662fbbddb366f",
+    "semantic_hash": "706c44df5bee724b920662fbbddb366f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\portfolio\\manage.blade.php": {
+    "mtime": 1780077675.7512357,
+    "ast_hash": "92c059e78ddab1d78b212b06377902ce",
+    "semantic_hash": "92c059e78ddab1d78b212b06377902ce"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\portfolio\\upload.blade.php": {
+    "mtime": 1780577485.1923883,
+    "ast_hash": "9aa46c2f635ca3e1575b9b46c9be5789",
+    "semantic_hash": "9aa46c2f635ca3e1575b9b46c9be5789"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\pricing.blade.php": {
+    "mtime": 1780724325.1124287,
+    "ast_hash": "b0a862087a991d8703a06057e70bf929",
+    "semantic_hash": "b0a862087a991d8703a06057e70bf929"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\profile\\edit.blade.php": {
+    "mtime": 1781160753.365042,
+    "ast_hash": "fac6f492b5cbd7c86581fc9fe00dbdb0",
+    "semantic_hash": "fac6f492b5cbd7c86581fc9fe00dbdb0"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\profile\\partials\\delete-user-form.blade.php": {
+    "mtime": 1774378668.0370312,
+    "ast_hash": "17a43a9c441c76341146501342c13b78",
+    "semantic_hash": "17a43a9c441c76341146501342c13b78"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\profile\\partials\\update-password-form.blade.php": {
+    "mtime": 1774378668.0380332,
+    "ast_hash": "eb062864784ba2aca6df8abfa07cf0d8",
+    "semantic_hash": "eb062864784ba2aca6df8abfa07cf0d8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\profile\\partials\\update-profile-information-form.blade.php": {
+    "mtime": 1780724400.6339755,
+    "ast_hash": "3695333e35273cca63da0f39969acf22",
+    "semantic_hash": "3695333e35273cca63da0f39969acf22"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\reports\\risk-report.blade.php": {
+    "mtime": 1780124650.3485603,
+    "ast_hash": "764467ba278cc6cc2e6333e141446854",
+    "semantic_hash": "764467ba278cc6cc2e6333e141446854"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\user\\dashboard.blade.php": {
+    "mtime": 1780577474.5378933,
+    "ast_hash": "401f6806d2a5528078ec5fefcc970ad9",
+    "semantic_hash": "401f6806d2a5528078ec5fefcc970ad9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\resources\\views\\user\\subscription.blade.php": {
+    "mtime": 1781184870.2610533,
+    "ast_hash": "a9a75d037ea7dcc98de198c0270b084f",
+    "semantic_hash": "a9a75d037ea7dcc98de198c0270b084f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\routes\\api.php": {
+    "mtime": 1779775444.7664616,
+    "ast_hash": "5d251c13df41f64508fc31f06346bf94",
+    "semantic_hash": "5d251c13df41f64508fc31f06346bf94"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\routes\\auth.php": {
+    "mtime": 1774378712.409883,
+    "ast_hash": "c230bc31e814bcfa0553ff5935e0c4e4",
+    "semantic_hash": "c230bc31e814bcfa0553ff5935e0c4e4"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\routes\\console.php": {
+    "mtime": 1774203464.3019502,
+    "ast_hash": "3c6ce2e6d16444282b24a9aa63885563",
+    "semantic_hash": "3c6ce2e6d16444282b24a9aa63885563"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\routes\\web.php": {
+    "mtime": 1781075195.6223173,
+    "ast_hash": "928d62856e29f5a5bda8a8d095165c18",
+    "semantic_hash": "928d62856e29f5a5bda8a8d095165c18"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\tailwind.config.js": {
+    "mtime": 1774670276.4814365,
+    "ast_hash": "5e06ebd964ed4a49528e5903f0298fa9",
+    "semantic_hash": "5e06ebd964ed4a49528e5903f0298fa9"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\tests\\Feature\\IfaTrialLeadSubmissionTest.php": {
+    "mtime": 1781161161.2952144,
+    "ast_hash": "2b167bc8f756e680211f3e28f07d7963",
+    "semantic_hash": "2b167bc8f756e680211f3e28f07d7963"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\tests\\TestCase.php": {
+    "mtime": 1779427569.3874216,
+    "ast_hash": "40144c979f8554e9822eda5d0483e367",
+    "semantic_hash": "40144c979f8554e9822eda5d0483e367"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\verify-syntax.php": {
+    "mtime": 1780077212.3566682,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\vite.config.js": {
+    "mtime": 1774634272.6339412,
+    "ast_hash": "c974212e789b242bd47fa2fc64d63251",
+    "semantic_hash": "c974212e789b242bd47fa2fc64d63251"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\CLAUDE.md": {
+    "mtime": 1781342452.6891053,
+    "ast_hash": "817fe671013b35ae0bc9301dfe449a87",
+    "semantic_hash": "817fe671013b35ae0bc9301dfe449a87"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\SKILL.md": {
+    "mtime": 1781342452.688105,
+    "ast_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1",
+    "semantic_hash": "26828fbc6cf325d3fb0ba6a3a28e03a1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\add-watch.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\exports.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\extraction-spec.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\github-and-merge.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\hooks.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\query.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "c2a8e798674a81b02aa9975f43023819",
+    "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\transcribe.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.claude\\skills\\graphify\\references\\update.md": {
+    "mtime": 1781341035.2910118,
+    "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\SKILL.md": {
+    "mtime": 1781342453.0308714,
+    "ast_hash": "5c72924d8902cf334936c5827ff65349",
+    "semantic_hash": "5c72924d8902cf334936c5827ff65349"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\add-watch.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\exports.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\extraction-spec.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "a86a7321597b23cc2b22e011b3dc6e1d",
+    "semantic_hash": "a86a7321597b23cc2b22e011b3dc6e1d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\github-and-merge.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\hooks.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\query.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "c2a8e798674a81b02aa9975f43023819",
+    "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\transcribe.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.codex\\skills\\graphify\\references\\update.md": {
+    "mtime": 1781341035.2432313,
+    "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\.github\\copilot-instructions.md": {
+    "mtime": 1781372667.5782712,
+    "ast_hash": "2b23503628bf2ec71d067a85ca8948ab",
+    "semantic_hash": "2b23503628bf2ec71d067a85ca8948ab"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\AGENTS.md": {
+    "mtime": 1781342453.0373175,
+    "ast_hash": "752aa83aa64361ac32860f882dcff932",
+    "semantic_hash": "752aa83aa64361ac32860f882dcff932"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\CLAUDE.md": {
+    "mtime": 1781342452.6965199,
+    "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
+    "semantic_hash": "8a6643a420fdad6bfb583523bc6cef16"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\DEPLOY.md": {
+    "mtime": 1780724552.9562466,
+    "ast_hash": "50df714de0bbf348bb085c80d4ba02bb",
+    "semantic_hash": "50df714de0bbf348bb085c80d4ba02bb"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\FILE_STRUCTURE.md": {
+    "mtime": 1780077212.3149548,
+    "ast_hash": "d6fbcb3a5a8e27bb6348e9a30f59f0a6",
+    "semantic_hash": "d6fbcb3a5a8e27bb6348e9a30f59f0a6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\INTEGRATION_CHECKLIST.md": {
+    "mtime": 1780077212.3149548,
+    "ast_hash": "c8f388da3f2f4a72db2037b74e3c09ce",
+    "semantic_hash": "c8f388da3f2f4a72db2037b74e3c09ce"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\QUICK_REFERENCE.md": {
+    "mtime": 1780077212.3149548,
+    "ast_hash": "723f4929df40d5077aa0e3a55306d862",
+    "semantic_hash": "723f4929df40d5077aa0e3a55306d862"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\README.md": {
+    "mtime": 1780385743.411141,
+    "ast_hash": "f98810e8b65b32b5c1c4e10cc409a74d",
+    "semantic_hash": "f98810e8b65b32b5c1c4e10cc409a74d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\REFACTORING_NOTES.md": {
+    "mtime": 1780077212.3164585,
+    "ast_hash": "0a7ab7e9fb40d88288756238becbeaf3",
+    "semantic_hash": "0a7ab7e9fb40d88288756238becbeaf3"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\STATUS_REPORT.md": {
+    "mtime": 1780077212.3164585,
+    "ast_hash": "5fbbec17d93dc7dc43ead103ef7c42e1",
+    "semantic_hash": "5fbbec17d93dc7dc43ead103ef7c42e1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\public\\robots.txt": {
+    "mtime": 1774203464.296811,
+    "ast_hash": "b6216d61c03e6ce0c9aea6ca7808f7ca",
+    "semantic_hash": "b6216d61c03e6ce0c9aea6ca7808f7ca"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\05\\13805254-a834-49e6-9da4-53e72076bc46.pdf": {
+    "mtime": 1780125554.72345,
+    "ast_hash": "cf377991dc9343ba916f71671bc4e310",
+    "semantic_hash": "cf377991dc9343ba916f71671bc4e310"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\05\\17281c92-3ed1-4ab9-a753-4e730dacf35d.pdf": {
+    "mtime": 1780125555.6317866,
+    "ast_hash": "ed48613b4ad5cc8a6400f2cbeb51a06d",
+    "semantic_hash": "ed48613b4ad5cc8a6400f2cbeb51a06d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\05\\1eb4d121-a85f-475f-8fa6-5aaa3c538729.pdf": {
+    "mtime": 1780125555.44521,
+    "ast_hash": "347244516d3060b8b3488065f214b7c8",
+    "semantic_hash": "347244516d3060b8b3488065f214b7c8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\05\\25c5d7d4-6037-4f4d-8ca1-baece1f8aba1.pdf": {
+    "mtime": 1780125555.0082502,
+    "ast_hash": "4a2cb9794fd19f74d75035c18770eb69",
+    "semantic_hash": "4a2cb9794fd19f74d75035c18770eb69"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\05\\a731599b-6441-4802-a009-36374edbc654.pdf": {
+    "mtime": 1780125555.2131846,
+    "ast_hash": "26c1e5b49d8ade801130d1b0f3edb4ec",
+    "semantic_hash": "26c1e5b49d8ade801130d1b0f3edb4ec"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\09572bb2-1482-413c-b7eb-6d56f0121766.pdf": {
+    "mtime": 1780552911.8400118,
+    "ast_hash": "18dca3171957e7586ba81d11a8f5f72d",
+    "semantic_hash": "18dca3171957e7586ba81d11a8f5f72d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\190d34f0-460c-41f8-9025-f92a7eea4c1f.pdf": {
+    "mtime": 1780460272.339204,
+    "ast_hash": "86334eaddf4e25f9fa2750e3b0b656eb",
+    "semantic_hash": "86334eaddf4e25f9fa2750e3b0b656eb"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\20418281-a030-46c3-be6a-ddbbe66d89f7.pdf": {
+    "mtime": 1780578328.7711754,
+    "ast_hash": "ff78317e3cbc133b3672d11e92e05395",
+    "semantic_hash": "ff78317e3cbc133b3672d11e92e05395"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\25e14fe6-9a97-4757-8324-9709bd843051.pdf": {
+    "mtime": 1780578329.2843935,
+    "ast_hash": "c46eb31b153c18d64ccadbbde057a3ef",
+    "semantic_hash": "c46eb31b153c18d64ccadbbde057a3ef"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\271b74b8-087b-4af8-bf3e-bd935c30e1f6.pdf": {
+    "mtime": 1780460271.319791,
+    "ast_hash": "d6861bb19b7fbc2037bf23038befc6bf",
+    "semantic_hash": "d6861bb19b7fbc2037bf23038befc6bf"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\3e5e9ab8-39cc-432e-b3b3-902235f2081b.pdf": {
+    "mtime": 1780553861.2424035,
+    "ast_hash": "ef2f0ee27ac3737ff26f3016e1e4c09e",
+    "semantic_hash": "ef2f0ee27ac3737ff26f3016e1e4c09e"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\3e6198b2-46d0-463f-bb3c-3ed3cdb37e1f.pdf": {
+    "mtime": 1780460272.6819973,
+    "ast_hash": "3241053ba55d00ece11098a2c8e3287a",
+    "semantic_hash": "3241053ba55d00ece11098a2c8e3287a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\441644a8-ed39-407c-95b7-3409e05d3fe3.pdf": {
+    "mtime": 1780557307.1928244,
+    "ast_hash": "b8fedae72d3f768f0ea2e606f7a242e1",
+    "semantic_hash": "b8fedae72d3f768f0ea2e606f7a242e1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\4719d24a-4c30-4dc2-b9d7-7618cbdba9eb.pdf": {
+    "mtime": 1780557306.9090528,
+    "ast_hash": "75e618222cf1cc2d74fc3a65582c6e3d",
+    "semantic_hash": "75e618222cf1cc2d74fc3a65582c6e3d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\4853da4a-b46b-4ba4-b31d-468b7c96ff20.pdf": {
+    "mtime": 1780460271.7318866,
+    "ast_hash": "0526259c3fa18d4f13f8aafac4c89e87",
+    "semantic_hash": "0526259c3fa18d4f13f8aafac4c89e87"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\4e72680c-dcec-496d-8f1c-537fc5f59774.pdf": {
+    "mtime": 1780553861.498591,
+    "ast_hash": "38df0f711e8b30f75f5b11ec6c1ff5b6",
+    "semantic_hash": "38df0f711e8b30f75f5b11ec6c1ff5b6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\570e50c6-a65f-40e2-9d45-777f3acbf8cb.pdf": {
+    "mtime": 1780578328.4728484,
+    "ast_hash": "a14c8b4d0a6314fa59d7ef368195dab1",
+    "semantic_hash": "a14c8b4d0a6314fa59d7ef368195dab1"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\5ec1e493-612d-4826-951d-709a98a6da94.pdf": {
+    "mtime": 1780460272.9648304,
+    "ast_hash": "154b9a37df2ddb101eec10589a63fdb2",
+    "semantic_hash": "154b9a37df2ddb101eec10589a63fdb2"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\64be6151-8bad-40ab-9c31-38e7f2c8dd8f.pdf": {
+    "mtime": 1780460272.0621712,
+    "ast_hash": "17c039cf4cace5bfc4a38d7406b3bf48",
+    "semantic_hash": "17c039cf4cace5bfc4a38d7406b3bf48"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\68bca3fb-b96e-4598-b02e-f368aa12087e.pdf": {
+    "mtime": 1780552914.2269442,
+    "ast_hash": "b680da9b2ccb9f0854245c091263494f",
+    "semantic_hash": "b680da9b2ccb9f0854245c091263494f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\6a1c847e-fc93-4ada-aabe-857ccc5b8dfd.pdf": {
+    "mtime": 1780552913.651757,
+    "ast_hash": "5fac1e27994c6f06a39cc00337f6e13d",
+    "semantic_hash": "5fac1e27994c6f06a39cc00337f6e13d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\6b0a8f97-4367-4a26-8f81-04eabb3ab5dd.pdf": {
+    "mtime": 1780557307.6370418,
+    "ast_hash": "a8b365b8dba5edb2ef4e140c23604a9d",
+    "semantic_hash": "a8b365b8dba5edb2ef4e140c23604a9d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\6f2c5a53-a5f3-4fab-aa86-aa218a23bb8f.pdf": {
+    "mtime": 1780553862.576276,
+    "ast_hash": "c9cd4fb32691c2b59c7cc09dc6f85e52",
+    "semantic_hash": "c9cd4fb32691c2b59c7cc09dc6f85e52"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\75a22ec9-062c-4ae5-bdc4-fb12a8ab5b20.pdf": {
+    "mtime": 1780578328.172719,
+    "ast_hash": "6f49bc12e1e6382e2f42b3ee570b2b63",
+    "semantic_hash": "6f49bc12e1e6382e2f42b3ee570b2b63"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\86e96213-a000-46c1-ae38-888a1b2f2287.pdf": {
+    "mtime": 1780578329.6401677,
+    "ast_hash": "f74b249a4a623f5df91925bd27d11a3f",
+    "semantic_hash": "f74b249a4a623f5df91925bd27d11a3f"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\8ac54be7-e50c-4c98-8257-00359a0ff021.pdf": {
+    "mtime": 1780553862.055254,
+    "ast_hash": "2fbc1092e150167b5e1edff9996f2ac5",
+    "semantic_hash": "2fbc1092e150167b5e1edff9996f2ac5"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\9077a648-dd18-4de2-b921-cb743c508cf5.pdf": {
+    "mtime": 1780557307.488155,
+    "ast_hash": "e5f44607383436a0b9b2dd9fb8689929",
+    "semantic_hash": "e5f44607383436a0b9b2dd9fb8689929"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\97ddcc31-7dfd-455d-a1a6-778cf0879d9d.pdf": {
+    "mtime": 1780553861.8015256,
+    "ast_hash": "dc2207bb742a19fabed2fb5ff01408ad",
+    "semantic_hash": "dc2207bb742a19fabed2fb5ff01408ad"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\b645697f-ea13-49ff-a12e-f124d91603f4.pdf": {
+    "mtime": 1780553862.3234763,
+    "ast_hash": "19820217794fd5e62f4625fd0d3b962a",
+    "semantic_hash": "19820217794fd5e62f4625fd0d3b962a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\bc218830-4fdf-40e2-b417-7e811b1ae4f4.pdf": {
+    "mtime": 1780552913.3710105,
+    "ast_hash": "86257228a652b346bff0298792007229",
+    "semantic_hash": "86257228a652b346bff0298792007229"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\c91ccf60-4462-48a5-b338-3b15f34660e9.pdf": {
+    "mtime": 1780552913.937566,
+    "ast_hash": "f6eca8bd4be9bf75903364d1a2cde72d",
+    "semantic_hash": "f6eca8bd4be9bf75903364d1a2cde72d"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\d786a85e-11f0-4246-9195-573d3ea4e885.pdf": {
+    "mtime": 1780557306.6818626,
+    "ast_hash": "bf57c85c99911a086cc530c8d80455c6",
+    "semantic_hash": "bf57c85c99911a086cc530c8d80455c6"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\d7aaf2e9-620b-4231-9f1e-52ba3dc925d6.pdf": {
+    "mtime": 1780578329.0230522,
+    "ast_hash": "0b191e83743ca2b69508e9f1900f7f9a",
+    "semantic_hash": "0b191e83743ca2b69508e9f1900f7f9a"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\de20d6dd-a348-4c31-ae40-4a291bd6d92c.pdf": {
+    "mtime": 1780557307.3971024,
+    "ast_hash": "38985577f80926705d1dde2260f687c8",
+    "semantic_hash": "38985577f80926705d1dde2260f687c8"
+  },
+  "D:\\RiskSignal\\portfolio-risk-ifa-v1\\storage\\app\\private\\portfolios\\reports\\2026\\06\\e53a80b2-1eda-4a6d-a841-6e35003e53d9.pdf": {
+    "mtime": 1780552913.0036702,
+    "ast_hash": "767fc338776995e861be704210e01a03",
+    "semantic_hash": "767fc338776995e861be704210e01a03"
+  }
+}
