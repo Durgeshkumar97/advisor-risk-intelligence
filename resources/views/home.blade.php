@@ -3,7 +3,7 @@
 @section('content')
 
 {{-- ── HERO ─────────────────────────────────────────── --}}
-<section id="home" style="padding-top:96px;">
+<section id="home" style="padding-top:2rem; padding-bottom:2rem;">
 
     <div class="container hero-grid"
 
