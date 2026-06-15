@@ -3,7 +3,7 @@
 @section('content')
 
 {{-- ── HERO ─────────────────────────────────────────── --}}
-<section id="home" style="padding-top:2rem; padding-bottom:2rem;">
+<section id="home" style="padding-top:1.25rem; padding-bottom:1.25rem;">
 
     <div class="container hero-grid"
 
@@ -17,11 +17,11 @@
         <!-- LEFT SIDE -->
         <div class="reveal reveal-left" style="max-width:520px;">
 
-            <div class="eyebrow" style="margin-bottom:1.2rem;">
+            <div class="eyebrow" style="margin-bottom:0.8rem;">
                 risk intelligence · Independent financial advisors
             </div>
 
-            <h1 style="line-height:1.2;">
+            <h1 style="line-height:1.1; font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:0.25rem;">
                 When markets fall, clients panic.<br>
                 RiskSignal helps advisors retain trust and AUM.<br>
                 <em style="color:var(--gold);">
@@ -30,7 +30,7 @@
             </h1>
 
             <p style="
-                margin-top:1.4rem;
+                margin-top:0.5rem;
                 font-size:1rem;
                 color:var(--ink-2);
                 line-height:1.6;
@@ -42,7 +42,7 @@
 
             <!-- CTA -->
             <div style="
-                margin-top:2rem;
+                margin-top:0.85rem;
                 display:flex;
                 gap:1rem;
                 flex-wrap:wrap;
