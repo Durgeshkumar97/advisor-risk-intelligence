@@ -125,18 +125,11 @@
         */
 
         .alert {
-
-            padding:
-                1rem 1.2rem;
-
-            border-radius:
-                14px;
-
-            margin:
-                1.5rem 0;
-
-            font-weight:
-                600;
+            padding: 1rem 1.2rem;
+            border-radius: 14px;
+            margin: 1.5rem 0;
+            font-weight: 600;
+            text-align: center;
         }
 
         .alert-success {
