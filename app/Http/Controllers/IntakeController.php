@@ -6,6 +6,7 @@ use App\Actions\Intakes\QueueAdminFreeTrialLeadNotificationAction;
 use App\Actions\Intakes\StoreIfaTrialLeadAction;
 use App\Http\Requests\StoreIfaTrialRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 
 class IntakeController extends Controller
 {
@@ -16,22 +17,25 @@ class IntakeController extends Controller
 
     public function ifaSubmit(StoreIfaTrialRequest $request): RedirectResponse
     {
-        $intake = $this->storeIfaTrialLead->execute(
+        $result = $this->storeIfaTrialLead->execute(
             validated: $request->validated(),
             document: $request->file('document'),
         );
 
-        if ($intake === null) {
+        if ($result === null) {
             return redirect()->route('login')
                 ->with('success', 'You already have a trial. Please login to continue.');
         }
 
         $this->queueAdminNotification->execute(
-            intake: $intake,
+            intake: $result['intake'],
             ipAddress: $request->ip(),
         );
 
-        return redirect()->route('login')
-            ->with('success', 'Trial started! Check your email and login to access your dashboard.');
+        Auth::login($result['user']);
+        $request->session()->regenerate();
+        $result['user']->forceFill(['last_login_at' => now()])->save();
+
+        return redirect()->route('onboarding');
     }
 }

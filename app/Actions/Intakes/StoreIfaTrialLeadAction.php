@@ -25,14 +25,17 @@ class StoreIfaTrialLeadAction
 
     /**
      * @param  array<string, mixed>  $validated
+     * @return array{intake: ClientIntake, user: User, created: bool}|null
+     *   Returns null on duplicate submission (existing live user).
      */
     public function execute(
         array $validated,
         ?UploadedFile $document = null,
-    ): ?ClientIntake {
+    ): ?array {
         $documentPath   = null;
         $newUser        = null;   // captured via reference — read AFTER transaction commits
         $setPasswordUrl = null;   // captured via reference — read AFTER transaction commits
+        $committedUser  = null;   // captured via reference — User object for auto-login
 
         try {
             $intake = DB::transaction(function () use (
@@ -103,6 +106,8 @@ class StoreIfaTrialLeadAction
                     $newUser = $user;
                 }
 
+                $committedUser = $user;
+
                 Log::info('IFA free trial lead stored.', [
                     'client_intake_id' => $intake->getKey(),
                     'submission_uuid'  => $intake->submission_uuid,
@@ -133,7 +138,15 @@ class StoreIfaTrialLeadAction
             $newUser->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
         }
 
-        return $intake;
+        if ($intake === null || $committedUser === null) {
+            return null;
+        }
+
+        return [
+            'intake'  => $intake,
+            'user'    => $committedUser,
+            'created' => $newUser !== null,
+        ];
     }
 
     /**
