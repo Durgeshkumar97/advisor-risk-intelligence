@@ -22,7 +22,8 @@ class IntakeController extends Controller
         );
 
         if ($intake === null) {
-            return back()->with('success', 'Already registered.');
+            return redirect()->route('login')
+                ->with('success', 'You already have a trial. Please login to continue.');
         }
 
         $this->queueAdminNotification->execute(
@@ -30,6 +31,7 @@ class IntakeController extends Controller
             ipAddress: $request->ip(),
         );
 
-        return back()->with('success', 'Trial started successfully.');
+        return redirect()->route('login')
+            ->with('success', 'Trial started! Check your email and login to access your dashboard.');
     }
 }
