@@ -21,7 +21,7 @@
                 risk intelligence · Independent financial advisors
             </div>
 
-            <h1 style="line-height:1.1; font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:0.25rem;">
+            <h1 style="line-height:1.1; font-size:clamp(2.0rem,4vw,2.8rem); margin-bottom:0.25rem;">
                 When markets fall, clients panic.<br>
                 RiskSignal helps advisors retain trust and AUM.<br>
                 <em style="color:var(--gold);">
