@@ -28,10 +28,11 @@ class LeadController extends Controller
 
         if ($existingLead) {
             return response()->json([
-                'success' => true,
-                'message' => 'Existing trial found',
-                'data'    => $existingLead,
-            ]);
+            'success'      => true,
+            'message'      => 'Existing trial found',
+            'redirect_url' => route('login'),
+            'data'         => $existingLead,
+        ]);
         }
 
         /*
@@ -84,9 +85,10 @@ class LeadController extends Controller
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => '7-day trial started successfully',
-            'data'    => $lead,
+            'success'      => true,
+            'message'      => '7-day trial started successfully',
+            'redirect_url' => route('login'),
+            'data'         => $lead,
         ], 201);
     }
 }
