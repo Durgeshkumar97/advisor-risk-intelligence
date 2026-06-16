@@ -37,6 +37,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
         |--------------------------------------------------------------------------
+        | QUEUE WORKER — runs every minute, stops when empty (shared hosting)
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('queue:work --stop-when-empty --tries=3 --timeout=60')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        /*
+        |--------------------------------------------------------------------------
         | DAILY RISK SIGNAL DELIVERY
         |--------------------------------------------------------------------------
         */
