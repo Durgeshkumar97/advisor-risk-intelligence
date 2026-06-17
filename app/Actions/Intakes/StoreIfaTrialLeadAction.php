@@ -4,6 +4,7 @@ namespace App\Actions\Intakes;
 
 use App\Models\ClientIntake;
 use App\Models\Plan;
+use App\Models\Portfolio;
 use App\Models\User;
 use App\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
@@ -44,6 +45,7 @@ class StoreIfaTrialLeadAction
                 &$documentPath,
                 &$newUser,
                 &$setPasswordUrl,
+                &$committedUser,
             ): ?ClientIntake {
                 $plan = Plan::where('slug', 'starter')->firstOrFail();
 
@@ -100,6 +102,14 @@ class StoreIfaTrialLeadAction
                 $this->ensureTrialSubscription($user, $plan);
 
                 if ($result['created']) {
+                    Portfolio::create([
+                        'user_id'     => $user->id,
+                        'name'        => 'My Portfolio',
+                        'total_value' => 0,
+                        'risk_score'  => 0,
+                        'risk_level'  => 'LOW',
+                    ]);
+
                     $resetToken     = Password::broker()->createToken($user);
                     $setPasswordUrl = route('password.reset', ['token' => $resetToken])
                         . '?email=' . urlencode($user->email);
