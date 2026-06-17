@@ -325,7 +325,7 @@ class PortfolioParser
         }
 
         // Asset type (normalised)
-        $assetType = $this->normaliseAssetType($get('asset_type'));
+        $assetType = $this->normaliseAssetType($get('asset_type'), $name);
 
         // Values — derive what we can
         $quantity       = $this->toFloat($get('quantity'));
@@ -408,10 +408,11 @@ class PortfolioParser
     |--------------------------------------------------------------------------
     */
 
-    private function normaliseAssetType(string $raw): string
+    private function normaliseAssetType(string $raw, string $name = ''): string
     {
         if ($raw === '') {
-            return 'stock'; // default
+            // No explicit asset_type column — try to infer from the holding name
+            return $this->normaliseAssetType($name === '' ? 'stock' : $name);
         }
 
         $lower = strtolower(trim($raw));
