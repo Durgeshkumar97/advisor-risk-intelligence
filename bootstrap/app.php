@@ -82,6 +82,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
         |--------------------------------------------------------------------------
+        | DAILY DATABASE BACKUP (03:00 — off-peak, after risk:generate at 08:00
+        | and away from queue:work's every-minute cycle)
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('backup:database')
+            ->dailyAt('03:00')
+            ->withoutOverlapping();
+
+        /*
+        |--------------------------------------------------------------------------
         | STALE PENDING PAYMENTS CLEANUP (every 30 minutes)
         |--------------------------------------------------------------------------
         */
