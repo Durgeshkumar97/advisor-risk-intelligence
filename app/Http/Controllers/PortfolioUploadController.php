@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePortfolioUploadRequest;
+use App\Http\Requests\StoreManualPortfolioRequest;
 use App\Jobs\ProcessPortfolioFile;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortfolioUploadController extends Controller
@@ -145,6 +147,136 @@ class PortfolioUploadController extends Controller
                 ->withErrors(['file' => 'Upload failed. Please try again.'])
                 ->withInput();
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE MANUAL — convert manual-entry form data into a CSV, then run the
+    | exact same pipeline as a real file upload (same job, same disk, same UX).
+    |--------------------------------------------------------------------------
+    */
+
+    public function storeManual(StoreManualPortfolioRequest $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $subscription = Subscription::with('plan')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        if (!$subscription || (!$subscription->isActive() && !$subscription->isTrial() && !$subscription->isInGracePeriod())) {
+            return redirect()->route('pricing')
+                ->with('error', 'An active subscription is required.');
+        }
+
+        $limit        = $subscription->plan?->monthly_client_limit ?? 50;
+        $currentCount = PortfolioFile::monthlyClientCount($user->id);
+        $resetDate    = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+
+        if ($currentCount >= $limit) {
+            return back()
+                ->withErrors(['client_name' => "Monthly limit reached ({$currentCount}/{$limit} clients used this month). Resets {$resetDate}."])
+                ->withInput();
+        }
+
+        try {
+            $clientName  = $request->getClientName();
+            $portfolioId = $request->getPortfolioId();
+            $mode        = $request->input('mode');
+
+            // Build rows and CSV
+            if ($mode === 'holdings') {
+                $rows = $request->getHoldingsRows();
+            } else {
+                $rows = array_map(
+                    fn ($r) => ['name' => ucwords(str_replace('_', ' ', $r['type'])), 'type' => $r['type'], 'value' => $r['value']],
+                    $request->getAllocRows()
+                );
+            }
+
+            $csvContent = $this->buildCsv($rows);
+
+            // Store as a .csv file on the portfolios disk
+            $directory  = now()->format('Y/m');
+            $filename   = Str::uuid()->toString() . '.csv';
+            $storedPath = $directory . '/' . $filename;
+
+            $written = Storage::disk(self::DISK)->put($storedPath, $csvContent);
+            if (!$written) {
+                throw new \RuntimeException('Failed to write generated CSV to storage.');
+            }
+
+            $originalName = $clientName . '.csv';
+            $fileSize     = strlen($csvContent);
+
+            $portfolioFile = PortfolioFile::create([
+                'user_id'      => $user->id,
+                'portfolio_id' => $portfolioId,
+                'original_name'=> $originalName,
+                'stored_name'  => $filename,
+                'path'         => $storedPath,
+                'mime_type'    => 'text/csv',
+                'file_size'    => $fileSize,
+                'status'       => PortfolioFile::STATUS_PENDING,
+                'meta'         => [
+                    'uploaded_at' => now()->toIso8601String(),
+                    'extension'   => 'csv',
+                    'source'      => 'manual_entry',
+                    'mode'        => $mode,
+                ],
+            ]);
+
+            ProcessPortfolioFile::dispatch($portfolioFile);
+
+            Log::info('Manual portfolio entry submitted.', [
+                'portfolio_file_id' => $portfolioFile->id,
+                'user_id'           => $user->id,
+                'mode'              => $mode,
+                'row_count'         => count($rows),
+            ]);
+
+            return redirect()
+                ->route('portfolio.upload')
+                ->with('success', 'Portfolio submitted successfully. Processing has started.');
+
+        } catch (\Throwable $e) {
+            Log::error('Manual portfolio submission failed.', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return back()
+                ->withErrors(['client_name' => 'Submission failed. Please try again.'])
+                ->withInput();
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BUILD CSV — generate a CSV string that PortfolioParser can parse.
+    | Headers match ALIASES exactly: name, asset_type, current_value.
+    |--------------------------------------------------------------------------
+    */
+
+    private function buildCsv(array $rows): string
+    {
+        $lines = ["name,asset_type,current_value"];
+        foreach ($rows as $row) {
+            $name  = $this->csvCell((string) ($row['name']  ?? ''));
+            $type  = $this->csvCell((string) ($row['type']  ?? 'stock'));
+            $value = number_format((float) ($row['value'] ?? 0), 2, '.', '');
+            $lines[] = "{$name},{$type},{$value}";
+        }
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    /** Wrap a cell value in double-quotes and escape internal quotes. */
+    private function csvCell(string $value): string
+    {
+        $escaped = str_replace('"', '""', $value);
+        return '"' . $escaped . '"';
     }
 
     /*
