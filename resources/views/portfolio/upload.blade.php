@@ -72,13 +72,7 @@
     @endif
 
     {{-- MAIN GRID --}}
-    <div style="
-        display:grid;
-        grid-template-columns:minmax(300px,420px) 1fr;
-        gap:2rem;
-        align-items:start;
-        min-width:0;
-    ">
+    <div class="upload-grid">
 
         {{-- ============================================================
            LEFT — UPLOAD CARD
@@ -337,12 +331,12 @@
                                             display:inline-flex;
                                             align-items:center;
                                             justify-content:center;
-                                            width:32px;height:32px;
+                                            width:40px;height:40px;
                                             border-radius:8px;
                                             background:rgba(59,130,246,.12);
                                             color:#93c5fd;
                                             text-decoration:none;
-                                            font-size:.9rem;
+                                            font-size:1rem;
                                             transition:.15s ease;
                                         "
                                         onmouseover="this.style.background='rgba(59,130,246,.22)'"
@@ -364,13 +358,13 @@
                                                 display:inline-flex;
                                                 align-items:center;
                                                 justify-content:center;
-                                                width:32px;height:32px;
+                                                width:40px;height:40px;
                                                 border-radius:8px;
                                                 border:none;
                                                 background:rgba(239,68,68,.12);
                                                 color:#fca5a5;
                                                 cursor:pointer;
-                                                font-size:.9rem;
+                                                font-size:1rem;
                                                 transition:.15s ease;
                                             "
                                             onmouseover="this.style.background='rgba(239,68,68,.25)'"

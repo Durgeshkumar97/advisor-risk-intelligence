@@ -6,13 +6,7 @@
 <section id="home" style="padding-top:1.25rem; padding-bottom:1.25rem;">
 
     <div class="container hero-grid"
-
-        style="
-            display:grid;
-            grid-template-columns:1.1fr 1fr;
-            align-items:center;
-            gap:3rem;
-         ">
+        style="align-items:center;">
 
         <!-- LEFT SIDE -->
         <div class="reveal reveal-left" style="max-width:520px;">

@@ -58,7 +58,7 @@
         .actions { display:flex; gap:10px; align-items:center; }
 
         .btn {
-            padding:10px 18px;
+            padding:12px 18px;
             border-radius:10px;
             font-weight:700;
             font-size:13px;

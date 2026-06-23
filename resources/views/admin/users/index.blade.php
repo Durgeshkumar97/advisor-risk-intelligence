@@ -15,7 +15,7 @@
         h1{font-size:32px;font-weight:900;line-height:1.05;margin-bottom:6px;}
         .subtitle{color:var(--soft);font-size:14px;}
         .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-        .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--white);cursor:pointer;background:transparent;transition:.15s;}
+        .btn{display:inline-flex;align-items:center;gap:6px;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--white);cursor:pointer;background:transparent;transition:.15s;}
         .btn:hover{background:rgba(255,255,255,.06);}
         .btn-primary{background:var(--blue);border-color:var(--blue);}
         .btn-primary:hover{background:#1d4ed8;}

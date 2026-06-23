@@ -256,7 +256,7 @@
     <div
         id="mobile-menu"
 
-        class="hidden md:hidden border-t"
+        class="md:hidden border-t"
 
         style="
             background:rgba(2,6,23,.98);
@@ -484,14 +484,14 @@
 
         toggle.addEventListener("click", () => {
 
-            mobileMenu.classList.toggle("hidden");
+            mobileMenu.classList.toggle("open");
         });
 
         mobileLinks.forEach(link => {
 
             link.addEventListener("click", () => {
 
-                mobileMenu.classList.add("hidden");
+                mobileMenu.classList.remove("open");
             });
         });
 

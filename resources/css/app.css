@@ -1896,3 +1896,21 @@ html:not(.app-ready) .reveal {
     min-width: 0;
   }
 }
+
+/* =====================================
+   UPLOAD PAGE GRID
+===================================== */
+.upload-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) 1fr;
+  gap: 2rem;
+  align-items: start;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
