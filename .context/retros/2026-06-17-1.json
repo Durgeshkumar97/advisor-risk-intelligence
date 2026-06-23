@@ -1,0 +1,51 @@
+{
+  "date": "2026-06-17",
+  "window": "7d",
+  "metrics": {
+    "commits": 23,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 2075,
+    "deletions": 459,
+    "net_loc": 1616,
+    "product_insertions": 900,
+    "graphify_artifact_lines": 77652,
+    "test_loc": 16,
+    "test_ratio": 0.008,
+    "active_days": 6,
+    "sessions": 5,
+    "deep_sessions": 3,
+    "avg_session_minutes": 144,
+    "loc_per_session_hour": 250,
+    "feat_pct": 0.22,
+    "fix_pct": 0.48,
+    "chore_pct": 0.17,
+    "docs_pct": 0.04,
+    "ui_pct": 0.09,
+    "peak_hour": 14,
+    "ai_assisted_commits": 3
+  },
+  "authors": {
+    "DurgeshKumar97": {
+      "commits": 23,
+      "insertions": 2075,
+      "deletions": 459,
+      "test_ratio": 0.008,
+      "top_area": "app/Actions/Intakes/"
+    }
+  },
+  "hotspots": {
+    "resources/views/home.blade.php": 4,
+    "app/Actions/Intakes/StoreIfaTrialLeadAction.php": 4,
+    "app/Services/RiskEngine/PortfolioParser.php": 2,
+    "app/Http/Controllers/IntakeController.php": 2
+  },
+  "test_health": {
+    "total_test_files": 1,
+    "tests_added_this_period": 16,
+    "regression_test_commits": 0,
+    "test_files_changed": 1
+  },
+  "streak_days": 8,
+  "tweetable": "Week of Jun 10: 23 commits (solo), +2,075/-459 LOC, 3 AI-assisted | soft-delete, trial auth, report fixes | Streak: 8d"
+}

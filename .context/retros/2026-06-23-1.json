@@ -1,0 +1,53 @@
+{
+  "date": "2026-06-23",
+  "window": "7d",
+  "metrics": {
+    "commits": 10,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 77,
+    "deletions": 25,
+    "net_loc": 52,
+    "test_loc": 0,
+    "test_ratio": 0,
+    "active_days": 3,
+    "sessions": 5,
+    "deep_sessions": 1,
+    "avg_session_minutes": 21,
+    "loc_per_session_hour": 29,
+    "feat_pct": 0.40,
+    "fix_pct": 0.50,
+    "chore_pct": 0.10,
+    "peak_hour": 14,
+    "ai_assisted_commits": 0
+  },
+  "authors": {
+    "DurgeshKumar97": {
+      "commits": 10,
+      "insertions": 77,
+      "deletions": 25,
+      "test_ratio": 0,
+      "top_area": "app/Services/RiskEngine/"
+    }
+  },
+  "hotspots": {
+    "app/Services/RiskEngine/PortfolioParser.php": 3,
+    "app/Http/Controllers/IntakeController.php": 2,
+    "app/Actions/Intakes/StoreIfaTrialLeadAction.php": 2,
+    "resources/views/reports/risk-report.blade.php": 1,
+    "resources/views/home.blade.php": 1,
+    "bootstrap/app.php": 1,
+    "app/Http/Controllers/PageController.php": 1,
+    "app/Http/Controllers/Api/LeadController.php": 1
+  },
+  "test_health": {
+    "total_test_files": 1,
+    "tests_added_this_period": 0,
+    "regression_test_commits": 0,
+    "test_files_changed": 0
+  },
+  "streak_days": 0,
+  "last_commit_date": "2026-06-18",
+  "longest_recent_run": 9,
+  "tweetable": "Week of Jun 16: 10 commits (solo), +77/-25 LOC | trial auto-login + default portfolio + parser precision fixes | Streak: 0d (break)"
+}

@@ -241,10 +241,6 @@ Route::middleware(['auth', 'paid'])->group(function () {
     Route::post('/portfolio/upload', [PortfolioUploadController::class, 'store'])
         ->name('portfolio.upload.store');
 
-    Route::post('/portfolio/manual', [PortfolioUploadController::class, 'storeManual'])
-        ->middleware('throttle:20,1')
-        ->name('portfolio.manual.store');
-
     Route::delete('/portfolio/file/{id}', [PortfolioUploadController::class, 'destroy'])
         ->name('portfolio.file.destroy');
 });
