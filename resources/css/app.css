@@ -52,6 +52,7 @@
 }
 
 html {
+  color-scheme: dark;
   scroll-behavior: smooth;
   width: 100%;
   text-size-adjust: 100%;
@@ -428,6 +429,12 @@ select {
 select option {
   background: var(--paper);
   color: var(--ink);
+}
+
+.form-select {
+  padding: .85rem 1rem;
+  border-radius: 12px;
+  font-size: .9rem;
 }
 
 /* JS-generated holding-row fields (upload page) */

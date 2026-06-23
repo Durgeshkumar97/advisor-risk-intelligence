@@ -8,6 +8,7 @@
 
     <style>
         :root {
+            color-scheme: dark;
             --bg:#020817;
             --panel:#0f172a;
             --panel2:#111c34;
@@ -108,6 +109,8 @@
         }
 
         .field:focus { outline:none; border-color:var(--blue); }
+
+        select option { background: #0b1730; color: #ffffff; }
 
         .filter-actions {
             display:flex;

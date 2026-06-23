@@ -106,15 +106,7 @@
 
                     <select
                         name="portfolio_id"
-                        style="
-                            width:100%;
-                            padding:.85rem 1rem;
-                            border-radius:12px;
-                            border:1px solid var(--paper-3);
-                            background:var(--paper-1);
-                            font-size:.9rem;
-                            color:inherit;
-                        ">
+                        class="form-select">
 
                         <option value="">Default Portfolio</option>
 
