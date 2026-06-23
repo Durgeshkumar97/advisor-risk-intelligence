@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AdminAuthController extends Controller
 {
@@ -40,10 +43,24 @@ class AdminAuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        $throttleKey = Str::transliterate(Str::lower($request->input('email')).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            event(new Lockout($request));
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()
+                ->withErrors(['email' => trans('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ])])
+                ->withInput($request->only('email'));
+        }
+
         if (!Auth::attempt(
             ['email' => $validated['email'], 'password' => $validated['password']],
             $request->boolean('remember')
         )) {
+            RateLimiter::hit($throttleKey);
             return back()
                 ->withErrors(['email' => 'Invalid credentials.'])
                 ->withInput($request->only('email'));
@@ -56,9 +73,9 @@ class AdminAuthController extends Controller
         */
 
         if (!Auth::user()->is_admin) {
-
             Auth::logout();
             $request->session()->invalidate();
+            RateLimiter::hit($throttleKey);
 
             return back()
                 ->withErrors(['email' => 'Access denied. Admin account required.'])
@@ -71,6 +88,7 @@ class AdminAuthController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        RateLimiter::clear($throttleKey);
         $request->session()->regenerate();
 
         /*
