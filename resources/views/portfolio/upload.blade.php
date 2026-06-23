@@ -849,8 +849,8 @@ function addHoldingRow(name = '', type = 'stock', value = '') {
             placeholder="Holding name"
             value="${escHtml(name)}"
             oninput="updateHoldingsChart()"
-            style="${fieldStyle()}">
-        <select onchange="updateHoldingsChart()" style="${fieldStyle()}">
+            class="holding-field">
+        <select onchange="updateHoldingsChart()" class="holding-field">
             ${buildTypeOptions(type)}
         </select>
         <input
@@ -859,7 +859,7 @@ function addHoldingRow(name = '', type = 'stock', value = '') {
             value="${escHtml(String(value))}"
             min="0"
             oninput="updateHoldingsChart()"
-            style="${fieldStyle()}">
+            class="holding-field">
         <button
             type="button"
             onclick="removeHoldingRow(${id})"
@@ -888,18 +888,6 @@ function removeHoldingRow(id) {
     const el = document.getElementById(`hrow-${id}`);
     if (el) el.remove();
     updateHoldingsChart();
-}
-
-function fieldStyle() {
-    return `
-        padding:.55rem .7rem;
-        border-radius:9px;
-        border:1px solid var(--paper-3);
-        background:var(--paper-1);
-        font-size:.82rem;
-        color:inherit;
-        width:100%;
-    `;
 }
 
 function escHtml(s) {

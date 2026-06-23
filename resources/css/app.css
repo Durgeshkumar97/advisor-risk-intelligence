@@ -425,6 +425,22 @@ select {
   color: var(--ink);
 }
 
+select option {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* JS-generated holding-row fields (upload page) */
+.holding-field {
+  padding: .55rem .7rem;
+  border-radius: 9px;
+  border: 1px solid var(--paper-3);
+  background: var(--paper);
+  font-size: .82rem;
+  color: var(--ink);
+  width: 100%;
+}
+
 input:not([type="checkbox"]):not([type="radio"]),
 textarea {
   appearance: none;
