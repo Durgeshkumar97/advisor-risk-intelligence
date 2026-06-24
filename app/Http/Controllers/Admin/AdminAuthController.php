@@ -75,6 +75,7 @@ class AdminAuthController extends Controller
         if (!Auth::user()->is_admin) {
             Auth::logout();
             $request->session()->invalidate();
+            $request->session()->regenerateToken();
             RateLimiter::hit($throttleKey);
 
             return back()

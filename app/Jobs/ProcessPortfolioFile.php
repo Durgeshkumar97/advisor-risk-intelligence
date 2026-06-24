@@ -118,6 +118,13 @@ class ProcessPortfolioFile implements ShouldQueue
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors,
                 &$riskScore, &$reportPath
             ) {
+                // Lock the row — blocks a concurrent worker until this transaction commits,
+                // then the second worker sees STATUS_PROCESSED and exits cleanly.
+                $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
+                if (!$lockedFile || $lockedFile->status === PortfolioFile::STATUS_PROCESSED) {
+                    return;
+                }
+
                 if ($portfolioId) {
                     PortfolioAsset::where('portfolio_id', $portfolioId)->delete();
                 }
@@ -268,6 +275,13 @@ class ProcessPortfolioFile implements ShouldQueue
 
     private function handleZipExtraction(PortfolioFile $file, string $absolutePath): void
     {
+        // Idempotency guard: if children were created in a prior attempt, the batch
+        // was already dispatched — exit early to avoid duplicate portfolios.
+        if (PortfolioFile::where('meta->extracted_from_zip_id', $file->id)->exists()) {
+            Log::info('ZIP extraction: children already exist, skipping re-extraction.', ['id' => $file->id]);
+            return;
+        }
+
         $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('', true);
         mkdir($tempDir, 0755, true);
 

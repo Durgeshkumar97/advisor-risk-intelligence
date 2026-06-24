@@ -53,8 +53,17 @@ class SubscriptionService
         }
 
         $durationDays = $plan->duration_days ?? 30;
-        $startsAt     = now();
-        $endsAt       = $startsAt->copy()->addDays($durationDays);
+
+        // If the user has an active subscription with time remaining, stack the new
+        // period from its end date so mid-period renewals don't erase paid days.
+        $currentSub = $user->subscriptions()
+            ->whereIn('status', ['active', 'trial'])
+            ->where('ends_at', '>', now())
+            ->latest('ends_at')
+            ->first();
+
+        $startsAt = $currentSub ? $currentSub->ends_at->max(now()) : now();
+        $endsAt   = $startsAt->copy()->addDays($durationDays);
 
         DB::transaction(function () use ($user, $payment, $plan, $startsAt, $endsAt) {
 

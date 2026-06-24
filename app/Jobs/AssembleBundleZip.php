@@ -50,6 +50,8 @@ class AssembleBundleZip implements ShouldQueue
 
         $tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . Str::uuid()->toString() . '-bundle.zip';
 
+        $assembled = false;
+
         try {
             $zip = new \ZipArchive();
             $zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
@@ -77,6 +79,8 @@ class AssembleBundleZip implements ShouldQueue
                 ]),
             ]);
 
+            $assembled = true;
+
             Log::info('AssembleBundleZip: bundle created.', [
                 'parent_id' => $this->parentFileId,
                 'processed' => $withReport->count(),
@@ -90,6 +94,24 @@ class AssembleBundleZip implements ShouldQueue
             if ($parent->user->email_reports && $parent->user->email !== env('REPORTS_NOTIFY_EMAIL')) {
                 Mail::to($parent->user->email)->queue(new BundleReportMail($parent));
             }
+
+        } catch (\Throwable $e) {
+            Log::error('AssembleBundleZip: failed.', [
+                'parent_id' => $this->parentFileId,
+                'message'   => $e->getMessage(),
+            ]);
+
+            if (!$assembled && $parent) {
+                $parent->update([
+                    'status' => PortfolioFile::STATUS_FAILED,
+                    'meta'   => array_merge($parent->meta ?? [], [
+                        'failed_at'     => now()->toIso8601String(),
+                        'error_message' => $e->getMessage(),
+                    ]),
+                ]);
+            }
+
+            throw $e;
 
         } finally {
             @unlink($tempZipPath);

@@ -142,7 +142,7 @@ class CheckoutController extends Controller
 
                 $locked->update(['status' => Payment::STATUS_PROCESSING]);
 
-                DB::afterCommit(fn() => ProcessSuccessfulPayment::dispatchSync($locked->fresh()));
+                DB::afterCommit(fn() => ProcessSuccessfulPayment::dispatch($locked->fresh()));
             });
         } catch (\Throwable $e) {
             Log::critical('Checkout success: transaction/dispatch failed', [
@@ -159,16 +159,23 @@ class CheckoutController extends Controller
 
         $payment->refresh();
 
-        if (!Auth::check() && $payment->user) {
+        if (!Auth::check() && $payment->user_id && $payment->user) {
             Auth::login($payment->user);
             $request->session()->regenerate();
             rescue(fn() => $payment->user->forceFill(['last_login_at' => now()])->save());
         }
 
-        $user     = Auth::user() ?? $payment->user;
-        $redirect = ($user && !$user->onboarding_completed)
-            ? route('onboarding')
-            : route('dashboard');
+        $user = Auth::user() ?? $payment->user;
+
+        if ($user) {
+            $redirect = $user->onboarding_completed
+                ? route('dashboard')
+                : route('onboarding');
+        } else {
+            // New user: job runs async, account created in background.
+            // WelcomeSetPasswordNotification will email them the activation link.
+            $redirect = route('login');
+        }
 
         return response()->json([
             'success'  => true,
