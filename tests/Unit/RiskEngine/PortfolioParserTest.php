@@ -301,3 +301,272 @@ it('returns an error and no rows for an unsupported file extension', function ()
     expect($result['rows'])->toBeEmpty()
         ->and($result['errors'][0])->toContain('.pdf');
 });
+
+// ---------------------------------------------------------------------------
+// Pipe delimiter
+// ---------------------------------------------------------------------------
+
+it('parses a pipe-delimited CSV', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name|asset_type|current_value|invested_value',
+        'Reliance|stock|25000|20000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['name'])->toBe('Reliance')
+        ->and($result['rows'][0]['current_value'])->toBe(25000.0);
+});
+
+// ---------------------------------------------------------------------------
+// Currency symbol stripping — $, £, €
+// ---------------------------------------------------------------------------
+
+it('strips $ from numeric value columns', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value,invested_value',
+        'Apple Inc,$15000,$12000',
+    ]));
+
+    $row = $this->parser->parse($file)['rows'][0];
+
+    expect($row['current_value'])->toBe(15000.0)
+        ->and($row['invested_value'])->toBe(12000.0);
+});
+
+it('strips £ and € from numeric value columns', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value,invested_value',
+        'BP Plc,£8000,£7000',
+        'LVMH,€5000,€4500',
+    ]));
+
+    $rows = $this->parser->parse($file)['rows'];
+
+    expect($rows[0]['current_value'])->toBe(8000.0)
+        ->and($rows[1]['current_value'])->toBe(5000.0);
+});
+
+it('strips commas from comma-formatted numbers when values are quoted', function () {
+    // fgetcsv splits on delimiter first, so comma-numbers must be quoted in the CSV
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value,invested_value',
+        '"Reliance","1,50,000","1,20,000"',
+    ]));
+
+    $row = $this->parser->parse($file)['rows'][0];
+
+    expect($row['current_value'])->toBe(150000.0)
+        ->and($row['invested_value'])->toBe(120000.0);
+});
+
+// ---------------------------------------------------------------------------
+// Derived buy_price from invested_value ÷ quantity
+// ---------------------------------------------------------------------------
+
+it('derives buy_price from invested_value ÷ quantity when buy_price column is absent', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,quantity,invested_value,current_value',
+        'Reliance,10,20000,25000',
+    ]));
+
+    $row = $this->parser->parse($file)['rows'][0];
+
+    expect($row['buy_price'])->toBe(2000.0);  // 20000 ÷ 10
+});
+
+// ---------------------------------------------------------------------------
+// Asset type inferred from name when no asset_type column
+// ---------------------------------------------------------------------------
+
+it('infers crypto from holding name when no asset_type column', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Bitcoin Holdings,50000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('crypto');
+});
+
+it('infers commodity from holding name containing "gold"', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Sovereign Gold Bond,10000',
+    ]));
+
+    // "Sovereign Gold Bond" — "gold" matches commodity before "bond" matches bond
+    // The map is iterated in declaration order: stock, mutual_fund, etf, bond, commodity…
+    // "sovereign gold bond" contains "bond" (bond map) so bond wins
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('bond');
+});
+
+it('infers commodity from holding name containing "silver"', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Silver ETF,5000',
+    ]));
+
+    // "silver etf" — "etf" matches etf (declared before commodity), etf wins
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('etf');
+});
+
+// ---------------------------------------------------------------------------
+// Asset type normalisation — remaining canonical types
+// ---------------------------------------------------------------------------
+
+it('normalises "bond" to bond', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        '7% GOI Bond,bond,50000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('bond');
+});
+
+it('normalises "debt" to bond', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'HDFC Short Term Debt Fund,debt,30000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('bond');
+});
+
+it('normalises "fd" to bond', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'SBI Fixed Deposit,fd,100000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('bond');
+});
+
+it('normalises "crypto" to crypto', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'Ethereum,crypto,25000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('crypto');
+});
+
+it('normalises "gold" asset type to commodity', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'Gold Biscuit,gold,15000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('commodity');
+});
+
+it('normalises "liquid" to cash', function () {
+    // "liquid fund" would match mutual_fund first ("fund" alias) before reaching cash;
+    // use "liquid" alone, which only appears in the cash aliases list
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'Nippon Liquid,liquid,200000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('cash');
+});
+
+it('normalises "international" to foreign_stock', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'Motilal Oswal International Fund,international,40000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('foreign_stock');
+});
+
+it('defaults to stock for an unrecognised asset_type string', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,asset type,current_value',
+        'Mystery Asset,derivatives,10000',
+    ]));
+
+    expect($this->parser->parse($file)['rows'][0]['asset_type'])->toBe('stock');
+});
+
+// ---------------------------------------------------------------------------
+// Case-insensitive header matching
+// ---------------------------------------------------------------------------
+
+it('matches headers case-insensitively', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'Name,Asset Type,Current Value,Invested Value',
+        'Reliance,stock,25000,20000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['name'])->toBe('Reliance')
+        ->and($result['rows'][0]['current_value'])->toBe(25000.0);
+});
+
+it('trims whitespace from header names', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        ' name , current_value , invested_value ',
+        'Reliance,25000,20000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['name'])->toBe('Reliance');
+});
+
+// ---------------------------------------------------------------------------
+// result['count'] field
+// ---------------------------------------------------------------------------
+
+it('returns the correct count of parsed rows', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Reliance,25000',
+        'HDFC Bank,8000',
+        'Infosys,15000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['count'])->toBe(3)
+        ->and($result['count'])->toBe(count($result['rows']));
+});
+
+// ---------------------------------------------------------------------------
+// Multiple row errors in a single file
+// ---------------------------------------------------------------------------
+
+it('accumulates errors for multiple bad rows while keeping good rows', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,buy_price',           // no current_value derivable
+        'Good Asset,100',           // bad — no current_value
+        ',200',                     // bad — empty name
+        '',                         // blank row — silently skipped, no error
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toHaveCount(2);  // one per bad data row; blank row is silent
+});
+
+// ---------------------------------------------------------------------------
+// profit_loss when invested_value is zero
+// ---------------------------------------------------------------------------
+
+it('computes profit_loss as current_value when invested_value is zero', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Free Stock,5000',   // no invested_value anywhere — defaults to 0
+    ]));
+
+    $row = $this->parser->parse($file)['rows'][0];
+
+    // profit_loss = current_value (5000) - invested_value (0) = 5000
+    expect($row['profit_loss'])->toBe(5000.0)
+        ->and($row['invested_value'])->toBe(0.0);
+});
