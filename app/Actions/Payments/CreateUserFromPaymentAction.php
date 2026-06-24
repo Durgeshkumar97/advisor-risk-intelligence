@@ -37,9 +37,10 @@ class CreateUserFromPaymentAction
         $result = $this->accounts->findRestoreOrCreateUserByEmail(
             $payment->email,
             [
-                'name'        => $payment->name ?? 'Advisor',
-                'password'    => Hash::make(Str::random(32)),
-                'login_token' => $loginToken,
+                'name'                   => $payment->name ?? 'Advisor',
+                'password'               => Hash::make(Str::random(32)),
+                'login_token'            => $loginToken,
+                'login_token_expires_at' => now()->addHours(24),
             ],
             [
                 'name' => $payment->name ?? 'Advisor',

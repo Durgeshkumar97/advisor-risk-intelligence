@@ -18,6 +18,7 @@ class User extends Authenticatable
         'phone',
         'is_admin',
         'login_token',
+        'login_token_expires_at',
         'login_method',
         'onboarding_completed',
         'email_reports',
@@ -33,8 +34,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'    => 'datetime',
-            'last_login_at'        => 'datetime',
+            'email_verified_at'      => 'datetime',
+            'last_login_at'          => 'datetime',
+            'login_token_expires_at' => 'datetime',
             'onboarding_completed' => 'boolean',
             'email_reports'        => 'boolean',
             'is_admin'             => 'boolean',

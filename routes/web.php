@@ -121,11 +121,22 @@ Route::get('/auto-login/{token}', function ($token) {
         return redirect()->route('login');
     }
 
+    if ($user->login_token_expires_at?->isPast()) {
+        $user->forceFill([
+            'login_token'            => null,
+            'login_token_expires_at' => null,
+        ])->save();
+
+        return redirect()->route('login')
+            ->with('error', "This login link has expired. Please use 'Forgot password' to access your account.");
+    }
+
     \Illuminate\Support\Facades\Auth::login($user);
 
     $user->forceFill([
-        'login_token'   => null,
-        'last_login_at' => now(),
+        'login_token'            => null,
+        'login_token_expires_at' => null,
+        'last_login_at'          => now(),
     ])->save();
 
     if (!$user->onboarding_completed) {
@@ -133,7 +144,7 @@ Route::get('/auto-login/{token}', function ($token) {
     }
 
     return redirect()->route('dashboard');
-})->name('auto.login');
+})->middleware(['throttle:5,1', 'guest'])->name('auto.login');
 
 /*
 |--------------------------------------------------------------------------
