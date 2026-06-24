@@ -23,6 +23,8 @@ return [
         ],
     ],
 
+    'founder_email' => env('FOUNDER_EMAIL', 'founder@risksignal.in'),
+
     'razorpay' => [
         'key'            => env('RAZORPAY_KEY'),
         'secret'         => env('RAZORPAY_SECRET'),

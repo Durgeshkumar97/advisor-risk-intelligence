@@ -118,7 +118,8 @@ Route::get('/auto-login/{token}', function ($token) {
     $user = \App\Models\User::where('login_token', $token)->first();
 
     if (!$user) {
-        return redirect()->route('login');
+        return redirect()->route('login')
+            ->with('error', 'This login link is invalid or has expired. Please use Forgot Password to access your account.');
     }
 
     if ($user->login_token_expires_at?->isPast()) {
@@ -128,7 +129,7 @@ Route::get('/auto-login/{token}', function ($token) {
         ])->save();
 
         return redirect()->route('login')
-            ->with('error', "This login link has expired. Please use 'Forgot password' to access your account.");
+            ->with('error', 'This login link is invalid or has expired. Please use Forgot Password to access your account.');
     }
 
     \Illuminate\Support\Facades\Auth::login($user);

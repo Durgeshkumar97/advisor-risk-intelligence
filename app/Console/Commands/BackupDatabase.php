@@ -169,7 +169,7 @@ class BackupDatabase extends Command
 
     private function deliverByEmail(string $filePath, string $filename): void
     {
-        $recipient = env('FOUNDER_EMAIL', 'founder@risksignal.in');
+        $recipient = config('services.founder_email');
         $sizeBytes = filesize($filePath);
 
         if ($sizeBytes > self::EMAIL_SIZE_WARN_BYTES) {

@@ -29,18 +29,8 @@ class FileController extends Controller
 
     public function view(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $user = Auth::user();
-
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD FILE — scope to requesting user unless admin
-        |--------------------------------------------------------------------------
-        */
-
-        $file = PortfolioFile::query()
-            ->where('id', $id)
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+        $file = PortfolioFile::findOrFail($id);
+        $this->authorize('view', $file);
 
         /*
         |--------------------------------------------------------------------------
@@ -66,8 +56,8 @@ class FileController extends Controller
 
     public function report(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $user = Auth::user();
-        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+        $file = PortfolioFile::findOrFail($id);
+        $this->authorize('view', $file);
 
         if (!$file->report_path || !Storage::disk(self::DISK)->exists($file->report_path)) {
             abort(404, 'Report not available.');
@@ -82,8 +72,8 @@ class FileController extends Controller
 
     public function reportDownload(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $user = Auth::user();
-        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+        $file = PortfolioFile::findOrFail($id);
+        $this->authorize('view', $file);
 
         if (!$file->report_path || !Storage::disk(self::DISK)->exists($file->report_path)) {
             abort(404, 'Report not available.');
@@ -97,8 +87,9 @@ class FileController extends Controller
 
     public function bundleDownload(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
+        $file = PortfolioFile::findOrFail($id);
+        $this->authorize('view', $file);
         $user = Auth::user();
-        $file = PortfolioFile::where('id', $id)->where('user_id', $user->id)->firstOrFail();
 
         if (!$file->bundle_report_path || !Storage::disk(self::DISK)->exists($file->bundle_report_path)) {
             abort(404, 'Bundle not available.');
