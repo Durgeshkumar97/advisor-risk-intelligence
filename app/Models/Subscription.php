@@ -95,7 +95,7 @@ class Subscription extends Model
         }
 
         return $this->ends_at
-            && $this->ends_at->diffInDays(now()) <= 3;
+            && now()->lessThan($this->ends_at->addDays(3));
     }
 
     public function daysRemaining(): int

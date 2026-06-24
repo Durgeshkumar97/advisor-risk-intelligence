@@ -104,13 +104,13 @@ class AdminUserController extends Controller
 
         $user->forceFill([
             'login_token'            => $token,
-            'login_token_expires_at' => now()->addHours(24),
+            'login_token_expires_at' => now()->addMinutes(15),
         ])->save();
 
         $link = route('auto.login', $token);
 
         return redirect()->route('admin.users.show', $id)
             ->with('login_link', $link)
-            ->with('success', 'Magic login link generated. Copy it from the box below (valid for one use, expires in 24 hours).');
+            ->with('success', 'Magic login link generated. Copy it from the box below (valid for one use, expires in 15 minutes).');
     }
 }

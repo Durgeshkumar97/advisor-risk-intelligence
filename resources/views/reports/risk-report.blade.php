@@ -112,9 +112,9 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
             <td style="color:#64748b;">{{ $asset->asset_type }}</td>
             <td style="color:#94a3b8;">{{ $asset->symbol ?: ($asset->isin ?: '—') }}</td>
             <td style="text-align:right;">{{ $asset->quantity }}</td>
-            <td style="text-align:right;">{!! $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' !!}</td>
+            <td style="text-align:right;">{{ $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' }}</td>
             <td style="text-align:right;" class="{{ $plPositive ? 'green' : 'red' }}">
-                {!! $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' !!}
+                {{ $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' }}
             </td>
             <td style="text-align:center;font-weight:700;" class="{{ $lvlClass }}">{{ number_format($asset->risk_score, 0) }}</td>
             <td style="text-align:center;font-weight:700;font-size:8px;" class="{{ $lvlClass }}">{{ $asset->risk_level }}</td>

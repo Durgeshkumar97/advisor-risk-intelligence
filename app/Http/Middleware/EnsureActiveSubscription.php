@@ -43,7 +43,13 @@ class EnsureActiveSubscription
         */
 
         $subscription = Subscription::where('user_id', $user->id)
-            ->orderByRaw("FIELD(status, 'active', 'trial', 'expired') ASC")
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'active' THEN 1
+                    WHEN status = 'trial' THEN 2
+                    ELSE 3
+                END
+            ")
             ->latest()
             ->first();
 
