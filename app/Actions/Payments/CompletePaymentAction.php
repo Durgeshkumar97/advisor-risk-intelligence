@@ -12,25 +12,21 @@ class CompletePaymentAction
 {
     public function execute(Payment $payment): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | PREVENT DOUBLE PROCESSING
-        |--------------------------------------------------------------------------
-        */
-
-        if ($payment->processed_at) {
-            return;
-        }
-
         DB::transaction(function () use ($payment) {
 
             /*
             |--------------------------------------------------------------------------
-            | REFRESH PAYMENT
+            | LOCK ROW + PREVENT DOUBLE PROCESSING
+            | lockForUpdate blocks a concurrent request here until this transaction
+            | commits — the second caller then sees processed_at already set and exits.
             |--------------------------------------------------------------------------
             */
 
-            $payment->refresh();
+            $locked = Payment::lockForUpdate()->find($payment->id);
+
+            if ($locked->processed_at) {
+                return;
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -38,7 +34,7 @@ class CompletePaymentAction
             |--------------------------------------------------------------------------
             */
 
-            if ($payment->status !== 'paid') {
+            if ($locked->status !== 'paid') {
 
                 throw new \Exception(
                     'Cannot complete unpaid payment.'
@@ -53,7 +49,7 @@ class CompletePaymentAction
 
             $user = app(
                 CreateUserFromPaymentAction::class
-            )->execute($payment);
+            )->execute($locked);
 
             /*
             |--------------------------------------------------------------------------
@@ -63,7 +59,7 @@ class CompletePaymentAction
 
             app(
                 CreateSubscriptionFromPaymentAction::class
-            )->execute($payment);
+            )->execute($locked);
 
             /*
             |--------------------------------------------------------------------------
@@ -87,7 +83,7 @@ class CompletePaymentAction
             |--------------------------------------------------------------------------
             */
 
-            $payment->update([
+            $locked->update([
                 'processed_at' => now(),
             ]);
 
@@ -99,11 +95,11 @@ class CompletePaymentAction
 
             Log::info('Payment completed successfully', [
 
-                'payment_id' => $payment->id,
+                'payment_id' => $locked->id,
 
                 'user_id' => $user->id,
 
-                'order_id' => $payment->order_id,
+                'order_id' => $locked->order_id,
             ]);
         });
     }

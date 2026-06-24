@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -55,25 +56,29 @@ class SubscriptionService
         $startsAt     = now();
         $endsAt       = $startsAt->copy()->addDays($durationDays);
 
-        $user->subscriptions()->updateOrCreate(
-            [
-                'provider'                  => 'razorpay',
-                'provider_subscription_id'  => $payment->payment_id,
-            ],
-            [
-                'plan_id'    => $plan->id,
-                'starts_at'  => $startsAt,
-                'ends_at'    => $endsAt,
-                'renewal_at' => $endsAt,
-                'status'     => 'active',
-            ]
-        );
+        DB::transaction(function () use ($user, $payment, $plan, $startsAt, $endsAt) {
 
-        $payment->update([
-            'user_id'      => $user->id,
-            'status'       => Payment::STATUS_PAID,
-            'processed_at' => now(),
-        ]);
+            $user->subscriptions()->updateOrCreate(
+                [
+                    'provider'                  => 'razorpay',
+                    'provider_subscription_id'  => $payment->payment_id,
+                ],
+                [
+                    'plan_id'    => $plan->id,
+                    'starts_at'  => $startsAt,
+                    'ends_at'    => $endsAt,
+                    'renewal_at' => $endsAt,
+                    'status'     => 'active',
+                ]
+            );
+
+            $payment->update([
+                'user_id'      => $user->id,
+                'status'       => Payment::STATUS_PAID,
+                'processed_at' => now(),
+            ]);
+
+        });
 
         Log::info('SubscriptionService: payment activated.', [
             'payment_id' => $payment->id,

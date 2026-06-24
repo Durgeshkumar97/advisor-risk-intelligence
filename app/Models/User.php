@@ -16,7 +16,6 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'is_admin',
         'login_token',
         'login_token_expires_at',
         'login_method',
