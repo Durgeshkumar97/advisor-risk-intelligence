@@ -90,9 +90,13 @@ Route::view('/payment/success', 'payment-success')
     ->name('payment.success');
 
 /*
- | payment/failure is fired by Razorpay client-side JS — no server
- | signature on failure events. Throttle prevents order-id bruteforcing.
- | Only pending payments can be flipped to failed (guard in controller).
+ | payment/failure is called by Razorpay's client-side JS checkout handler
+ | when a payment fails in the modal (network drop, bank decline, etc.).
+ | There is NO server-side Razorpay signature on failure events — that only
+ | exists on payment.captured webhooks (handled by /webhook/razorpay).
+ |
+ | Risk: low — failure only marks a pending row as 'failed'; it cannot mark
+ | a paid order as failed. Throttle limits abuse / order-id guessing.
  */
 Route::post('/payment/failure', [PaymentController::class, 'failure'])
     ->middleware('throttle:15,1')
@@ -353,6 +357,12 @@ Route::middleware(['admin'])
 |--------------------------------------------------------------------------
 | FALLBACK — proper 404 (not a 302 redirect to home)
 |--------------------------------------------------------------------------
+|
+| Returns a proper HTTP 404 (not a 302 redirect to home).
+| The custom errors/404.blade.php view is used so the page stays
+| on-brand. Search engines receive the correct status code and
+| do not index dead URLs as home.
+|
 */
 
 Route::fallback(function () {
