@@ -190,10 +190,8 @@ class PortfolioUploadController extends Controller
     {
         $user = Auth::user();
 
-        $file = PortfolioFile::query()
-            ->where('id', $id)
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+        $file = PortfolioFile::findOrFail($id);
+        $this->authorize('delete', $file);
 
         if ($file->isProcessing()) {
             return back()->with('error', 'Cannot delete a file that is currently being processed.');

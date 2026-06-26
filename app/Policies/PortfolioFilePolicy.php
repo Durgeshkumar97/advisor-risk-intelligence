@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\PortfolioFile;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /**
  * Authorises PortfolioFile actions.
@@ -21,9 +22,11 @@ class PortfolioFilePolicy
     |--------------------------------------------------------------------------
     */
 
-    public function view(User $user, PortfolioFile $file): bool
+    public function view(User $user, PortfolioFile $file): Response
     {
-        return $user->id === $file->user_id;
+        return $user->id === $file->user_id
+            ? Response::allow()
+            : Response::denyWithStatus(404);
     }
 
     /*
@@ -33,8 +36,10 @@ class PortfolioFilePolicy
     | Only the owner may delete their own file.
     */
 
-    public function delete(User $user, PortfolioFile $file): bool
+    public function delete(User $user, PortfolioFile $file): Response
     {
-        return $user->id === $file->user_id;
+        return $user->id === $file->user_id
+            ? Response::allow()
+            : Response::denyWithStatus(404);
     }
 }
