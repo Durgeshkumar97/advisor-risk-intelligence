@@ -19,6 +19,15 @@ class VerifyRazorpayPayment
      */
     public function execute(array $payload): Payment
     {
+        $verified = app(RazorpayService::class)
+            ->verifySignature($payload);
+
+        if (!$verified) {
+            throw ValidationException::withMessages([
+                'signature' => 'Invalid payment signature.',
+            ]);
+        }
+
         return DB::transaction(function () use ($payload) {
 
             $payment = Payment::query()
@@ -34,15 +43,6 @@ class VerifyRazorpayPayment
 
             if ($payment->status === Payment::STATUS_PAID) {
                 return $payment;
-            }
-
-            $verified = app(RazorpayService::class)
-                ->verifySignature($payload);
-
-            if (!$verified) {
-                throw ValidationException::withMessages([
-                    'signature' => 'Invalid payment signature.',
-                ]);
             }
 
             $payment->update([
