@@ -115,18 +115,15 @@ class RiskSignalApp {
 
     initializeTheme() {
 
-        const savedTheme =
-            localStorage.getItem("theme");
+        /*
+         | Default is always "dark" — RiskSignal's brand aesthetic.
+         | If the user has explicitly toggled the theme before, their
+         | localStorage preference wins. OS preference is intentionally
+         | ignored so first-time visitors always see the dark/colorful version.
+         */
+        const saved = localStorage.getItem("theme") || "dark";
 
-        const preferredTheme =
-            window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches
-                ? "dark"
-                : "light";
-
-        const theme =
-            savedTheme || preferredTheme;
+        const theme = saved;
 
         this.applyTheme(theme);
 
