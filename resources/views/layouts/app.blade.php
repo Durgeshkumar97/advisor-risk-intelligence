@@ -23,19 +23,19 @@
         name="description"
         content="AI-powered portfolio risk intelligence platform for independent financial advisors.">
 
-    {{-- GOOGLE FONT --}}
+    {{-- FONT PRELOAD --}}
     <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com">
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
+        rel="preload"
+        href="/fonts/figtree/figtree-latin.woff2"
+        as="font"
+        type="font/woff2"
         crossorigin>
-
     <link
-        href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+        rel="preload"
+        href="/fonts/figtree/figtree-latin-ext.woff2"
+        as="font"
+        type="font/woff2"
+        crossorigin>
 
     {{-- VITE --}}
     @vite([
@@ -71,6 +71,7 @@
 
             font-family:
                 'Figtree',
+                'FigtreeFallback',
                 sans-serif;
 
             overflow-x: hidden;
@@ -78,16 +79,6 @@
 
         a {
             text-decoration: none;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | FIXED NAVBAR WRAPPER
-        |--------------------------------------------------------------------------
-        */
-
-        .navbar-wrapper {
-            /* positioning handled entirely by the <nav> inside */
         }
 
         /*
@@ -123,6 +114,10 @@
         | ALERTS
         |--------------------------------------------------------------------------
         */
+
+        .alert-region {
+            min-height: 6.5rem;
+        }
 
         .alert {
             padding: 1rem 1.2rem;
@@ -247,31 +242,24 @@
 
         <div class="content-container">
 
-            {{-- SUCCESS --}}
-            @if(session('success'))
+            {{-- ALERT REGION: always present so alerts never shift content below --}}
+            <div class="alert-region">
 
-            <div class="alert alert-success">
-                {{ session('success') }}
+                @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+                @elseif(session('restored_account'))
+                <div class="alert alert-success">
+                    {{ session('restored_account') }}
+                </div>
+                @elseif(session('error'))
+                <div class="alert alert-error">
+                    {{ session('error') }}
+                </div>
+                @endif
+
             </div>
-
-            @endif
-
-            @if(session('restored_account'))
-
-            <div class="alert alert-success">
-                {{ session('restored_account') }}
-            </div>
-
-            @endif
-
-            {{-- ERROR --}}
-            @if(session('error'))
-
-            <div class="alert alert-error">
-                {{ session('error') }}
-            </div>
-
-            @endif
 
             {{-- CONTENT --}}
             @yield('content')
