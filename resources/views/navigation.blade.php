@@ -6,7 +6,6 @@
     class="fixed top-0 left-0 w-full z-[1000]"
     style="
         background:rgba(11,19,43,.92);
-        backdrop-filter:blur(20px);
         border-bottom:1px solid rgba(255,255,255,.06);
         box-sizing:border-box;
     "
