@@ -37,4 +37,9 @@ return [
         'test_mode'       => (bool) env('WHATSAPP_TEST_MODE', false),
     ],
 
+    'risk_service' => [
+        'url'     => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
+        'timeout' => (float) env('RISK_SERVICE_TIMEOUT', 2),
+    ],
+
 ];
