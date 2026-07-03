@@ -10,6 +10,7 @@ use App\Models\RiskScore;
 use App\Services\RiskEngine\AssetRiskScorer;
 use App\Services\RiskEngine\PortfolioParser;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
+use App\Services\StockRiskService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 use Illuminate\Bus\Batchable;
@@ -58,7 +59,8 @@ class ProcessPortfolioFile implements ShouldQueue
     public function handle(
         PortfolioParser         $parser,
         AssetRiskScorer         $assetScorer,
-        PortfolioRiskCalculator $calculator
+        PortfolioRiskCalculator $calculator,
+        StockRiskService        $stockRiskService
     ): void {
         $file = $this->portfolioFile->fresh();
 
@@ -114,9 +116,24 @@ class ProcessPortfolioFile implements ShouldQueue
             $riskScore   = null;
             $reportPath  = null;
 
+            // Batch-fetch stock classifications OUTSIDE the transaction — the loop
+            // below runs inside DB::transaction() while PortfolioFile is row-locked
+            // (lockForUpdate() a few lines down), so a network call per holding here
+            // would extend that lock across N HTTP round trips. One batched call for
+            // the whole file instead, matching StockRiskService's batch endpoint.
+            $stockSymbols = collect($holdings)
+                ->filter(fn ($row) => ($row['asset_type'] ?? null) === 'stock')
+                ->map(fn ($row) => trim((string) ($row['symbol'] ?? '')))
+                ->filter(fn ($symbol) => $symbol !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            $stockRiskMap = $stockRiskService->classifyBatch($stockSymbols);
+
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors,
-                &$riskScore, &$reportPath
+                $stockRiskMap, &$riskScore, &$reportPath
             ) {
                 // Lock the row — blocks a concurrent worker until this transaction commits,
                 // then the second worker sees STATUS_PROCESSED and exits cleanly.
@@ -132,7 +149,28 @@ class ProcessPortfolioFile implements ShouldQueue
                 $assetModels = collect();
 
                 foreach ($holdings as $row) {
-                    $assetScore = $assetScorer->score($row['asset_type'], $row['name']);
+                    $isStock = ($row['asset_type'] ?? null) === 'stock';
+                    $symbol  = $isStock ? trim((string) ($row['symbol'] ?? '')) : '';
+                    $stockRisk = ($isStock && $symbol !== '') ? ($stockRiskMap[$symbol] ?? null) : null;
+
+                    $scored     = $assetScorer->score($row['asset_type'], $row['name'], $stockRisk);
+                    $assetScore = $scored['score'];
+
+                    $meta = ['source_file_id' => $file->id];
+
+                    if ($isStock) {
+                        // Auditable provenance: 'source' distinguishes a real ML
+                        // classification from the static fallback, so a silent
+                        // outage never looks indistinguishable from live data.
+                        $meta['stock_risk'] = [
+                            'source'     => $scored['source'],
+                            'risk_level' => $stockRisk['risk_level'] ?? null,
+                            'volatility' => $stockRisk['volatility'] ?? null,
+                            'confidence' => $stockRisk['confidence'] ?? null,
+                            'as_of_date' => $stockRisk['as_of_date'] ?? null,
+                            'stale'      => $stockRisk['stale'] ?? false,
+                        ];
+                    }
 
                     $asset = PortfolioAsset::create([
                         'portfolio_id'   => $portfolioId,
@@ -148,7 +186,7 @@ class ProcessPortfolioFile implements ShouldQueue
                         'profit_loss'    => $row['profit_loss'],
                         'risk_score'     => $assetScore,
                         'risk_level'     => $assetScorer->level($assetScore),
-                        'meta'           => ['source_file_id' => $file->id],
+                        'meta'           => $meta,
                     ]);
 
                     $assetModels->push($asset);

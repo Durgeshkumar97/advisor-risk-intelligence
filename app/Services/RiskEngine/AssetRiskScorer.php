@@ -10,12 +10,50 @@ namespace App\Services\RiskEngine;
  * Methodology (SEBI Risk-o-meter inspired):
  *   1. Base score by asset class
  *   2. Name-keyword adjustments for mutual funds & ETFs
- *   3. Returns the bounded result
+ *   3. For 'stock' holdings, an optional pre-fetched StockRiskService
+ *      classification overrides the flat base score (see $stockRisk below)
+ *   4. Returns the bounded result
  *
- * No external API calls — fully deterministic and offline-capable.
+ * No external API calls of its own — fully deterministic and offline-capable.
+ * Stock-specific data must be fetched by the caller (batched, before any DB
+ * transaction opens — see ProcessPortfolioFile) and passed in per asset;
+ * this class never calls StockRiskService directly, so calling score() in a
+ * per-asset loop never fires one HTTP request per holding.
  */
 class AssetRiskScorer
 {
+    /*
+    |--------------------------------------------------------------------------
+    | STOCK RISK LEVEL → SCORE  (only used when live classifier data is given)
+    |--------------------------------------------------------------------------
+    |
+    | Anchored to the classifier's empirical NIFTY50 volatility percentile
+    | bands (risk_service/app/config.py): Medium (25-80th percentile, the
+    | typical case) is kept at today's flat default of 65 so an average
+    | stock's score doesn't shift on rollout. Low/High are a symmetric ±15
+    | step reflecting that Low (~29th percentile) is still equity risk, not
+    | "safe", while High (~top 20th percentile) is a confirmed statistical
+    | outlier and deliberately scores above foreign_stock's flat, unverified
+    | 75 — a data-backed signal outranks a heuristic category default.
+    |
+    */
+
+    private const STOCK_RISK_LEVEL_SCORES = [
+        'Low'    => 50,
+        'Medium' => 65,
+        'High'   => 80,
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCORE SOURCE LABELS  (auditable provenance for meta.stock_risk.source)
+    |--------------------------------------------------------------------------
+    */
+
+    public const SOURCE_LIVE                = 'live';
+    public const SOURCE_FALLBACK_UNAVAILABLE = 'fallback_unavailable';
+    public const SOURCE_CATEGORY_DEFAULT     = 'category_default';
+
     /*
     |--------------------------------------------------------------------------
     | BASE RISK SCORES BY ASSET TYPE  (0 = risk-free, 100 = maximum risk)
@@ -78,15 +116,46 @@ class AssetRiskScorer
     */
 
     /**
-     * Return a 0–100 risk score for one holding.
+     * Return a 0–100 risk score for one holding, plus its provenance.
      *
      * @param  string  $assetType  One of the keys in BASE_SCORES (or unknown)
      * @param  string  $name       Holding name / scheme name
-     * @return float               Risk score 0.00–100.00
+     * @param  ?array  $stockRisk  Pre-fetched StockRiskService result for this
+     *                             symbol (see StockRiskService::classifyBatch()),
+     *                             or null. Only consulted when $assetType is
+     *                             'stock'; ignored for every other asset type.
+     *                             Expected shape: ['risk_level' => ?string,
+     *                             'unavailable' => bool, ...]. This method never
+     *                             calls StockRiskService itself — the caller
+     *                             must batch-fetch and pass results in per asset.
+     * @return array{score: float, source: string}  source is one of
+     *                             self::SOURCE_LIVE, SOURCE_FALLBACK_UNAVAILABLE,
+     *                             or SOURCE_CATEGORY_DEFAULT.
      */
-    public function score(string $assetType, string $name): float
+    public function score(string $assetType, string $name, ?array $stockRisk = null): array
     {
         $assetType = strtolower(trim($assetType));
+
+        if ($assetType === 'stock') {
+            $riskLevel   = $stockRisk['risk_level'] ?? null;
+            $unavailable = (bool) ($stockRisk['unavailable'] ?? true);
+
+            // `stale` is a caveat flag, not a failure — a stale-but-valid
+            // classification is still the best available data and is used
+            // as live. Only unavailable (or an unrecognized risk_level —
+            // never coerce garbage into a real score) falls back.
+            if (!$unavailable && isset(self::STOCK_RISK_LEVEL_SCORES[$riskLevel])) {
+                return [
+                    'score'  => (float) self::STOCK_RISK_LEVEL_SCORES[$riskLevel],
+                    'source' => self::SOURCE_LIVE,
+                ];
+            }
+
+            return [
+                'score'  => (float) self::BASE_SCORES['stock'],
+                'source' => self::SOURCE_FALLBACK_UNAVAILABLE,
+            ];
+        }
 
         // Default to stock risk if unknown type
         $base = self::BASE_SCORES[$assetType] ?? self::BASE_SCORES['stock'];
@@ -96,7 +165,10 @@ class AssetRiskScorer
             $base = $this->applyKeywordAdjustments($base, $name);
         }
 
-        return (float) max(0, min(100, $base));
+        return [
+            'score'  => (float) max(0, min(100, $base)),
+            'source' => self::SOURCE_CATEGORY_DEFAULT,
+        ];
     }
 
     /*
