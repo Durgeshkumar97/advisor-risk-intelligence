@@ -69,7 +69,8 @@ it('returns all required keys', function () {
     expect($result)->toHaveKeys(['score', 'volatility', 'drawdown', 'next_action', 'risk_flags', 'meta']);
     expect($result['meta'])->toHaveKeys([
         'composition_score', 'concentration_score', 'equity_ratio_score',
-        'drawdown_score', 'asset_count', 'risk_level', 'source',
+        'drawdown_score', 'asset_count', 'risk_level', 'calculator_version',
+        'stock_risk_fallback_count',
     ]);
 });
 
@@ -357,4 +358,65 @@ it('volatility is zero for a single-asset portfolio', function () {
     ]);
 
     expect(calc()->calculate($assets)['volatility'])->toBe(0.0);
+});
+
+// ---------------------------------------------------------------------------
+// meta.stock_risk_fallback_count — informational aggregation, does not
+// affect composition/concentration/equity-ratio/drawdown or the composite score
+// ---------------------------------------------------------------------------
+
+it('counts equity holdings that fell back to a static stock risk score', function () {
+    $assets = collect([
+        makeAsset([
+            'asset_type' => 'stock', 'current_value' => 1000, 'invested_value' => 1000,
+            'risk_score' => 65, 'meta' => ['stock_risk' => ['source' => 'live']],
+        ]),
+        makeAsset([
+            'asset_type' => 'stock', 'current_value' => 1000, 'invested_value' => 1000,
+            'risk_score' => 65, 'meta' => ['stock_risk' => ['source' => 'fallback_unavailable']],
+        ]),
+        makeAsset([
+            'asset_type' => 'stock', 'current_value' => 1000, 'invested_value' => 1000,
+            'risk_score' => 80, 'meta' => ['stock_risk' => ['source' => 'fallback_unavailable']],
+        ]),
+        makeAsset([
+            // no meta at all — matches how ProcessPortfolioFile writes non-stock rows
+            'asset_type' => 'bond', 'current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 15,
+        ]),
+    ]);
+
+    $result = calc()->calculate($assets);
+
+    expect($result['meta']['stock_risk_fallback_count'])->toBe(2)
+        // Purely informational — the score/factors are unaffected by fallback usage.
+        ->and($result['meta']['composition_score'])->toBe(round((65 + 65 + 80 + 15) / 4, 2));
+});
+
+it('reports a zero fallback count when every stock holding used live data', function () {
+    $assets = collect([
+        makeAsset([
+            'asset_type' => 'stock', 'current_value' => 1000, 'invested_value' => 1000,
+            'risk_score' => 50, 'meta' => ['stock_risk' => ['source' => 'live']],
+        ]),
+        makeAsset([
+            'asset_type' => 'stock', 'current_value' => 1000, 'invested_value' => 1000,
+            'risk_score' => 80, 'meta' => ['stock_risk' => ['source' => 'live']],
+        ]),
+    ]);
+
+    expect(calc()->calculate($assets)['meta']['stock_risk_fallback_count'])->toBe(0);
+});
+
+it('reports a zero fallback count and does not error for a fixed-income-only portfolio', function () {
+    $assets = collect([
+        makeAsset(['asset_type' => 'bond', 'current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 15]),
+        makeAsset(['asset_type' => 'cash', 'current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 5]),
+    ]);
+
+    // Neither asset has a meta.stock_risk key at all — matches production
+    // output for non-stock rows (ProcessPortfolioFile never writes that key
+    // for them). Confirms the aggregation doesn't error on a missing key.
+    expect($assets->first()->meta)->toBeNull();
+
+    expect(calc()->calculate($assets)['meta']['stock_risk_fallback_count'])->toBe(0);
 });

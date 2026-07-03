@@ -48,6 +48,12 @@ class AssetRiskScorer
     |--------------------------------------------------------------------------
     | SCORE SOURCE LABELS  (auditable provenance for meta.stock_risk.source)
     |--------------------------------------------------------------------------
+    |
+    | Per-asset provenance — not to be confused with PortfolioRiskCalculator's
+    | meta.calculator_version (a version tag for that class, unrelated to
+    | data provenance). PortfolioRiskCalculator aggregates
+    | SOURCE_FALLBACK_UNAVAILABLE into meta.stock_risk_fallback_count.
+    |
     */
 
     public const SOURCE_LIVE                = 'live';

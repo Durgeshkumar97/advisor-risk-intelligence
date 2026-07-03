@@ -238,6 +238,24 @@ class PortfolioRiskCalculator
 
         /*
         |----------------------------------------------------------------------
+        | STOCK RISK DATA QUALITY  (informational only — does not affect score)
+        |----------------------------------------------------------------------
+        |
+        | Count of holdings whose per-asset score fell back to AssetRiskScorer's
+        | static default because a live StockRiskService classification wasn't
+        | available (see AssetRiskScorer::SOURCE_FALLBACK_UNAVAILABLE and
+        | ProcessPortfolioFile's meta.stock_risk write). Read-only aggregation
+        | over $asset->meta — does not change composition/concentration/
+        | equity-ratio/drawdown or the composite score itself.
+        |
+        */
+
+        $stockRiskFallbackCount = $assets
+            ->filter(fn ($a) => ($a->meta['stock_risk']['source'] ?? null) === AssetRiskScorer::SOURCE_FALLBACK_UNAVAILABLE)
+            ->count();
+
+        /*
+        |----------------------------------------------------------------------
         | NEXT ACTION
         |----------------------------------------------------------------------
         */
@@ -273,7 +291,12 @@ class PortfolioRiskCalculator
                 'market_multiplier'   => $this->marketMultiplier(),
                 'risk_flags'          => $riskFlags,
                 'risk_level'          => $this->level($finalScore),
-                'source'              => 'portfolio-risk-calculator-v1',
+                'stock_risk_fallback_count' => $stockRiskFallbackCount,
+                // Renamed from 'source' to avoid colliding with the unrelated
+                // per-asset AssetRiskScorer::SOURCE_* provenance label stored
+                // in PortfolioAsset.meta.stock_risk.source — this key is a
+                // version tag for this calculator, not data provenance.
+                'calculator_version'  => 'portfolio-risk-calculator-v1',
             ],
         ];
     }
@@ -402,9 +425,10 @@ class PortfolioRiskCalculator
             'next_action'=> 'Upload a portfolio file to receive your personalised risk signal.',
             'risk_flags' => ['NO_HOLDINGS'],
             'meta'       => [
-                'source'     => 'portfolio-risk-calculator-v1',
-                'risk_level' => 'NONE',
-                'asset_count'=> 0,
+                'calculator_version'        => 'portfolio-risk-calculator-v1',
+                'risk_level'                => 'NONE',
+                'asset_count'               => 0,
+                'stock_risk_fallback_count' => 0,
             ],
         ];
     }
