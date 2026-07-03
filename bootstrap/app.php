@@ -74,12 +74,6 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('02:00')
             ->withoutOverlapping();
 
-        // WhatsApp delivery disabled — see app/Console/Commands/SendDailyWhatsApp.php
-        // $schedule->command('whatsapp:signal')
-        //     ->dailyAt('16:30')
-        //     ->withoutOverlapping()
-        //     ->runInBackground();
-
         /*
         |--------------------------------------------------------------------------
         | DAILY DATABASE BACKUP (03:00 — off-peak, after risk:generate at 08:00
