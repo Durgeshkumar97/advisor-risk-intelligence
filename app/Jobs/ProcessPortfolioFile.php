@@ -331,9 +331,44 @@ class ProcessPortfolioFile implements ShouldQueue
                 throw new \Exception("Failed to open ZIP archive (ZipArchive error code: {$result}).");
             }
 
-            $zip->extractTo($tempDir);
+            // Validate entry names BEFORE writing anything to disk — do not
+            // rely on a realpath() check after extractTo() has already
+            // written every entry (that only "works" by accident of how the
+            // underlying libzip build happens to normalise paths).
+            $safeEntries     = [];
+            $rejectedEntries = [];
+
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+
+                if ($name === false) {
+                    continue;
+                }
+
+                if ($this->isUnsafeZipEntryName($name)) {
+                    $rejectedEntries[] = $name;
+                    continue;
+                }
+
+                $safeEntries[] = $name;
+            }
+
+            if (!empty($rejectedEntries)) {
+                Log::warning('ZIP extraction: rejected unsafe entry names before extraction.', [
+                    'portfolio_file_id' => $file->id,
+                    'rejected_entries'  => $rejectedEntries,
+                ]);
+            }
+
+            if (!empty($safeEntries)) {
+                $zip->extractTo($tempDir, $safeEntries);
+            }
+
             $zip->close();
 
+            // Second, defense-in-depth layer — should never trigger now that
+            // unsafe names are excluded before extraction, but kept in case
+            // this ever runs against a code path that bypasses the check above.
             $realTempDir = realpath($tempDir);
             $iterator    = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS)
@@ -458,6 +493,22 @@ class ProcessPortfolioFile implements ShouldQueue
         } finally {
             $this->cleanupTempDir($tempDir);
         }
+    }
+
+    /**
+     * True if a ZIP entry name could escape the extraction directory —
+     * checked on the raw name string, before any file exists on disk, so it
+     * doesn't depend on realpath() (which needs the target to already exist).
+     */
+    private function isUnsafeZipEntryName(string $name): bool
+    {
+        if (str_starts_with($name, '/') || preg_match('#^[a-zA-Z]:[\\\\/]#', $name)) {
+            return true; // absolute path (unix or windows-style)
+        }
+
+        $segments = preg_split('#[\\\\/]+#', $name);
+
+        return in_array('..', $segments, true);
     }
 
     private function deriveClientName(string $filename, int $index): string

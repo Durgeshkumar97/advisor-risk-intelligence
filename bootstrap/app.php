@@ -100,6 +100,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
         })->everyThirtyMinutes();
 
+        /*
+        |--------------------------------------------------------------------------
+        | ORPHANED ZIP TEMP DIRECTORY CLEANUP (hourly)
+        |--------------------------------------------------------------------------
+        |
+        | A queue timeout kills ProcessPortfolioFile's ZIP extraction via
+        | SIGKILL, which skips its cleanup finally block — this sweeps up
+        | anything left behind.
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('portfolio:cleanup-temp-dirs')
+            ->hourly();
+
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {

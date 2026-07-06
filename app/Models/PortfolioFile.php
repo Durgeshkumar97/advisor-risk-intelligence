@@ -128,10 +128,19 @@ class PortfolioFile extends Model
 
     public static function monthlyClientCount(int $userId): int
     {
+        // Portable equivalent of the old MySQL-only
+        // COALESCE(JSON_EXTRACT(meta, '$.extension'), '') != 'zip' — a missing
+        // meta.extension key (NULL) must still count as "not zip", same as
+        // the original COALESCE-to-empty-string did. Written via the query
+        // builder's JSON-path support so it works on both MySQL (production)
+        // and SQLite (tests), instead of a MySQL-only raw JSON_UNQUOTE call.
         return static::where('user_id', $userId)
             ->whereYear('created_at', now()->year)
             ->whereMonth('created_at', now()->month)
-            ->whereRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.extension')), '') != 'zip'")
+            ->where(function ($query) {
+                $query->whereNull('meta->extension')
+                    ->orWhere('meta->extension', '!=', 'zip');
+            })
             ->count();
     }
 }
