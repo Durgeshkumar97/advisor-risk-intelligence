@@ -58,16 +58,32 @@ class RegisteredUserController extends Controller
                 'password' => $password,
             ],
             [
+                // Never accept a password from an unauthenticated registration
+                // attempt for an account that already exists — the guard above
+                // only blocks ACTIVE emails, so this restoreAttributes array is
+                // reached when restoring a SOFT-DELETED account. Gating
+                // Auth::login() below is not enough on its own: if an
+                // attacker-chosen password were written here, they could just
+                // log in afterward via the normal, genuinely password-verified
+                // /login form. Omitting 'password' keeps the account's
+                // original password intact.
                 'name' => $validated['name'],
-                'password' => $password,
             ],
         );
 
         $user = $result['user'];
 
-        if ($result['created']) {
-            event(new Registered($user));
+        if (! $result['created']) {
+            // Restoring an existing (soft-deleted) account — never auto-login
+            // and never accept a new password from this unauthenticated flow.
+            // The real owner is notified via a single-use login link instead.
+            $accounts->sendLoginLinkToExistingUser($user);
+
+            return redirect()->route('login')
+                ->with('success', "An account with this email already exists — we've sent a secure login link to your email.");
         }
+
+        event(new Registered($user));
 
         Auth::login($user);
 

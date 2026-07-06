@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\Payments\CompletePaymentAction;
+use App\Models\ClientIntake;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\User;
@@ -10,7 +11,9 @@ use App\Notifications\ExistingAccountLoginLinkNotification;
 use App\Notifications\WelcomeSetPasswordNotification;
 use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -198,5 +201,124 @@ class AccountTakeoverPreventionTest extends TestCase
 
         $this->assertNotNull($newUser);
         $this->assertAuthenticatedAs($newUser);
+    }
+
+    // ─── Registration over a soft-deleted account's email ───────────────────
+
+    public function test_registering_over_a_soft_deleted_email_does_not_change_its_password_or_login_the_attacker(): void
+    {
+        Notification::fake();
+
+        $victim = User::factory()->create([
+            'email'    => 'trashed-victim@example.test',
+            'password' => 'original-password-123',
+        ]);
+        $victim->delete(); // soft delete
+
+        $response = $this->post(route('register'), [
+            'name'                  => 'Attacker',
+            'email'                 => 'trashed-victim@example.test',
+            'password'              => 'attacker-chosen-password',
+            'password_confirmation' => 'attacker-chosen-password',
+        ]);
+
+        // Never auto-logged in as the restored account.
+        $this->assertGuest();
+        $response->assertRedirect(route('login'));
+
+        // The account is restored (no longer soft-deleted)...
+        $victim->refresh();
+        $this->assertFalse($victim->trashed());
+
+        // ...but its ORIGINAL password is untouched — gating Auth::login()
+        // alone would NOT have caught a leftover password overwrite here.
+        $this->assertTrue(Hash::check('original-password-123', $victim->password));
+        $this->assertFalse(Hash::check('attacker-chosen-password', $victim->password));
+
+        // The real owner is notified.
+        Notification::assertSentTo($victim, ExistingAccountLoginLinkNotification::class);
+
+        // The test that would have caught an incomplete fix (gating the login
+        // call without also stripping the password): attempt to actually log
+        // in with the attacker-chosen password via the real, password-verified
+        // /login form. This must fail.
+        $this->post(route('login'), [
+            'email'    => 'trashed-victim@example.test',
+            'password' => 'attacker-chosen-password',
+        ]);
+        $this->assertGuest();
+
+        // The real owner's original password still works.
+        $this->post(route('login'), [
+            'email'    => 'trashed-victim@example.test',
+            'password' => 'original-password-123',
+        ]);
+        $this->assertAuthenticatedAs($victim);
+    }
+
+    public function test_registering_with_a_genuinely_new_email_still_works_end_to_end(): void
+    {
+        $response = $this->post(route('register'), [
+            'name'                  => 'Brand New User',
+            'email'                 => 'brand-new-register@example.test',
+            'password'              => 'a-secure-password-1',
+            'password_confirmation' => 'a-secure-password-1',
+        ]);
+
+        $newUser = User::where('email', 'brand-new-register@example.test')->first();
+
+        $this->assertNotNull($newUser);
+        $this->assertAuthenticatedAs($newUser);
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_registering_with_an_active_existing_email_still_fails_validation(): void
+    {
+        User::factory()->create(['email' => 'already-active@example.test']);
+
+        $response = $this->post(route('register'), [
+            'name'                  => 'Someone Else',
+            'email'                 => 'already-active@example.test',
+            'password'              => 'a-secure-password-1',
+            'password_confirmation' => 'a-secure-password-1',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    // ─── Trial signup over a soft-deleted account (duplicate-lead branch) ───
+
+    public function test_trial_signup_duplicate_of_a_soft_deleted_account_restores_it_and_notifies_the_owner(): void
+    {
+        Notification::fake();
+        $this->starterPlan();
+
+        $victim = User::factory()->create(['email' => 'trashed-trial@example.test']);
+        $victim->delete();
+
+        ClientIntake::create([
+            'submission_uuid' => (string) Str::uuid(),
+            'name'            => 'Original Advisor',
+            'email'           => 'trashed-trial@example.test',
+            'whatsapp'        => '+91 90000 00000',
+            'firm_name'       => 'Original Firm',
+            'status'          => 'trial',
+        ]);
+
+        $response = $this->post(route('ifa.submit'), [
+            'advisor_name' => 'Attacker',
+            'whatsapp'     => '+91 99999 99999',
+            'email'        => 'trashed-trial@example.test',
+            'firm_name'    => 'Fake Firm',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect(route('login'));
+
+        $victim->refresh();
+        $this->assertFalse($victim->trashed());
+
+        Notification::assertSentTo($victim, ExistingAccountLoginLinkNotification::class);
     }
 }

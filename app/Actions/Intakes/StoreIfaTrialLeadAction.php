@@ -33,10 +33,11 @@ class StoreIfaTrialLeadAction
         array $validated,
         ?UploadedFile $document = null,
     ): ?array {
-        $documentPath   = null;
-        $newUser        = null;   // captured via reference — read AFTER transaction commits
-        $setPasswordUrl = null;   // captured via reference — read AFTER transaction commits
-        $committedUser  = null;   // captured via reference — User object for auto-login
+        $documentPath          = null;
+        $newUser               = null;   // captured via reference — read AFTER transaction commits
+        $setPasswordUrl        = null;   // captured via reference — read AFTER transaction commits
+        $committedUser         = null;   // captured via reference — User object for auto-login
+        $restoredExistingUser  = null;   // captured via reference — notified AFTER transaction commits
 
         try {
             $intake = DB::transaction(function () use (
@@ -46,6 +47,7 @@ class StoreIfaTrialLeadAction
                 &$newUser,
                 &$setPasswordUrl,
                 &$committedUser,
+                &$restoredExistingUser,
             ): ?ClientIntake {
                 $plan = Plan::where('slug', 'starter')->firstOrFail();
 
@@ -59,6 +61,12 @@ class StoreIfaTrialLeadAction
                         $user = $result['user'];
 
                         $this->ensureTrialSubscription($user, $plan);
+
+                        // No session is granted here (this branch returns null,
+                        // so IntakeController never auto-logs in), but the real
+                        // owner must still be told their soft-deleted account
+                        // was just restored by an unauthenticated submission.
+                        $restoredExistingUser = $user;
 
                         Log::info('Duplicate IFA free trial lead restored soft-deleted user.', [
                             'email_hash' => $this->hashValue($validated['email']),
@@ -146,6 +154,10 @@ class StoreIfaTrialLeadAction
         // If the transaction rolls back, $newUser stays null and no email is sent.
         if ($newUser !== null && $setPasswordUrl !== null) {
             $newUser->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
+        }
+
+        if ($restoredExistingUser !== null) {
+            $this->accounts->sendLoginLinkToExistingUser($restoredExistingUser);
         }
 
         if ($intake === null || $committedUser === null) {
