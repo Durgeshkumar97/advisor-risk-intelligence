@@ -153,6 +153,8 @@ class PortfolioZipUploadSecurityTest extends TestCase
     }
 
     // ─── 3. zip-slip entry is never written to disk ──────────────────────
+    // NOTE: on this libzip build extractTo() neutralises '../' on its own, so this
+    // test can't discriminate the fix from that accident — see 3b for the real proof.
 
     public function test_zip_slip_entry_is_never_written_outside_the_extraction_directory(): void
     {
