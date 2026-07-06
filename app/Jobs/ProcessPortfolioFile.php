@@ -52,6 +52,14 @@ class ProcessPortfolioFile implements ShouldQueue
         'data', 'export', 'file', 'document', 'upload',
     ];
 
+    // Even an aggressively over-diversified direct-equity retail/HNI portfolio
+    // realistically holds low hundreds of distinct stocks at most; this sits
+    // ~2-5x above that while staying far below what a crafted CSV could claim
+    // (a symbol column isn't validated against a real ticker list, so nothing
+    // else stops one file from listing hundreds of thousands of fake symbols).
+    // Matches StockRiskService::MAX_BATCH_SYMBOLS, its own defense-in-depth cap.
+    private const MAX_DISTINCT_STOCK_SYMBOLS = 500;
+
     public function __construct(
         public readonly PortfolioFile $portfolioFile
     ) {}
@@ -128,6 +136,24 @@ class ProcessPortfolioFile implements ShouldQueue
                 ->unique()
                 ->values()
                 ->all();
+
+            if (count($stockSymbols) > self::MAX_DISTINCT_STOCK_SYMBOLS) {
+                Log::warning('ProcessPortfolioFile: rejected — too many distinct stock symbols.', [
+                    'id'                    => $file->id,
+                    'distinct_symbol_count' => count($stockSymbols),
+                    'max_allowed'           => self::MAX_DISTINCT_STOCK_SYMBOLS,
+                ]);
+
+                $file->update([
+                    'status' => PortfolioFile::STATUS_FAILED,
+                    'meta'   => array_merge($file->meta ?? [], [
+                        'failed_at'     => now()->toIso8601String(),
+                        'error_message' => 'Portfolio contains too many distinct stock symbols (' . number_format(count($stockSymbols)) . '). Maximum allowed is ' . number_format(self::MAX_DISTINCT_STOCK_SYMBOLS) . ' — please split into smaller batches.',
+                    ]),
+                ]);
+
+                return;
+            }
 
             $stockRiskMap = $stockRiskService->classifyBatch($stockSymbols);
 

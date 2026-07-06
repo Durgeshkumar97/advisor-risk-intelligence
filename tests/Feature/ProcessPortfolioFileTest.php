@@ -174,4 +174,70 @@ class ProcessPortfolioFileTest extends TestCase
         expect((float) $asset->risk_score)->toBe(65.0)
             ->and($asset->meta['stock_risk']['source'])->toBe(AssetRiskScorer::SOURCE_FALLBACK_UNAVAILABLE);
     }
+
+    // ─── distinct-stock-symbol cap ────────────────────────────────────────
+
+    private function csvWithDistinctStockSymbols(int $count): string
+    {
+        $rows = ['name,asset_type,symbol,current_value'];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $rows[] = "Stock {$i},stock,SYM{$i},1000";
+        }
+
+        return implode("\n", $rows);
+    }
+
+    public function test_portfolio_with_too_many_distinct_stock_symbols_is_rejected_before_classify_batch(): void
+    {
+        $file = $this->makePortfolioFile($this->csvWithDistinctStockSymbols(501));
+
+        // A spy, not a stub: proves the expensive downstream call never fires,
+        // not just that the end state happens to look right.
+        $this->mock(StockRiskService::class)
+            ->shouldReceive('classifyBatch')
+            ->never();
+
+        ProcessPortfolioFile::dispatchSync($file);
+
+        $file->refresh();
+
+        expect($file->status)->toBe(PortfolioFile::STATUS_FAILED)
+            ->and($file->meta['error_message'])->toContain('too many distinct stock symbols')
+            ->and($file->meta['error_message'])->toContain('501')
+            ->and($file->meta['error_message'])->toContain('500');
+
+        // Rejection happens before the transaction that would create assets.
+        expect(PortfolioAsset::count())->toBe(0);
+    }
+
+    public function test_portfolio_with_distinct_stock_symbols_under_the_cap_still_processes_end_to_end(): void
+    {
+        $symbolCount = 50;
+        $file        = $this->makePortfolioFile($this->csvWithDistinctStockSymbols($symbolCount));
+
+        $expectedSymbols = collect(range(1, $symbolCount))->map(fn ($i) => "SYM{$i}")->all();
+
+        $this->mock(StockRiskService::class)
+            ->shouldReceive('classifyBatch')
+            ->once()
+            ->with($expectedSymbols)
+            ->andReturn(collect($expectedSymbols)->mapWithKeys(fn ($symbol) => [
+                $symbol => [
+                    'risk_level' => 'Medium', 'volatility' => 30.0, 'confidence' => 0.8,
+                    'as_of_date' => '2026-07-01', 'stale' => false, 'unavailable' => false,
+                ],
+            ])->all());
+
+        ProcessPortfolioFile::dispatchSync($file);
+
+        $file->refresh();
+
+        expect($file->status)->toBe(PortfolioFile::STATUS_PROCESSED)
+            ->and(PortfolioAsset::count())->toBe($symbolCount);
+
+        $first = PortfolioAsset::where('symbol', 'SYM1')->first();
+        expect((float) $first->risk_score)->toBe(65.0)
+            ->and($first->meta['stock_risk']['source'])->toBe(AssetRiskScorer::SOURCE_LIVE);
+    }
 }

@@ -202,6 +202,50 @@ it('expires a stale-flagged result from the local cache sooner than a fresh one'
 });
 
 // ---------------------------------------------------------------------------
+// Defense-in-depth batch-size cap — independent of ProcessPortfolioFile's own
+// cap. Called directly here, bypassing the job entirely, to prove this layer
+// works on its own rather than only in tandem with the caller-side check.
+// ---------------------------------------------------------------------------
+
+it('rejects a batch over the hard cap without making an HTTP call', function () {
+    Http::fake();
+
+    $symbols = collect(range(1, 501))->map(fn ($i) => "SYM{$i}")->all();
+
+    $results = $this->service->classifyBatch($symbols);
+
+    Http::assertNothingSent();
+
+    expect($results)->toHaveCount(501);
+
+    foreach ($results as $result) {
+        expect($result['unavailable'])->toBeTrue()
+            ->and($result['risk_level'])->toBeNull();
+    }
+});
+
+it('still processes a batch at exactly the cap normally', function () {
+    Http::fake([
+        'risk-service.test/stock-risk' => Http::response([
+            'results' => collect(range(1, 500))->map(fn ($i) => [
+                'symbol' => "SYM{$i}", 'risk_level' => 'Low', 'volatility' => 15.0,
+                'confidence' => 0.9, 'as_of_date' => '2026-07-01', 'stale' => false,
+            ])->all(),
+            'disclaimer' => 'Not investment advice.',
+        ], 200),
+    ]);
+
+    $symbols = collect(range(1, 500))->map(fn ($i) => "SYM{$i}")->all();
+
+    $results = $this->service->classifyBatch($symbols);
+
+    Http::assertSentCount(1);
+    expect($results)->toHaveCount(500)
+        ->and($results['SYM1']['unavailable'])->toBeFalse()
+        ->and($results['SYM1']['risk_level'])->toBe('Low');
+});
+
+// ---------------------------------------------------------------------------
 // Bounded total timeout — Http::timeout() only bounds a single attempt, so
 // naively chaining ->retry() on top of it lets worst-case latency multiply
 // past the configured budget. requestPlan() derives a per-attempt timeout

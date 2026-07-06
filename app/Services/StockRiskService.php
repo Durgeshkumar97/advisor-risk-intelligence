@@ -52,6 +52,15 @@ class StockRiskService
     /** Floor per attempt so a retry is never given an unusably tiny slice of the budget. */
     private const MIN_ATTEMPT_TIMEOUT = 0.5;
 
+    /**
+     * Defense-in-depth ceiling, independent of ProcessPortfolioFile's own cap —
+     * protects this service's contract (and the downstream HTTP payload/compute
+     * cost) for any caller, not just the one that currently exists. Should never
+     * trip in normal operation; if it does, some caller isn't enforcing its own
+     * limit before reaching here. Matches ProcessPortfolioFile::MAX_DISTINCT_STOCK_SYMBOLS.
+     */
+    private const MAX_BATCH_SYMBOLS = 500;
+
     protected string $url;
 
     protected float $timeout;
@@ -91,6 +100,18 @@ class StockRiskService
 
         if ($requested->isEmpty()) {
             return [];
+        }
+
+        if ($requested->count() > self::MAX_BATCH_SYMBOLS) {
+            $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? null;
+
+            Log::error('StockRiskService: classifyBatch() called with a batch exceeding the hard cap — the caller should have enforced its own limit before reaching here.', [
+                'requested_count' => $requested->count(),
+                'max_allowed'     => self::MAX_BATCH_SYMBOLS,
+                'caller'          => $this->formatCallerFrame($caller),
+            ]);
+
+            return $requested->mapWithKeys(fn ($symbol) => [$symbol => $this->unavailable()])->all();
         }
 
         $results = [];
@@ -260,6 +281,23 @@ class StockRiskService
         $perAttemptTimeout = ($this->timeout - $retryDelaySeconds) / self::RETRY_ATTEMPTS;
 
         return [self::RETRY_ATTEMPTS, $perAttemptTimeout, self::RETRY_DELAY_MS];
+    }
+
+    /**
+     * Formats a debug_backtrace() frame as "Class::method()" for the
+     * batch-size-cap log line — best-effort context for tracking down
+     * which caller isn't enforcing its own limit.
+     */
+    private function formatCallerFrame(?array $frame): string
+    {
+        if ($frame === null) {
+            return 'unknown';
+        }
+
+        $function = $frame['function'] ?? 'unknown';
+        $class    = $frame['class'] ?? null;
+
+        return $class ? "{$class}::{$function}()" : "{$function}()";
     }
 
     protected function normalize(string $symbol): string
