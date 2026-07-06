@@ -8,6 +8,7 @@ use App\Actions\Payments\VerifyRazorpayPayment;
 use App\Jobs\ProcessSuccessfulPayment;
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Services\RazorpayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -338,6 +339,121 @@ describe('WebhookController::handle()', function () {
         $sig  = hash_hmac('sha256', $body, $this->secret);
 
         postWebhook($body, $sig)->assertStatus(400);
+    });
+
+    it('revokes access via CheckSubscription when a refund webhook arrives — not just a DB status flip', function () {
+        $user = User::factory()->create();
+
+        $payment = Payment::create([
+            'plan_id'      => $this->plan->id,
+            'user_id'      => $user->id,
+            'order_id'     => 'order_refund_gate',
+            'payment_id'   => 'pay_refund_gate',
+            'name'         => 'Test IFA',
+            'email'        => 'ifa@example.com',
+            'phone'        => '9876543210',
+            'amount'       => '999.00',
+            'currency'     => 'INR',
+            'gateway'      => 'razorpay',
+            'status'       => Payment::STATUS_PAID,
+            'processed_at' => now(),
+        ]);
+
+        $subscription = Subscription::create([
+            'user_id'                  => $user->id,
+            'plan_id'                  => $this->plan->id,
+            'status'                   => 'active',
+            'starts_at'                => now(),
+            'ends_at'                  => now()->addDays(20),
+            'renewal_at'               => now()->addDays(20),
+            'provider'                 => 'razorpay',
+            'provider_subscription_id' => 'pay_refund_gate',
+        ]);
+
+        // Sanity check: access is genuinely granted BEFORE the refund.
+        $this->actingAs($user)->get(route('portfolio.manage'))->assertOk();
+
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            'order_refund_gate', 'pay_refund_gate', $this->secret, 'payment.refunded',
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_REFUNDED);
+
+        // The assertion that catches an incomplete fix (status-only, no
+        // backdated ends_at): CheckSubscription's grace-period check reads
+        // ends_at directly and never looks at status at all.
+        expect($subscription->fresh()->ends_at->isPast())->toBeTrue();
+        expect($subscription->fresh()->status)->toBe('cancelled');
+
+        // The real proof: hit the actual gated route as this user and confirm
+        // the middleware itself now denies access — not just a DB assertion.
+        $this->actingAs($user)->get(route('portfolio.manage'))->assertRedirect();
+    });
+
+    it('is idempotent when the same refund webhook is delivered twice', function () {
+        $user = User::factory()->create();
+
+        Payment::create([
+            'plan_id'      => $this->plan->id,
+            'user_id'      => $user->id,
+            'order_id'     => 'order_refund_idem',
+            'payment_id'   => 'pay_refund_idem',
+            'name'         => 'Test IFA',
+            'email'        => 'ifa@example.com',
+            'phone'        => '9876543210',
+            'amount'       => '999.00',
+            'currency'     => 'INR',
+            'gateway'      => 'razorpay',
+            'status'       => Payment::STATUS_PAID,
+            'processed_at' => now(),
+        ]);
+
+        Subscription::create([
+            'user_id'                  => $user->id,
+            'plan_id'                  => $this->plan->id,
+            'status'                   => 'active',
+            'starts_at'                => now(),
+            'ends_at'                  => now()->addDays(20),
+            'renewal_at'               => now()->addDays(20),
+            'provider'                 => 'razorpay',
+            'provider_subscription_id' => 'pay_refund_idem',
+        ]);
+
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            'order_refund_idem', 'pay_refund_idem', $this->secret, 'payment.refunded',
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+        $firstEndsAt = Subscription::where('provider_subscription_id', 'pay_refund_idem')->first()->ends_at;
+
+        // Second delivery of the identical payload — must not error or re-process.
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+        $secondEndsAt = Subscription::where('provider_subscription_id', 'pay_refund_idem')->first()->ends_at;
+
+        expect($secondEndsAt->equalTo($firstEndsAt))->toBeTrue();
+    });
+
+    it('returns 200 without crashing when a refund webhook references an unknown payment', function () {
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            'order_does_not_exist', 'pay_does_not_exist', $this->secret, 'payment.refunded',
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+    });
+
+    it('leaves payment.captured handling completely unaffected by the new refund branch', function () {
+        $payment = pendingPayment($this->plan, orderId: 'order_wh_unaffected');
+
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            $payment->order_id, 'pay_wh_unaffected', $this->secret, 'payment.captured',
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_PROCESSING);
+        Queue::assertPushedTimes(ProcessSuccessfulPayment::class, 1);
     });
 });
 
