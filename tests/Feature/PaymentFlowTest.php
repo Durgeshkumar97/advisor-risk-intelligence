@@ -14,7 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 
-uses(RefreshDatabase::class);
+uses(\Tests\TestCase::class, RefreshDatabase::class);
 
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
@@ -153,7 +153,13 @@ describe('CheckoutController::success()', function () {
              ->assertJson(['success' => false]);
     });
 
-    it('auto-logs in an existing user and redirects to dashboard on success', function () {
+    it('never auto-logs in based on the payment\'s resolved user, and redirects to login', function () {
+        // Simulates the fulfilment job (ProcessSuccessfulPayment, faked here via
+        // Queue::fake()) having already matched this payment's email to an
+        // EXISTING account by the time this check runs. The browser completing
+        // checkout must never be logged in as that account — it could be
+        // anyone who typed in that email, not its real owner. See
+        // CheckoutController::success() and SubscriptionService::activate().
         $user    = User::factory()->create(['onboarding_completed' => true]);
         $payment = pendingPayment($this->plan, $user, 'order_existing_user');
 
@@ -164,6 +170,29 @@ describe('CheckoutController::success()', function () {
             'razorpay_payment_id' => 'pay_user_001',
             'razorpay_order_id'   => $payment->order_id,
             'razorpay_signature'  => 'sig_user_001',
+        ])
+        ->assertOk()
+        ->assertJson(['success' => true, 'redirect' => route('login')]);
+
+        $this->assertGuest();
+    });
+
+    it('redirects an already-authenticated buyer straight to their dashboard', function () {
+        // Distinct from the case above: here the browser already had a real,
+        // independently-established session BEFORE checkout even started —
+        // Auth::user() reflects that, not an email match from the async job.
+        $user = User::factory()->create(['onboarding_completed' => true]);
+        $this->actingAs($user);
+
+        $payment = pendingPayment($this->plan, orderId: 'order_already_logged_in');
+
+        $this->mock(RazorpayService::class)
+            ->shouldReceive('verifySignature')->once()->andReturn(true);
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_loggedin_001',
+            'razorpay_order_id'   => $payment->order_id,
+            'razorpay_signature'  => 'sig_loggedin_001',
         ])
         ->assertOk()
         ->assertJson(['success' => true, 'redirect' => route('dashboard')]);

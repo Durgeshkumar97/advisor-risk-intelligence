@@ -48,6 +48,7 @@ class CreateUserFromPaymentAction
         );
 
         $user = $result['user'];
+        $user->wasRecentlyCreated = $result['created'];
 
         if (!$payment->user_id) {
             $payment->update(['user_id' => $user->id]);

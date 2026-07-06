@@ -50,6 +50,12 @@ class SubscriptionService
             $setPasswordUrl = route('password.reset', ['token' => $resetToken])
                               . '?email=' . urlencode($user->email);
             $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
+        } else {
+            // This payment's email matched an EXISTING account. The payer is
+            // never auto-logged in from this unauthenticated flow — send a
+            // login link to the account's own address instead, so its real
+            // owner has a safe way back in regardless of who paid.
+            $this->accounts->sendLoginLinkToExistingUser($user);
         }
 
         $durationDays = $plan->duration_days ?? 30;

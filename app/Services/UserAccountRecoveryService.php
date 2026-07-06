@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Notifications\ExistingAccountLoginLinkNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -67,5 +68,33 @@ class UserAccountRecoveryService
         if (app()->bound('session')) {
             session()->flash(self::RESTORED_FLASH_KEY, self::RESTORED_MESSAGE);
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEND LOGIN LINK TO EXISTING USER
+    |--------------------------------------------------------------------------
+    |
+    | Used whenever an unauthenticated flow (trial signup, checkout) matches
+    | an email to an EXISTING account. That account must never be auto-logged
+    | into from an unauthenticated request — the submitter could be anyone
+    | who merely typed in that email. Instead, a single-use magic-link token
+    | is emailed to the account's own address (reusing the same login_token /
+    | /auto-login/{token} mechanism the admin "send login link" feature
+    | already uses — see AdminUserController::sendLoginLink()). The link is
+    | NEVER returned in the HTTP response to the submitter.
+    |
+    */
+
+    public function sendLoginLinkToExistingUser(User $user): void
+    {
+        $token = Str::random(64);
+
+        $user->forceFill([
+            'login_token' => $token,
+            'login_token_expires_at' => now()->addMinutes(15),
+        ])->save();
+
+        $user->notify(new ExistingAccountLoginLinkNotification(route('auto.login', $token)));
     }
 }

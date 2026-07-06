@@ -159,21 +159,21 @@ class CheckoutController extends Controller
 
         $payment->refresh();
 
-        if (!Auth::check() && $payment->user_id && $payment->user) {
-            Auth::login($payment->user);
-            $request->session()->regenerate();
-            rescue(fn() => $payment->user->forceFill(['last_login_at' => now()])->save());
-        }
-
-        $user = Auth::user() ?? $payment->user;
+        // Never auto-login based on $payment->user here: the fulfilment job
+        // (ProcessSuccessfulPayment) runs asynchronously and resolves the user
+        // by an unauthenticated email match — it could be an EXISTING account
+        // that has nothing to do with whoever is sitting in this browser.
+        // Only trust an already-established session. New users get
+        // WelcomeSetPasswordNotification; existing-email matches get a
+        // login-link email (see SubscriptionService::activate()) — either
+        // way, access requires actually opening that email.
+        $user = Auth::user();
 
         if ($user) {
             $redirect = $user->onboarding_completed
                 ? route('dashboard')
                 : route('onboarding');
         } else {
-            // New user: job runs async, account created in background.
-            // WelcomeSetPasswordNotification will email them the activation link.
             $redirect = route('login');
         }
 

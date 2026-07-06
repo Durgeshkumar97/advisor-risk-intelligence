@@ -3,6 +3,7 @@
 namespace App\Actions\Payments;
 
 use App\Models\Payment;
+use App\Services\UserAccountRecoveryService;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,19 +64,23 @@ class CompletePaymentAction
 
             /*
             |--------------------------------------------------------------------------
-            | AUTO LOGIN USER
+            | AUTO LOGIN — ONLY FOR A GENUINELY NEW ACCOUNT
+            |--------------------------------------------------------------------------
+            |
+            | $user may be an EXISTING account matched purely by the email typed
+            | into this unauthenticated payment form — never auto-login in that
+            | case, since the payer could be anyone who knows that email, not
+            | its owner. Only a freshly-created account is safe to log straight
+            | into. The existing-account case gets a login-link email instead.
             |--------------------------------------------------------------------------
             */
 
-            Auth::login($user);
-
-            /*
-            |--------------------------------------------------------------------------
-            | REGENERATE SESSION
-            |--------------------------------------------------------------------------
-            */
-
-            request()->session()->regenerate();
+            if ($user->wasRecentlyCreated) {
+                Auth::login($user);
+                request()->session()->regenerate();
+            } else {
+                app(UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($user);
+            }
 
             /*
             |--------------------------------------------------------------------------
