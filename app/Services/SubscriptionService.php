@@ -6,7 +6,7 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
 
 use Illuminate\Support\Facades\DB;

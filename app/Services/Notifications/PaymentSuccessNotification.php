@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Services\Notifications;
 
 use App\Models\Payment;
 use Illuminate\Bus\Queueable;

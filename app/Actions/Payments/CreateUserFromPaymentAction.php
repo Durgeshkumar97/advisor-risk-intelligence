@@ -5,8 +5,8 @@ namespace App\Actions\Payments;
 use App\Models\Payment;
 use App\Models\Portfolio;
 use App\Models\User;
-use App\Notifications\PaymentSuccessNotification;
-use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\Notifications\PaymentSuccessNotification;
+use App\Services\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
 
 use Illuminate\Support\Facades\Hash;

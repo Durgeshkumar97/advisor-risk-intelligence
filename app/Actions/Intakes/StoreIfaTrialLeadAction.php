@@ -6,7 +6,7 @@ use App\Models\ClientIntake;
 use App\Models\Plan;
 use App\Models\Portfolio;
 use App\Models\User;
-use App\Notifications\WelcomeSetPasswordNotification;
+use App\Services\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;

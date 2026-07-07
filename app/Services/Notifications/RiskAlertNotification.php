@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Services\Notifications;
 
 use App\Mail\RiskAlertMail;
 use App\Models\User;

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Notifications\ExistingAccountLoginLinkNotification;
+use App\Services\Notifications\ExistingAccountLoginLinkNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
