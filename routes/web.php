@@ -214,6 +214,12 @@ Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/report/{id}', [FileController::class, 'report'])
         ->name('report.view');
+});
+
+// Report/bundle downloads require a fully active subscription — no trial,
+// no grace period. Viewing an existing report is fine during grace; minting
+// a fresh download/bundle is not.
+Route::middleware(['auth', 'active.sub'])->group(function () {
 
     Route::get('/report/{id}/download', [FileController::class, 'reportDownload'])
         ->name('report.download');

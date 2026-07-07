@@ -20,14 +20,6 @@ use App\Models\Subscription;
  */
 class EnsureActiveSubscription
 {
-    /*
-    |--------------------------------------------------------------------------
-    | GRACE PERIOD (days after expiry before access is cut off)
-    |--------------------------------------------------------------------------
-    */
-
-    private const GRACE_DAYS = 3;
-
     public function handle(Request $request, Closure $next): mixed
     {
         $user = Auth::user();
@@ -70,42 +62,11 @@ class EnsureActiveSubscription
 
         /*
         |--------------------------------------------------------------------------
-        | TRIAL — full access while trial is running
-        |--------------------------------------------------------------------------
-        */
-
-        if ($subscription->isTrial()) {
-            return $next($request);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | TRIAL EXPIRED
-        |--------------------------------------------------------------------------
-        */
-
-        if ($subscription->status === 'trial' && $subscription->trial_ends_at?->isPast()) {
-            return redirect()->route('subscription.index')
-                ->with('error', 'Your 14-day trial has expired. Choose a plan to continue.');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | GRACE PERIOD — 3-day window after expiry, access continues
-        |--------------------------------------------------------------------------
-        */
-
-        if ($subscription->isExpired() && $subscription->isInGracePeriod()) {
-            return $next($request);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | FULLY EXPIRED — redirect to pricing
+        | ANYTHING ELSE (trial, grace period, expired) — no access, no exceptions
         |--------------------------------------------------------------------------
         */
 
         return redirect('/pricing')
-            ->with('error', 'Your subscription has expired. Renew to continue.');
+            ->with('error', 'This action requires an active subscription.');
     }
 }
