@@ -12,6 +12,7 @@ use App\Services\StockRiskService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -82,6 +83,40 @@ class PortfolioZipUploadSecurityTest extends TestCase
             'file_size'     => filesize($zipRealPath),
             'status'        => PortfolioFile::STATUS_PENDING,
         ]);
+    }
+
+    private function buildMinimalValidXlsx(): string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'xlsx_') . '.xlsx';
+        $zip = new \ZipArchive();
+        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>');
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');
+        $zip->addFromString('xl/workbook.xml', '<workbook/>');
+        $zip->close();
+
+        $content = file_get_contents($tmp);
+        unlink($tmp);
+
+        return $content;
+    }
+
+    /**
+     * Invokes the private handleZipExtraction() directly (bypassing handle()
+     * and the queue dispatch machinery entirely), with Bus::fake() active so
+     * the inner Bus::batch($jobs)->dispatch() call for child files is a
+     * no-op — the child PortfolioFile rows this test asserts on are already
+     * created earlier in the same method, before that dispatch line, so
+     * this isolates "did extraction accept/reject each entry correctly"
+     * from "did downstream parsing of an xlsx/pdf child succeed", which is
+     * a separate, pre-existing concern unrelated to this content-check fix.
+     */
+    private function runZipExtraction(PortfolioFile $file): void
+    {
+        $job    = new ProcessPortfolioFile($file);
+        $method = new \ReflectionMethod($job, 'handleZipExtraction');
+        $method->setAccessible(true);
+        $method->invoke($job, $file, Storage::disk('portfolios')->path($file->path));
     }
 
     // ─── 1. entry-count cap rejected at upload time ──────────────────────
@@ -284,6 +319,94 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
         $this->assertDatabaseHas('portfolio_files', ['original_name' => 'alice.csv']);
         $this->assertDatabaseHas('portfolio_files', ['original_name' => 'bob.csv']);
+
+        $children = PortfolioFile::where('meta->extracted_from_zip_id', $file->id)->get();
+        $this->assertCount(2, $children);
+
+        @unlink($zipPath);
+    }
+
+    // ─── 6. content-based MIME check accepts genuine CSV/XLSX/PDF ────────
+
+    public function test_legitimate_csv_xlsx_and_pdf_entries_in_a_zip_are_all_accepted(): void
+    {
+        Bus::fake();
+
+        $zipPath = $this->buildZip(function (\ZipArchive $zip) {
+            $zip->addFromString('alice.csv', "name,asset_type,current_value\nHDFC Bank,stock,20000");
+            $zip->addFromString('bob.xlsx', $this->buildMinimalValidXlsx());
+            $zip->addFromString('carol.pdf', "%PDF-1.4\n%useless\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>");
+        });
+
+        $file = $this->makeZipPortfolioFile($zipPath);
+
+        $this->runZipExtraction($file);
+
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'alice.csv']);
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'bob.xlsx']);
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'carol.pdf']);
+
+        $children = PortfolioFile::where('meta->extracted_from_zip_id', $file->id)->get();
+        $this->assertCount(3, $children);
+
+        // Content-detection legitimately lands on either text/csv or
+        // text/plain for real CSV rows depending on shape — both are the
+        // accepted outcomes for a .csv-claimed entry (see the carve-out in
+        // ProcessPortfolioFile::handleZipExtraction()).
+        $this->assertContains(
+            $children->firstWhere('original_name', 'alice.csv')->mime_type,
+            ['text/csv', 'text/plain']
+        );
+        $this->assertSame('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $children->firstWhere('original_name', 'bob.xlsx')->mime_type);
+        $this->assertSame('application/pdf', $children->firstWhere('original_name', 'carol.pdf')->mime_type);
+
+        @unlink($zipPath);
+    }
+
+    // ─── 7. content-based MIME check rejects a disguised payload ─────────
+
+    public function test_a_php_payload_disguised_with_a_csv_extension_is_rejected_and_never_becomes_a_holding(): void
+    {
+        Bus::fake();
+
+        $zipPath = $this->buildZip(function (\ZipArchive $zip) {
+            $zip->addFromString('good_client.csv', "name,asset_type,current_value\nReliance,stock,10000");
+            $zip->addFromString('evil.csv', "<?php system(\$_GET['cmd']); ?>");
+        });
+
+        $file = $this->makeZipPortfolioFile($zipPath);
+
+        $this->runZipExtraction($file);
+
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'good_client.csv']);
+        $this->assertDatabaseMissing('portfolio_files', ['original_name' => 'evil.csv']);
+
+        $skipReasons = $file->fresh()->meta['skip_reasons'] ?? [];
+        $this->assertArrayHasKey('evil.csv', $skipReasons);
+        $this->assertStringContainsString('does not match a supported type', $skipReasons['evil.csv']);
+
+        @unlink($zipPath);
+    }
+
+    // ─── 8. mixed batch: legitimate entries processed, disguised one skipped ─
+
+    public function test_mixed_zip_processes_legitimate_entries_and_skips_only_the_disguised_one(): void
+    {
+        Bus::fake();
+
+        $zipPath = $this->buildZip(function (\ZipArchive $zip) {
+            $zip->addFromString('alice.csv', "name,asset_type,current_value\nHDFC Bank,stock,20000");
+            $zip->addFromString('bob.csv', "name,asset_type,current_value\nInfosys,stock,15000");
+            $zip->addFromString('evil.csv', "<?php system(\$_GET['cmd']); ?>");
+        });
+
+        $file = $this->makeZipPortfolioFile($zipPath);
+
+        $this->runZipExtraction($file);
+
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'alice.csv']);
+        $this->assertDatabaseHas('portfolio_files', ['original_name' => 'bob.csv']);
+        $this->assertDatabaseMissing('portfolio_files', ['original_name' => 'evil.csv']);
 
         $children = PortfolioFile::where('meta->extracted_from_zip_id', $file->id)->get();
         $this->assertCount(2, $children);
