@@ -151,27 +151,6 @@
             box-shadow:0 0 0 3px rgba(37,99,235,.18);
         }
 
-        .row{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:12px;
-            margin:2px 0 18px;
-            flex-wrap:wrap;
-        }
-
-        .remember{
-            display:flex;
-            align-items:center;
-            gap:8px;
-            color:var(--muted);
-            font-size:13px;
-        }
-
-        .remember input{
-            accent-color:var(--blue);
-        }
-
         .mini-link{
             color:var(--gold);
             font-size:13px;
@@ -269,11 +248,6 @@
             .btn{
                 padding:14px;
             }
-
-            .row{
-                align-items:flex-start;
-                flex-direction:column;
-            }
         }
 
         @media (max-width:420px){
@@ -353,13 +327,6 @@
                 @error('password')
                     <div class="error">{{ $message }}</div>
                 @enderror
-            </div>
-
-            <div class="row">
-                <label class="remember">
-                    <input type="checkbox" name="remember">
-                    Keep me signed in
-                </label>
             </div>
 
             <button type="submit" class="btn">

@@ -58,9 +58,12 @@ class AdminAuthController extends Controller
                 ->withInput($request->only('email'));
         }
 
+        // Admin sessions never persist beyond the 15-minute session lifetime
+        // (config/session.php) — no "remember me" cookie is ever queued here,
+        // regardless of what the request sends.
         if (!Auth::attempt(
             ['email' => $validated['email'], 'password' => $validated['password']],
-            $request->boolean('remember')
+            false
         )) {
             RateLimiter::hit($throttleKey);
 
