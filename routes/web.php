@@ -117,7 +117,7 @@ Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
 |--------------------------------------------------------------------------
 */
 
-Route::get('/auto-login/{token}', function ($token) {
+Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $token) {
 
     $user = \App\Models\User::where('login_token', $token)->first();
 
@@ -143,6 +143,14 @@ Route::get('/auto-login/{token}', function ($token) {
         'login_token_expires_at' => null,
         'last_login_at'          => now(),
     ])->save();
+
+    \App\Models\AdminLog::create([
+        'target_user_id' => $user->id,
+        'token_hash'     => hash('sha256', $token),
+        'event'          => 'impersonation_link_used',
+        'ip'             => $request->ip(),
+        'user_agent'     => $request->userAgent(),
+    ]);
 
     if (!$user->onboarding_completed) {
         return redirect()->route('onboarding');

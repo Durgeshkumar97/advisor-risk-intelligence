@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminLog;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -61,6 +63,14 @@ class AdminAuthController extends Controller
             $request->boolean('remember')
         )) {
             RateLimiter::hit($throttleKey);
+
+            AdminLog::create([
+                'user_id'    => User::where('email', $validated['email'])->value('id'),
+                'event'      => 'admin_login_failed',
+                'ip'         => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
             return back()
                 ->withErrors(['email' => 'Invalid credentials.'])
                 ->withInput($request->only('email'));
@@ -73,10 +83,19 @@ class AdminAuthController extends Controller
         */
 
         if (!Auth::user()->is_admin) {
+            $deniedUserId = Auth::id();
+
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             RateLimiter::hit($throttleKey);
+
+            AdminLog::create([
+                'user_id'    => $deniedUserId,
+                'event'      => 'admin_login_denied',
+                'ip'         => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
 
             return back()
                 ->withErrors(['email' => 'Access denied. Admin account required.'])
@@ -101,6 +120,13 @@ class AdminAuthController extends Controller
         Auth::user()->forceFill([
             'last_login_at' => now(),
         ])->save();
+
+        AdminLog::create([
+            'user_id'    => Auth::id(),
+            'event'      => 'admin_login_success',
+            'ip'         => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return redirect()->route('admin.dashboard');
     }

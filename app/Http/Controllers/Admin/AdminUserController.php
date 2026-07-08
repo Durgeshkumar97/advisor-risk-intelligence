@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminLog;
 use App\Models\Payment;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
@@ -96,7 +98,7 @@ class AdminUserController extends Controller
     |
     */
 
-    public function sendLoginLink(int $id): \Illuminate\Http\RedirectResponse
+    public function sendLoginLink(Request $request, int $id): \Illuminate\Http\RedirectResponse
     {
         $user = User::findOrFail($id);
 
@@ -108,6 +110,15 @@ class AdminUserController extends Controller
         ])->save();
 
         $link = route('auto.login', $token);
+
+        AdminLog::create([
+            'user_id'        => Auth::id(),
+            'target_user_id' => $user->id,
+            'token_hash'     => hash('sha256', $token),
+            'event'          => 'impersonation_link_minted',
+            'ip'             => $request->ip(),
+            'user_agent'     => $request->userAgent(),
+        ]);
 
         return redirect()->route('admin.users.show', $id)
             ->with('login_link', $link)
