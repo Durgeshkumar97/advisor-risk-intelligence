@@ -30,16 +30,20 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
+        // Password::sendResetLink() still only emails a real link to an
+        // existing, non-throttled account — that underlying behavior is
+        // untouched. What changes is the response: RESET_LINK_SENT,
+        // INVALID_USER, and RESET_THROTTLED are deliberately NOT reflected
+        // back to the client, since Laravel's default messages for those
+        // differ per status and let /forgot-password be used to enumerate
+        // which emails have an account.
+        Password::sendResetLink(
             $request->only('email')
         );
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        return back()->with(
+            'status',
+            'If an account exists for this email, a password reset link has been sent.'
+        );
     }
 }

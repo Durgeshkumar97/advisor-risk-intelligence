@@ -47,9 +47,15 @@ class LoginRequest extends FormRequest
             ->where('email', Str::lower($this->string('email')))
             ->first();
 
+        // A soft-deleted account used to get a distinct "deactivated" message
+        // here — that let /login be used to enumerate which emails belong to
+        // a deactivated account. It now falls through to the same generic
+        // failure below as a wrong password or a non-existent email would.
         if ($user?->trashed()) {
+            RateLimiter::hit($this->throttleKey());
+
             throw ValidationException::withMessages([
-                'email' => 'This account has been deactivated. Email support@risksignal.in to recover it.',
+                'email' => trans('auth.failed'),
             ]);
         }
 
