@@ -41,7 +41,15 @@ class VerifyRazorpayPayment
                 ]);
             }
 
-            if ($payment->status === Payment::STATUS_PAID) {
+            // The Razorpay webhook (server-to-server) and this browser-side
+            // verify call race — either can arrive first. If the webhook
+            // already moved this payment to 'processing', treat it the same
+            // as 'paid': already being handled, return as-is. Without this,
+            // falling through below would overwrite a paid_at the webhook
+            // deliberately preserved, and cause the caller's own dedup check
+            // to miss (since status would bounce back to 'paid'), dispatching
+            // a second, redundant ProcessSuccessfulPayment job.
+            if (in_array($payment->status, [Payment::STATUS_PAID, Payment::STATUS_PROCESSING], true)) {
                 return $payment;
             }
 

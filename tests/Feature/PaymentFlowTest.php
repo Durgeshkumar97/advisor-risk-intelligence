@@ -455,6 +455,40 @@ describe('WebhookController::handle()', function () {
         expect($payment->fresh()->status)->toBe(Payment::STATUS_PROCESSING);
         Queue::assertPushedTimes(ProcessSuccessfulPayment::class, 1);
     });
+
+    it('does not dispatch a second job when the webhook already moved the payment to processing before the browser verify call arrives', function () {
+        // Simulates the actual race: Razorpay's server-to-server webhook
+        // fires first and moves the payment to 'processing' + dispatches
+        // the fulfilment job — then the browser's own JS-callback verify
+        // call arrives for the same payment.
+        $payment = pendingPayment($this->plan, orderId: 'order_race_webhook_first');
+
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            $payment->order_id, 'pay_race_001', $this->secret,
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_PROCESSING);
+        Queue::assertPushedTimes(ProcessSuccessfulPayment::class, 1);
+
+        // Now the browser-side verify call arrives for the same order.
+        $this->mock(RazorpayService::class)
+            ->shouldReceive('verifySignature')->once()->andReturn(true);
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_race_001',
+            'razorpay_order_id'   => $payment->order_id,
+            'razorpay_signature'  => 'sig_race_001',
+        ])->assertOk()->assertJson(['success' => true]);
+
+        // Status must still be 'processing' — VerifyRazorpayPayment must not
+        // have flipped it back to 'paid'.
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_PROCESSING);
+
+        // The real proof: still exactly ONE dispatch total, not two.
+        Queue::assertPushedTimes(ProcessSuccessfulPayment::class, 1);
+    });
 });
 
 // ─── VerifyRazorpayPayment action ─────────────────────────────────────────────
@@ -525,6 +559,39 @@ describe('VerifyRazorpayPayment', function () {
 
         expect($result->status)->toBe(Payment::STATUS_PAID)
             ->and($payment->fresh()->payment_id)->toBe('pay_original_001');
+    });
+
+    it('is idempotent when payment is already processing — returns the row byte-identical, untouched', function () {
+        // The webhook and this browser-side verify call race; if the
+        // webhook already moved the payment to 'processing', execute()
+        // must treat that exactly like 'paid' — return as-is, without
+        // overwriting paid_at (which the webhook deliberately preserves)
+        // or bouncing status back to 'paid' (which would break the
+        // caller's own dedup check — see the end-to-end race test above).
+        $payment = pendingPayment($this->plan, orderId: 'order_already_processing');
+        $payment->update([
+            'status'     => Payment::STATUS_PROCESSING,
+            'payment_id' => 'pay_original_processing',
+            'paid_at'    => now()->subMinutes(5),
+        ]);
+
+        $beforeAttributes = $payment->fresh()->getAttributes();
+
+        $this->mock(RazorpayService::class)
+            ->shouldReceive('verifySignature')->once()->andReturn(true);
+
+        // Replay with a different payment_id/signature — nothing must change.
+        $result = $this->action->execute([
+            'razorpay_payment_id' => 'pay_race_attempt',
+            'razorpay_order_id'   => $payment->order_id,
+            'razorpay_signature'  => 'sig_any',
+        ]);
+
+        expect($result->status)->toBe(Payment::STATUS_PROCESSING);
+
+        $afterAttributes = $payment->fresh()->getAttributes();
+
+        expect($afterAttributes)->toEqual($beforeAttributes);
     });
 
     it('throws ValidationException when the order_id does not exist in the database', function () {
