@@ -31,9 +31,10 @@ class IfaTrialLeadSubmissionTest extends TestCase
             'firm_name' => 'RiskSignal Advisors',
         ]);
 
-        $response
-            ->assertRedirect(route('home'))
-            ->assertSessionHas('success', 'Trial started successfully.');
+        // The current flow auto-logs a genuinely new lead straight in and
+        // sends them to onboarding — no 'success' flash message is set on
+        // this path (see IntakeController::ifaSubmit()).
+        $response->assertRedirect(route('onboarding'));
 
         $this->assertDatabaseHas('client_intakes', [
             'name' => 'Durgesh Kumar',
@@ -80,9 +81,13 @@ class IfaTrialLeadSubmissionTest extends TestCase
             'firm_name' => 'Existing Firm',
         ]);
 
+        // This scenario (a pre-existing ClientIntake row for the same
+        // email, no User account involved) hits StoreIfaTrialLeadAction's
+        // duplicateExists() branch, which returns null — IntakeController
+        // then redirects to login with this exact message.
         $response
-            ->assertRedirect(route('home'))
-            ->assertSessionHas('success', 'Already registered.');
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('success', 'You already have a trial. Please login to continue.');
 
         $this->assertDatabaseCount('client_intakes', 1);
 
