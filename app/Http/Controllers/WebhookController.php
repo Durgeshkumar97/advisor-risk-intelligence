@@ -63,7 +63,20 @@ class WebhookController extends Controller
         $entity = $body['payload']['payment']['entity'] ?? null;
 
         if (!$entity || empty($entity['order_id'])) {
-            Log::warning('Razorpay webhook: missing payment entity or order_id', ['body' => $body]);
+            // Keys only, never values — a Razorpay payment entity can carry
+            // email/contact/vpa/bank/notes, and this is the actual PII risk,
+            // not the LOG_LEVEL config (currently 'error', which happens to
+            // suppress warning() today, but that's an operational setting
+            // that could change independently of this code). The safety
+            // here is structural: there is no value to leak regardless of
+            // what level this ends up being logged at.
+            Log::warning('Razorpay webhook: missing payment entity or order_id', [
+                'event'                => $event,
+                'payment_id'           => $entity['id'] ?? null,
+                'order_id'             => $entity['order_id'] ?? null,
+                'top_level_body_keys'  => array_keys($body),
+                'payload_payment_keys' => array_keys($entity ?? []),
+            ]);
             return response()->json(['error' => 'missing entity'], 400);
         }
 

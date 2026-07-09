@@ -12,6 +12,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\RazorpayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 
@@ -332,6 +333,51 @@ describe('WebhookController::handle()', function () {
         postWebhook($body, $sig)
             ->assertStatus(400)
             ->assertJson(['error' => 'missing entity']);
+    });
+
+    it('logs the missing-entity warning with structural context only — no PII values leak, but still enough to debug', function () {
+        Log::spy();
+
+        $entityWithPii = [
+            'id'      => 'pay_pii_test_001',
+            'email'   => 'realcustomer@example.com',
+            'contact' => '+919876543210',
+            'notes'   => ['secret' => 'do-not-leak-this-value'],
+            // order_id deliberately omitted — this is what triggers the branch.
+        ];
+
+        $body = json_encode([
+            'event'   => 'payment.captured',
+            'payload' => ['payment' => ['entity' => $entityWithPii]],
+        ]);
+        $sig = hash_hmac('sha256', $body, $this->secret);
+
+        postWebhook($body, $sig)
+            ->assertStatus(400)
+            ->assertJson(['error' => 'missing entity']);
+
+        $capturedContext = null;
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context) use (&$capturedContext) {
+                $capturedContext = $context;
+                return $message === 'Razorpay webhook: missing payment entity or order_id';
+            });
+
+        expect($capturedContext)->not->toBeNull();
+
+        // USEFUL: still enough structural detail to debug what Razorpay sent.
+        expect($capturedContext['event'])->toBe('payment.captured');
+        expect($capturedContext['payment_id'])->toBe('pay_pii_test_001');
+        expect($capturedContext['order_id'])->toBeNull();
+        expect($capturedContext['payload_payment_keys'])->toContain('email', 'contact', 'notes');
+
+        // SAFE: no PII value anywhere in the logged payload.
+        $encoded = json_encode($capturedContext);
+        expect($encoded)->not->toContain('realcustomer@example.com');
+        expect($encoded)->not->toContain('+919876543210');
+        expect($encoded)->not->toContain('do-not-leak-this-value');
     });
 
     it('returns 400 for a malformed JSON body even with a valid signature', function () {
