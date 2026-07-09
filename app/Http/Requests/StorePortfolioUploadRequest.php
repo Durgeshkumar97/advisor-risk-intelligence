@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Portfolio;
+use App\Rules\PortfolioFileType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Validator;
@@ -87,7 +88,7 @@ class StorePortfolioUploadRequest extends FormRequest
                 |--------------------------------------------------------------------------
                 */
 
-                'mimes:pdf,csv,xlsx,xls,zip',
+                new PortfolioFileType(),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -174,9 +175,6 @@ class StorePortfolioUploadRequest extends FormRequest
 
             'file.file' =>
             'The uploaded file must be valid.',
-
-            'file.mimes' =>
-            'Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.',
 
             'file.max' =>
             'File size must not exceed 20MB.',
