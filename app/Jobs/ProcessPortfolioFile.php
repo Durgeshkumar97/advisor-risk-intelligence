@@ -347,7 +347,7 @@ class ProcessPortfolioFile implements ShouldQueue
         }
 
         $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('', true);
-        mkdir($tempDir, 0755, true);
+        $this->createOwnerOnlyTempDir($tempDir);
 
         try {
             $zip    = new \ZipArchive();
@@ -545,6 +545,19 @@ class ProcessPortfolioFile implements ShouldQueue
         } finally {
             $this->cleanupTempDir($tempDir);
         }
+    }
+
+    /**
+     * mkdir()'s mode argument is subject to the runtime umask, which we
+     * don't control on shared hosting — chmod() sets the bits directly,
+     * guaranteeing owner-only access regardless of umask (verified
+     * empirically: a permissive umask can leave broader bits set, and a
+     * pathological one can strip even the owner's own bits).
+     */
+    private function createOwnerOnlyTempDir(string $path): void
+    {
+        mkdir($path, 0700, true);
+        chmod($path, 0700);
     }
 
     /**

@@ -268,6 +268,37 @@ class PortfolioZipUploadSecurityTest extends TestCase
         }
     }
 
+    // ─── 3c. temp-extraction dir is owner-only, verified via fileperms() ─
+    //
+    // mkdir()'s mode argument is subject to the runtime umask, which isn't
+    // something we control (or have verified) on Hostinger shared hosting —
+    // confirmed empirically that a pathological umask can leave mkdir()'s
+    // requested mode either broader OR narrower than requested. This test
+    // asserts the ACTUAL on-disk permission bits via fileperms(), not just
+    // that mkdir() was called with a given argument.
+
+    public function test_temp_extraction_dir_is_created_owner_only_regardless_of_mode_argument(): void
+    {
+        $job = new ProcessPortfolioFile(new PortfolioFile());
+
+        $method = new \ReflectionMethod($job, 'createOwnerOnlyTempDir');
+        $method->setAccessible(true);
+
+        $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_permtest_' . uniqid('', true);
+
+        $method->invoke($job, $dir);
+
+        clearstatcache(true, $dir);
+        $actualPermissions = fileperms($dir) & 0777;
+
+        rmdir($dir);
+
+        $this->assertSame(0700, $actualPermissions, sprintf(
+            'Expected temp dir permissions to be 0700, got %04o',
+            $actualPermissions
+        ));
+    }
+
     // ─── 4. cleanup command ───────────────────────────────────────────────
 
     public function test_cleanup_command_removes_old_orphaned_dirs_but_not_fresh_ones(): void
