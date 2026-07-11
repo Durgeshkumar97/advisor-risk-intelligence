@@ -10,13 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-function adminRememberMeTestAdmin(array $overrides = []): User
-{
-    return User::factory()->create(array_merge([
-        'is_admin' => true,
-        'password' => bcrypt('correct-password'),
-    ], $overrides));
-}
+require_once __DIR__ . '/../Support/SharedFixtures.php';
 
 describe('admin login never issues a persistent "remember me" cookie', function () {
 
@@ -25,7 +19,7 @@ describe('admin login never issues a persistent "remember me" cookie', function 
         // (stock Laravel scaffolding, unrelated to login) — so the proof
         // that "remember me" was never honoured isn't that the token is
         // null, it's that Auth::attempt(..., false) never touches it.
-        $admin = adminRememberMeTestAdmin();
+        $admin = adminUserFixture();
         $tokenBeforeLogin = $admin->remember_token;
 
         $response = $this->post(route('admin.login.submit'), [
@@ -47,7 +41,7 @@ describe('admin login never issues a persistent "remember me" cookie', function 
     });
 
     it('behaves identically when remember is omitted entirely', function () {
-        $admin = adminRememberMeTestAdmin();
+        $admin = adminUserFixture();
         $tokenBeforeLogin = $admin->remember_token;
 
         $response = $this->post(route('admin.login.submit'), [

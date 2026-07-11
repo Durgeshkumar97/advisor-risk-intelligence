@@ -3,10 +3,8 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessPortfolioFile;
-use App\Models\Plan;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Services\StockRiskService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,39 +15,13 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+require_once __DIR__ . '/../Support/SharedFixtures.php';
+
 class PortfolioZipUploadSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
     // ─── helpers ──────────────────────────────────────────────────────────
-
-    private function activeUser(): User
-    {
-        $plan = Plan::create([
-            'name'                 => 'Team',
-            'slug'                 => 'team-' . uniqid(),
-            'price'                => 999,
-            'duration_days'        => 30,
-            'portfolio_limit'      => 100,
-            'trial_days'           => 0,
-            'is_active'            => true,
-            'monthly_client_limit' => 1000,
-        ]);
-
-        $user = User::factory()->create();
-
-        Subscription::create([
-            'user_id'    => $user->id,
-            'plan_id'    => $plan->id,
-            'status'     => 'active',
-            'starts_at'  => now(),
-            'ends_at'    => now()->addDays(30),
-            'renewal_at' => now()->addDays(30),
-            'provider'   => 'razorpay',
-        ]);
-
-        return $user;
-    }
 
     private function buildZip(callable $populate): string
     {
@@ -85,22 +57,6 @@ class PortfolioZipUploadSecurityTest extends TestCase
         ]);
     }
 
-    private function buildMinimalValidXlsx(): string
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'xlsx_') . '.xlsx';
-        $zip = new \ZipArchive();
-        $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>');
-        $zip->addFromString('_rels/.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');
-        $zip->addFromString('xl/workbook.xml', '<workbook/>');
-        $zip->close();
-
-        $content = file_get_contents($tmp);
-        unlink($tmp);
-
-        return $content;
-    }
-
     /**
      * Invokes the private handleZipExtraction() directly (bypassing handle()
      * and the queue dispatch machinery entirely), with Bus::fake() active so
@@ -125,7 +81,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
     {
         Storage::fake('portfolios');
 
-        $user = $this->activeUser();
+        $user = activeSubscriberUser();
 
         $zipPath = $this->buildZip(function (\ZipArchive $zip) {
             for ($i = 0; $i < 2001; $i++) {
@@ -156,7 +112,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
     {
         Storage::fake('portfolios');
 
-        $user = $this->activeUser();
+        $user = activeSubscriberUser();
 
         $zipPath = $this->buildZip(function (\ZipArchive $zip) {
             // 510MB of a single repeated byte — DEFLATE compresses this to a
@@ -365,7 +321,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
         $zipPath = $this->buildZip(function (\ZipArchive $zip) {
             $zip->addFromString('alice.csv', "name,asset_type,current_value\nHDFC Bank,stock,20000");
-            $zip->addFromString('bob.xlsx', $this->buildMinimalValidXlsx());
+            $zip->addFromString('bob.xlsx', minimalValidXlsxContent());
             $zip->addFromString('carol.pdf', "%PDF-1.4\n%useless\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>");
         });
 

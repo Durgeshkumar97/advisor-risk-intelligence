@@ -14,19 +14,9 @@ use Illuminate\Support\Facades\Storage;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-// ─── file-level helpers ───────────────────────────────────────────────────────
+require_once __DIR__ . '/../Support/SharedFixtures.php';
 
-/** Minimal Plan row — only the fields the migration requires non-null. */
-function activeSubTestPlan(): Plan
-{
-    return Plan::create([
-        'name'          => 'Starter',
-        'slug'          => 'starter',
-        'price'         => '999.00',
-        'duration_days' => 30,
-        'is_active'     => true,
-    ]);
-}
+// ─── file-level helpers ───────────────────────────────────────────────────────
 
 /** PortfolioFile owned by $user with a report + bundle already sitting on disk. */
 function fileWithReportsFor(User $user, Portfolio $portfolio): PortfolioFile
@@ -69,7 +59,7 @@ function subscriptionWith(User $user, Plan $plan, string $status, $endsAt): Subs
 
 beforeEach(function () {
     Storage::fake('portfolios');
-    $this->plan = activeSubTestPlan();
+    $this->plan = minimalActivePlan();
 });
 
 describe('EnsureActiveSubscription (active.sub) gates report.download and file.bundle.download', function () {

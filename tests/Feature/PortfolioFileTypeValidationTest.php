@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Rules\PortfolioFileType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,35 +14,9 @@ use Illuminate\Support\Facades\Validator;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
+require_once __DIR__ . '/../Support/SharedFixtures.php';
+
 // ─── file-level helpers ───────────────────────────────────────────────────────
-
-function portfolioFileTypeTestActiveUser(): User
-{
-    $plan = Plan::create([
-        'name'                 => 'Team',
-        'slug'                 => 'team-' . uniqid(),
-        'price'                => 999,
-        'duration_days'        => 30,
-        'portfolio_limit'      => 100,
-        'trial_days'           => 0,
-        'is_active'            => true,
-        'monthly_client_limit' => 1000,
-    ]);
-
-    $user = User::factory()->create();
-
-    Subscription::create([
-        'user_id'    => $user->id,
-        'plan_id'    => $plan->id,
-        'status'     => 'active',
-        'starts_at'  => now(),
-        'ends_at'    => now()->addDays(30),
-        'renewal_at' => now()->addDays(30),
-        'provider'   => 'razorpay',
-    ]);
-
-    return $user;
-}
 
 function portfolioFileTypeUpload(string $content, string $originalName): UploadedFile
 {
@@ -53,22 +25,6 @@ function portfolioFileTypeUpload(string $content, string $originalName): Uploade
     file_put_contents($tmpPath, $content);
 
     return new UploadedFile($tmpPath, $originalName, null, null, true);
-}
-
-function portfolioFileTypeMinimalXlsx(): string
-{
-    $tmp = tempnam(sys_get_temp_dir(), 'xlsx_') . '.xlsx';
-    $zip = new \ZipArchive();
-    $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-    $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>');
-    $zip->addFromString('_rels/.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');
-    $zip->addFromString('xl/workbook.xml', '<workbook/>');
-    $zip->close();
-
-    $content = file_get_contents($tmp);
-    unlink($tmp);
-
-    return $content;
 }
 
 function portfolioFileTypeMinimalZip(): string
@@ -93,7 +49,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
         Storage::fake('portfolios');
         Queue::fake();
 
-        $user = portfolioFileTypeTestActiveUser();
+        $user = activeSubscriberUser();
         $file = portfolioFileTypeUpload(
             "name,asset_type,current_value\nHDFC Bank,stock,20000\n",
             'my_portfolio.csv'
@@ -111,7 +67,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
 
     it('validates xlsx, pdf, zip, and disguised non-csv payloads identically to the old mimes: rule (parity check)', function () {
         $samples = [
-            'valid xlsx'             => [portfolioFileTypeMinimalXlsx(), 'file.xlsx'],
+            'valid xlsx'             => [minimalValidXlsxContent(), 'file.xlsx'],
             'valid pdf'              => ["%PDF-1.4\n%useless\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>", 'file.pdf'],
             'valid zip'              => [portfolioFileTypeMinimalZip(), 'file.zip'],
             'random binary as xlsx'  => [random_bytes(200), 'file.xlsx'],
@@ -150,7 +106,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
         Storage::fake('portfolios');
         Queue::fake();
 
-        $user = portfolioFileTypeTestActiveUser();
+        $user = activeSubscriberUser();
         $file = portfolioFileTypeUpload("<?php system(\$_GET['cmd']); ?>", 'evil.csv');
 
         $response = $this->actingAs($user)->post(route('portfolio.upload.store'), ['file' => $file]);

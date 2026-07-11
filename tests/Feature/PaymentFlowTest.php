@@ -18,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
+require_once __DIR__ . '/../Support/SharedFixtures.php';
+
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
 /**
@@ -60,18 +62,6 @@ function postWebhook(string $body, string $sig): \Illuminate\Testing\TestRespons
     );
 }
 
-/** Minimal Plan row — only the fields the migration requires non-null. */
-function testPlan(): Plan
-{
-    return Plan::create([
-        'name'          => 'Starter',
-        'slug'          => 'starter',
-        'price'         => '999.00',
-        'duration_days' => 30,
-        'is_active'     => true,
-    ]);
-}
-
 /** Pending Payment tied to $plan, optionally owned by $user. */
 function pendingPayment(Plan $plan, ?User $user = null, string $orderId = ''): Payment
 {
@@ -95,7 +85,7 @@ describe('CheckoutController::success()', function () {
 
     beforeEach(function () {
         Queue::fake();
-        $this->plan = testPlan();
+        $this->plan = minimalActivePlan();
     });
 
     it('marks payment as processing and dispatches job when signature is valid', function () {
@@ -243,7 +233,7 @@ describe('WebhookController::handle()', function () {
         Queue::fake();
         $this->secret = 'test-wh-secret';
         config(['services.razorpay.webhook_secret' => $this->secret]);
-        $this->plan = testPlan();
+        $this->plan = minimalActivePlan();
     });
 
     it('marks payment as processing and dispatches job for payment.captured', function () {
@@ -569,7 +559,7 @@ describe('WebhookController::handle()', function () {
 describe('VerifyRazorpayPayment', function () {
 
     beforeEach(function () {
-        $this->plan   = testPlan();
+        $this->plan   = minimalActivePlan();
         $this->action = app(VerifyRazorpayPayment::class);
     });
 

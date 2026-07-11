@@ -10,18 +10,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-function adminLogTestAdmin(array $overrides = []): User
-{
-    return User::factory()->create(array_merge([
-        'is_admin' => true,
-        'password' => bcrypt('correct-password'),
-    ], $overrides));
-}
+require_once __DIR__ . '/../Support/SharedFixtures.php';
 
 describe('admin_logs is written to on every admin auth / impersonation event', function () {
 
     it('records admin_login_success when an admin logs in with valid credentials', function () {
-        $admin = adminLogTestAdmin();
+        $admin = adminUserFixture();
 
         $this->post(route('admin.login.submit'), [
             'email'    => $admin->email,
@@ -38,7 +32,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
     });
 
     it('records admin_login_failed with the matched user in target_user_id, user_id left null (no admin acted)', function () {
-        $admin = adminLogTestAdmin();
+        $admin = adminUserFixture();
 
         $this->post(route('admin.login.submit'), [
             'email'    => $admin->email,
@@ -84,7 +78,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
     });
 
     it('records impersonation_link_minted with both the admin, the target user, and the token hash', function () {
-        $admin  = adminLogTestAdmin();
+        $admin  = adminUserFixture();
         $target = User::factory()->create();
 
         $this->actingAs($admin)
@@ -119,7 +113,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
     });
 
     it('lets a mint + use pair be joined by token_hash, and distinguishes a retry mint for the same target', function () {
-        $admin  = adminLogTestAdmin();
+        $admin  = adminUserFixture();
         $target = User::factory()->create(['onboarding_completed' => true]);
 
         // First mint — e.g. the admin's first attempt, link never actually used.
@@ -206,7 +200,7 @@ describe('self-service login links (no admin involved) get their own, distinctly
     });
 
     it('keeps admin-initiated and self-service mint/use pairs independently queryable by event name', function () {
-        $admin        = adminLogTestAdmin();
+        $admin        = adminUserFixture();
         $adminTarget  = User::factory()->create(['onboarding_completed' => true]);
         $selfTarget   = User::factory()->create(['onboarding_completed' => true]);
 
@@ -229,7 +223,7 @@ describe('self-service login links (no admin involved) get their own, distinctly
 describe('admin_logs rows survive the purge of the target user they reference', function () {
 
     it('nullifies target_user_id (does not delete the log row) when the target user is force-deleted', function () {
-        $admin  = adminLogTestAdmin();
+        $admin  = adminUserFixture();
         $target = User::factory()->create();
 
         $log = AdminLog::create([
