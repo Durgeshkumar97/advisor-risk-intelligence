@@ -87,4 +87,34 @@ describe('/login no longer distinguishes a deactivated account from a nonexisten
         $response->assertSessionHasErrors('email');
         expect(session('errors')->first('email'))->toContain('Too many login attempts');
     });
+
+    it('takes the same Timebox-floored response time for a deactivated account as for a wrong password or a nonexistent email', function () {
+        // Before the fix, the deactivated-account branch returned before
+        // Auth::attempt() ever ran, skipping Laravel's SessionGuard Timebox
+        // (a ~200ms floor applied to every failed attempt specifically to
+        // prevent timing-based enumeration) — empirically measured at ~5ms
+        // vs ~200ms for the other two cases. Same direct microtime()
+        // technique used to confirm the bug, not an inspection-based
+        // assertion. 100ms is a threshold comfortably above the old ~5ms
+        // buggy baseline and comfortably below the 200ms floor, chosen to
+        // avoid flakiness while still proving the gap is closed.
+        $active = User::factory()->create(['password' => bcrypt('correct-password')]);
+
+        $deactivated = User::factory()->create(['password' => bcrypt('correct-password')]);
+        $deactivated->delete();
+
+        $time = function (string $email, string $password): float {
+            $start = microtime(true);
+            test()->post(route('login'), ['email' => $email, 'password' => $password]);
+            return (microtime(true) - $start) * 1000;
+        };
+
+        $deactivatedMs   = $time($deactivated->email, 'whatever');
+        $wrongPasswordMs = $time($active->email, 'wrong-password');
+        $nonExistentMs   = $time('nobody-'.uniqid().'@example.com', 'whatever');
+
+        expect($deactivatedMs)->toBeGreaterThan(100);
+        expect($wrongPasswordMs)->toBeGreaterThan(100);
+        expect($nonExistentMs)->toBeGreaterThan(100);
+    });
 });

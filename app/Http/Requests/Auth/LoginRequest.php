@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -43,22 +42,18 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $user = User::withTrashed()
-            ->where('email', Str::lower($this->string('email')))
-            ->first();
-
-        // A soft-deleted account used to get a distinct "deactivated" message
-        // here — that let /login be used to enumerate which emails belong to
-        // a deactivated account. It now falls through to the same generic
-        // failure below as a wrong password or a non-existent email would.
-        if ($user?->trashed()) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
-        }
-
+        // No separate soft-deleted-account check here on purpose: a distinct
+        // branch used to look up the user with withTrashed() and short-circuit
+        // before Auth::attempt() ever ran. That let /login be used to
+        // enumerate deactivated accounts two ways — a distinct message, and
+        // (even after the message was unified) a distinct response time,
+        // since Auth::attempt() pads every failure to a ~200ms floor via
+        // Laravel's Timebox and the early-return skipped it entirely
+        // (empirically measured: ~5ms vs ~200ms). EloquentUserProvider's
+        // query respects the model's SoftDeletes scope, so Auth::attempt()
+        // already fails for a trashed account's email exactly like a
+        // nonexistent one — same message, same rate-limit hit, same timing —
+        // without a second query or a second code path to keep in sync.
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
