@@ -94,7 +94,17 @@ class WebhookController extends Controller
                     return;
                 }
 
-                if ($payment->processed_at !== null || $payment->status === Payment::STATUS_PROCESSING) {
+                // Mirrors VerifyRazorpayPayment's equivalent check: the
+                // browser-verify path and this webhook race, and either can
+                // arrive first. Treating PAID the same as PROCESSING here
+                // makes "already handled, don't touch it" true by inspection
+                // of this guard alone, rather than true only by interaction
+                // with the paid_at-preserving update below and the caller's
+                // own status==='processing' check.
+                if ($payment->processed_at !== null
+                    || $payment->status === Payment::STATUS_PROCESSING
+                    || $payment->status === Payment::STATUS_PAID
+                ) {
                     return;
                 }
 

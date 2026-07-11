@@ -326,6 +326,33 @@ describe('WebhookController::handle()', function () {
         Queue::assertNotPushed(ProcessSuccessfulPayment::class);
     });
 
+    it('is idempotent when status is already paid (browser-verify path won the race) — no update, no dispatch', function () {
+        // Locks in explicitly what was previously only true by interaction
+        // between separate guards (the webhook's own paid_at-preserving
+        // update, plus CheckoutController's own status==='processing'
+        // check) — a future edit to either of those could otherwise
+        // silently reopen this gap.
+        $payment = pendingPayment($this->plan, orderId: 'order_wh_already_paid');
+        $payment->update([
+            'status'     => Payment::STATUS_PAID,
+            'payment_id' => 'pay_already_paid',
+            'paid_at'    => now()->subMinutes(3),
+        ]);
+
+        $beforeAttributes = $payment->fresh()->getAttributes();
+
+        ['body' => $body, 'sig' => $sig] = razorpayWebhookBody(
+            $payment->order_id, 'pay_webhook_retry_attempt', $this->secret,
+        );
+
+        postWebhook($body, $sig)->assertOk()->assertJson(['status' => 'ok']);
+
+        $afterAttributes = $payment->fresh()->getAttributes();
+
+        expect($afterAttributes)->toEqual($beforeAttributes);
+        Queue::assertNotPushed(ProcessSuccessfulPayment::class);
+    });
+
     it('returns 400 when the payment entity is absent from the payload', function () {
         $body = json_encode(['event' => 'payment.captured', 'payload' => []]);
         $sig  = hash_hmac('sha256', $body, $this->secret);
