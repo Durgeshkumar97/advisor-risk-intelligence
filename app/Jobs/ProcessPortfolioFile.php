@@ -435,29 +435,21 @@ class ProcessPortfolioFile implements ShouldQueue
                     continue;
                 }
 
-                // Content-based check, same mechanism Laravel's own mimes:
-                // rule uses for the top-level (non-ZIP) upload — the
-                // filename extension above is just a cheap first-pass
-                // filter; this is the actual security-relevant layer, since
-                // a ZIP entry's name is entirely attacker-controlled.
-                //
-                // csv gets a carve-out: it has no binary magic signature —
-                // it's indistinguishable from generic plain text, and
-                // finfo's csv-vs-plain-text heuristic is unstable on
-                // short/irregular content (verified empirically: some real
-                // CSVs detect as text/csv, others as text/plain). A PHP
-                // payload or arbitrary binary disguised as .csv still fails
-                // both checks (detects as e.g. text/x-php or
-                // application/octet-stream), so this only tolerates the
-                // txt-vs-csv ambiguity, not genuinely dangerous content.
-                $detectedFile      = new \Symfony\Component\HttpFoundation\File\File($realFilePath);
-                $detectedExtension = $detectedFile->guessExtension();
+                // Content-based check — the filename extension above is
+                // just a cheap first-pass filter; this is the actual
+                // security-relevant layer, since a ZIP entry's name is
+                // entirely attacker-controlled. Same mechanism and csv
+                // carve-out as the primary (non-ZIP) upload's PortfolioFileType
+                // rule, shared via contentMatchesAllowedType() — see its
+                // docblock. self::ALLOWED_EXTENSIONS (no 'zip') is passed
+                // explicitly so a nested zip-in-zip still isn't accepted,
+                // even though the top-level upload's own allow-list does
+                // include 'zip'.
+                $detectedFile = new \Symfony\Component\HttpFoundation\File\File($realFilePath);
+                $result       = \App\Rules\PortfolioFileType::contentMatchesAllowedType($detectedFile, $ext, self::ALLOWED_EXTENSIONS);
 
-                $contentIsAcceptable = in_array($detectedExtension, self::ALLOWED_EXTENSIONS, true)
-                    || ($ext === 'csv' && $detectedFile->getMimeType() === 'text/plain');
-
-                if (!$contentIsAcceptable) {
-                    $skipReasons[$originalName] = 'File content does not match a supported type (claimed .' . $ext . ', detected: ' . ($detectedExtension ?? 'unrecognized') . ')';
+                if (!$result['acceptable']) {
+                    $skipReasons[$originalName] = 'File content does not match a supported type (claimed .' . $ext . ', detected: ' . ($result['detectedExtension'] ?? 'unrecognized') . ')';
                     continue;
                 }
 
@@ -485,7 +477,7 @@ class ProcessPortfolioFile implements ShouldQueue
                     'original_name' => $originalName,
                     'stored_name'   => $storedFilename,
                     'path'          => $storedPath,
-                    'mime_type'     => $detectedFile->getMimeType() ?: (self::MIME_MAP[$ext] ?? 'application/octet-stream'),
+                    'mime_type'     => $result['detectedMimeType'] ?: (self::MIME_MAP[$ext] ?? 'application/octet-stream'),
                     'file_size'     => $extractedFile->getSize(),
                     'status'        => PortfolioFile::STATUS_PENDING,
                     'meta'          => [

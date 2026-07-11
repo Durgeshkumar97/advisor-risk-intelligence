@@ -189,4 +189,26 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
         expect($validator->errors()->first('file'))
             ->toBe('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');
     });
+
+    // ─── 5. shared contentMatchesAllowedType() is exception-safe generically ─
+    //
+    // A side effect of extracting this logic out of PortfolioFileType into a
+    // shared static method: ProcessPortfolioFile::handleZipExtraction() now
+    // gets the same exception-safety net PortfolioFileType already had,
+    // instead of only the primary upload path being protected. Testing the
+    // shared method directly (not through either specific caller) proves
+    // this holds regardless of which one calls it.
+
+    it('contentMatchesAllowedType() reports unacceptable rather than throwing for an unreadable file', function () {
+        $file = new \Symfony\Component\HttpFoundation\File\File(
+            '/tmp/nonexistent_' . uniqid() . '.csv',
+            false
+        );
+
+        $result = PortfolioFileType::contentMatchesAllowedType($file, 'csv', ['csv', 'xlsx', 'xls', 'pdf']);
+
+        expect($result['acceptable'])->toBeFalse();
+        expect($result['detectedExtension'])->toBeNull();
+        expect($result['detectedMimeType'])->toBeNull();
+    });
 });
