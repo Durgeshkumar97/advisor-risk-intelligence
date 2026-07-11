@@ -32,11 +32,22 @@ class PortfolioFileType implements ValidationRule
             return;
         }
 
-        $detectedExtension = $value->guessExtension();
-        $claimedExtension  = strtolower($value->getClientOriginalExtension());
+        // guessExtension()/getMimeType() throw on a file that isn't actually
+        // readable — e.g. a failed upload (oversized, interrupted transfer)
+        // that still reports a non-empty getPath(). The old mimes: rule
+        // never reached this point for such files (it checks isValid()
+        // first); this rule doesn't, so the same case must be caught here
+        // instead and turned into the same clean validation failure.
+        try {
+            $detectedExtension = $value->guessExtension();
+            $claimedExtension  = strtolower($value->getClientOriginalExtension());
 
-        $contentIsAcceptable = in_array($detectedExtension, self::ALLOWED_EXTENSIONS, true)
-            || ($claimedExtension === 'csv' && $value->getMimeType() === 'text/plain');
+            $contentIsAcceptable = in_array($detectedExtension, self::ALLOWED_EXTENSIONS, true)
+                || ($claimedExtension === 'csv' && $value->getMimeType() === 'text/plain');
+        } catch (\Throwable $e) {
+            $fail('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');
+            return;
+        }
 
         if (!$contentIsAcceptable) {
             $fail('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');

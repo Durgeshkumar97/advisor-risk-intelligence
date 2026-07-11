@@ -158,4 +158,35 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
         $response->assertSessionHasErrors('file');
         $this->assertDatabaseMissing('portfolio_files', ['original_name' => 'evil.csv']);
     });
+
+    // ─── 4. a failed/invalid upload must not crash the rule ──────────────────
+
+    it('converts an invalid UploadedFile (failed upload, e.g. oversized) into a clean validation failure instead of throwing', function () {
+        // Reproduces the exact failure mode found during investigation:
+        // PHP flags the upload as failed (UPLOAD_ERR_INI_SIZE, as it would
+        // for a file exceeding upload_max_filesize/post_max_size), but the
+        // resulting UploadedFile's getPath() is still a non-empty directory
+        // ('/tmp'), not '', so the rule's isValidFileInstance()-style guard
+        // doesn't catch it and execution reaches guessExtension()/
+        // getMimeType() on a file that doesn't actually exist/isn't readable.
+        $file = new UploadedFile(
+            '/tmp/nonexistent_failed_upload_' . uniqid(),
+            'portfolio.csv',
+            'text/csv',
+            UPLOAD_ERR_INI_SIZE,
+            true
+        );
+
+        expect($file->isValid())->toBeFalse();
+        expect($file->getPath())->not->toBe('');
+
+        $validator = Validator::make(
+            ['file' => $file],
+            ['file' => new PortfolioFileType()]
+        );
+
+        expect($validator->fails())->toBeTrue();
+        expect($validator->errors()->first('file'))
+            ->toBe('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');
+    });
 });
