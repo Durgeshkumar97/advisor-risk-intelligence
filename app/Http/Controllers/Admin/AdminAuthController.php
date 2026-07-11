@@ -67,12 +67,10 @@ class AdminAuthController extends Controller
         )) {
             RateLimiter::hit($throttleKey);
 
-            AdminLog::create([
-                'user_id'    => User::where('email', $validated['email'])->value('id'),
-                'event'      => 'admin_login_failed',
-                'ip'         => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]);
+            AdminLog::record(
+                'admin_login_failed',
+                targetUserId: User::where('email', $validated['email'])->value('id'),
+            );
 
             return back()
                 ->withErrors(['email' => 'Invalid credentials.'])
@@ -93,12 +91,7 @@ class AdminAuthController extends Controller
             $request->session()->regenerateToken();
             RateLimiter::hit($throttleKey);
 
-            AdminLog::create([
-                'user_id'    => $deniedUserId,
-                'event'      => 'admin_login_denied',
-                'ip'         => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]);
+            AdminLog::record('admin_login_denied', targetUserId: $deniedUserId);
 
             return back()
                 ->withErrors(['email' => 'Access denied. Admin account required.'])
@@ -124,12 +117,7 @@ class AdminAuthController extends Controller
             'last_login_at' => now(),
         ])->save();
 
-        AdminLog::create([
-            'user_id'    => Auth::id(),
-            'event'      => 'admin_login_success',
-            'ip'         => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
+        AdminLog::record('admin_login_success', userId: Auth::id());
 
         return redirect()->route('admin.dashboard');
     }

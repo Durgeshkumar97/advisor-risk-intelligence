@@ -37,7 +37,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         expect($log->created_at)->not->toBeNull();
     });
 
-    it('records admin_login_failed with the matched user id when the password is wrong', function () {
+    it('records admin_login_failed with the matched user in target_user_id, user_id left null (no admin acted)', function () {
         $admin = adminLogTestAdmin();
 
         $this->post(route('admin.login.submit'), [
@@ -48,11 +48,11 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         $log = AdminLog::where('event', 'admin_login_failed')->first();
 
         expect($log)->not->toBeNull();
-        expect($log->user_id)->toBe($admin->id);
-        expect($log->target_user_id)->toBeNull();
+        expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBe($admin->id);
     });
 
-    it('records admin_login_failed with a null user id when the email does not exist at all', function () {
+    it('records admin_login_failed with both user_id and target_user_id null when the email does not exist at all', function () {
         $this->post(route('admin.login.submit'), [
             'email'    => 'nobody-'.uniqid().'@example.com',
             'password' => 'whatever',
@@ -62,9 +62,10 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
 
         expect($log)->not->toBeNull();
         expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBeNull();
     });
 
-    it('records admin_login_denied when a non-admin authenticates correctly against the admin login', function () {
+    it('records admin_login_denied with the rejected non-admin in target_user_id, user_id left null (no admin acted)', function () {
         $user = User::factory()->create([
             'is_admin' => false,
             'password' => bcrypt('correct-password'),
@@ -78,8 +79,8 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         $log = AdminLog::where('event', 'admin_login_denied')->first();
 
         expect($log)->not->toBeNull();
-        expect($log->user_id)->toBe($user->id);
-        expect($log->target_user_id)->toBeNull();
+        expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBe($user->id);
     });
 
     it('records impersonation_link_minted with both the admin, the target user, and the token hash', function () {
@@ -164,6 +165,64 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
             ->assertRedirect(route('login'));
 
         expect(AdminLog::where('event', 'impersonation_link_used')->count())->toBe(0);
+    });
+});
+
+describe('self-service login links (no admin involved) get their own, distinctly-named audit events', function () {
+
+    it('records self_service_login_link_minted with no admin, the target user, and the token hash', function () {
+        $target = User::factory()->create();
+
+        app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($target);
+
+        $log      = AdminLog::where('event', 'self_service_login_link_minted')->first();
+        $rawToken = $target->fresh()->login_token;
+
+        expect($log)->not->toBeNull();
+        expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBe($target->id);
+        expect($log->token_hash)->toBe(hash('sha256', $rawToken));
+    });
+
+    it('records self_service_login_link_used (not impersonation_link_used) when a self-service-minted token is consumed', function () {
+        $target = User::factory()->create(['onboarding_completed' => true]);
+
+        app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($target);
+        $token = $target->fresh()->login_token;
+
+        $this->get(route('auto.login', $token))
+            ->assertRedirect(route('dashboard'));
+
+        $log = AdminLog::where('event', 'self_service_login_link_used')->first();
+
+        expect($log)->not->toBeNull();
+        expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBe($target->id);
+        expect($log->token_hash)->toBe(hash('sha256', $token));
+
+        // Distinguishable from admin-initiated impersonation by event name
+        // alone — not just by checking whether user_id happens to be null.
+        expect(AdminLog::where('event', 'impersonation_link_used')->count())->toBe(0);
+    });
+
+    it('keeps admin-initiated and self-service mint/use pairs independently queryable by event name', function () {
+        $admin        = adminLogTestAdmin();
+        $adminTarget  = User::factory()->create(['onboarding_completed' => true]);
+        $selfTarget   = User::factory()->create(['onboarding_completed' => true]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.login-link', $adminTarget->id))
+            ->assertRedirect(route('admin.users.show', $adminTarget->id));
+
+        app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($selfTarget);
+
+        expect(AdminLog::where('event', 'impersonation_link_minted')->count())->toBe(1);
+        expect(AdminLog::where('event', 'self_service_login_link_minted')->count())->toBe(1);
+
+        expect(AdminLog::where('event', 'impersonation_link_minted')->first()->target_user_id)
+            ->toBe($adminTarget->id);
+        expect(AdminLog::where('event', 'self_service_login_link_minted')->first()->target_user_id)
+            ->toBe($selfTarget->id);
     });
 });
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AdminLog;
 use App\Models\User;
 use App\Services\Notifications\ExistingAccountLoginLinkNotification;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,15 @@ class UserAccountRecoveryService
     | already uses — see AdminUserController::sendLoginLink()). The link is
     | NEVER returned in the HTTP response to the submitter.
     |
+    | Logged as self_service_login_link_minted, distinct from
+    | impersonation_link_minted — no admin is involved here at all, and
+    | reusing the impersonation event name would mislabel routine
+    | self-service logins as admin impersonation in the audit trail. This
+    | method is also called from a queued job (SubscriptionService::activate()
+    | via ProcessSuccessfulPayment), so AdminLog::record() may capture a
+    | placeholder ip/user_agent rather than a real requester's — see its
+    | docblock.
+    |
     */
 
     public function sendLoginLinkToExistingUser(User $user): void
@@ -94,6 +104,12 @@ class UserAccountRecoveryService
             'login_token' => $token,
             'login_token_expires_at' => now()->addMinutes(15),
         ])->save();
+
+        AdminLog::record(
+            'self_service_login_link_minted',
+            targetUserId: $user->id,
+            tokenHash: hash('sha256', $token),
+        );
 
         $user->notify(new ExistingAccountLoginLinkNotification(route('auto.login', $token)));
     }

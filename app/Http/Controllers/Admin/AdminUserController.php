@@ -98,7 +98,7 @@ class AdminUserController extends Controller
     |
     */
 
-    public function sendLoginLink(Request $request, int $id): \Illuminate\Http\RedirectResponse
+    public function sendLoginLink(int $id): \Illuminate\Http\RedirectResponse
     {
         $user = User::findOrFail($id);
 
@@ -111,14 +111,12 @@ class AdminUserController extends Controller
 
         $link = route('auto.login', $token);
 
-        AdminLog::create([
-            'user_id'        => Auth::id(),
-            'target_user_id' => $user->id,
-            'token_hash'     => hash('sha256', $token),
-            'event'          => 'impersonation_link_minted',
-            'ip'             => $request->ip(),
-            'user_agent'     => $request->userAgent(),
-        ]);
+        AdminLog::record(
+            'impersonation_link_minted',
+            userId: Auth::id(),
+            targetUserId: $user->id,
+            tokenHash: hash('sha256', $token),
+        );
 
         return redirect()->route('admin.users.show', $id)
             ->with('login_link', $link)

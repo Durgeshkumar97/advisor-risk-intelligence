@@ -144,13 +144,25 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
         'last_login_at'          => now(),
     ])->save();
 
-    \App\Models\AdminLog::create([
-        'target_user_id' => $user->id,
-        'token_hash'     => hash('sha256', $token),
-        'event'          => 'impersonation_link_used',
-        'ip'             => $request->ip(),
-        'user_agent'     => $request->userAgent(),
-    ]);
+    // This route consumes tokens from two distinct mint sites (admin-initiated
+    // impersonation vs. self-service account recovery) — look up which one
+    // minted this token via its token_hash so the _used event carries the
+    // matching, correctly-labeled name rather than a single event name that
+    // would conflate the two. Defaults to the impersonation label if no
+    // matching mint row is found (shouldn't happen; erring toward the more
+    // security-sensitive label for audit review).
+    $tokenHash = hash('sha256', $token);
+
+    $mintEvent = \App\Models\AdminLog::where('token_hash', $tokenHash)
+        ->whereIn('event', ['impersonation_link_minted', 'self_service_login_link_minted'])
+        ->latest('id')
+        ->value('event');
+
+    $usedEvent = $mintEvent === 'self_service_login_link_minted'
+        ? 'self_service_login_link_used'
+        : 'impersonation_link_used';
+
+    \App\Models\AdminLog::record($usedEvent, targetUserId: $user->id, tokenHash: $tokenHash);
 
     if (!$user->onboarding_completed) {
         return redirect()->route('onboarding');
