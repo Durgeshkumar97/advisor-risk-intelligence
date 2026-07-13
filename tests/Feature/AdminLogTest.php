@@ -59,6 +59,27 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         expect($log->target_user_id)->toBeNull();
     });
 
+    it('records admin_login_failed with the matched user in target_user_id even when that admin account is soft-deleted', function () {
+        // Auth::attempt() itself already excludes soft-deleted users from
+        // authenticating at all (via the model's SoftDeletes scope) — this
+        // proves the SEPARATE audit-log lookup uses withTrashed(), so a
+        // deactivated admin's failed login attempt is still identifiable
+        // instead of being indistinguishable from a nonexistent email.
+        $admin = adminUserFixture();
+        $admin->delete();
+
+        $this->post(route('admin.login.submit'), [
+            'email'    => $admin->email,
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('email');
+
+        $log = AdminLog::where('event', 'admin_login_failed')->first();
+
+        expect($log)->not->toBeNull();
+        expect($log->user_id)->toBeNull();
+        expect($log->target_user_id)->toBe($admin->id);
+    });
+
     it('records admin_login_denied with the rejected non-admin in target_user_id, user_id left null (no admin acted)', function () {
         $user = User::factory()->create([
             'is_admin' => false,

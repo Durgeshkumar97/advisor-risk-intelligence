@@ -69,7 +69,13 @@ class AdminAuthController extends Controller
 
             AdminLog::record(
                 'admin_login_failed',
-                targetUserId: User::where('email', $validated['email'])->value('id'),
+                // withTrashed() so a soft-deleted admin's failed login attempt
+                // is still identifiable in the audit log — Auth::attempt()
+                // itself already excludes trashed users from authenticating
+                // (via the model's SoftDeletes scope), so this lookup existing
+                // separately for the audit trail is the only place that can
+                // still find them.
+                targetUserId: User::withTrashed()->where('email', $validated['email'])->value('id'),
             );
 
             return back()
