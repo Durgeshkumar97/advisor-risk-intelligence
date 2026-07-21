@@ -10,7 +10,7 @@ uses(\Tests\TestCase::class);
 
 function makeProfile(float $capacityScore): ClientRiskProfile
 {
-    return (new ClientRiskProfile())->forceFill([
+    return (new ClientRiskProfile)->forceFill([
         'capacity_score' => $capacityScore,
     ]);
 }
@@ -20,8 +20,8 @@ function makeProfile(float $capacityScore): ClientRiskProfile
 // ---------------------------------------------------------------------------
 
 it('computes the capacity score as the plain average of all five sub-scores', function () {
-    // time_horizon=4 (90), income_stability=3 (85), drawdown_reaction=3 (80),
-    // emergency_savings=3 (80), primary_goal=4 (90) -> avg = 85.0
+    // time_horizon=4 (100), income_stability=3 (100), drawdown_reaction=3 (70),
+    // emergency_savings=3 (100), primary_goal=4 (100) -> avg = 94.0
     $score = ClientRiskProfile::computeCapacityScore(
         timeHorizon: 4,
         incomeStability: 3,
@@ -30,11 +30,12 @@ it('computes the capacity score as the plain average of all five sub-scores', fu
         primaryGoal: 4,
     );
 
-    expect($score)->toBe(85.0);
+    expect($score)->toBe(94.0);
 });
 
-it('computes the lowest possible capacity score from the most conservative answer set', function () {
-    // 10, 20, 10, 15, 15 -> avg = 14.0
+it('computes a genuine 0 as the lowest possible capacity score (bottom of the 0-100 scale)', function () {
+    // Every question's option 1 now scores 0 -> avg = 0.0, matching the bottom
+    // of PortfolioRiskCalculator's range.
     $score = ClientRiskProfile::computeCapacityScore(
         timeHorizon: 1,
         incomeStability: 1,
@@ -43,12 +44,27 @@ it('computes the lowest possible capacity score from the most conservative answe
         primaryGoal: 1,
     );
 
-    expect($score)->toBe(14.0);
+    expect($score)->toBe(0.0);
+});
+
+it('computes a genuine 100 as the highest possible capacity score (top of the 0-100 scale)', function () {
+    // Every question's top option now scores 100 -> avg = 100.0. Proves the
+    // rescaled instrument spans the full 0-100, so capacity_score is directly
+    // comparable to the portfolio score across the whole range.
+    $score = ClientRiskProfile::computeCapacityScore(
+        timeHorizon: 4,
+        incomeStability: 3,
+        drawdownReaction: 4,
+        emergencySavings: 3,
+        primaryGoal: 4,
+    );
+
+    expect($score)->toBe(100.0);
 });
 
 it('computes a mixed answer set correctly', function () {
-    // time_horizon=2 (35), income_stability=2 (55), drawdown_reaction=2 (50),
-    // emergency_savings=2 (50), primary_goal=2 (45) -> avg = 47.0
+    // time_horizon=2 (30), income_stability=2 (50), drawdown_reaction=2 (30),
+    // emergency_savings=2 (50), primary_goal=2 (30) -> avg = 38.0
     $score = ClientRiskProfile::computeCapacityScore(
         timeHorizon: 2,
         incomeStability: 2,
@@ -57,7 +73,19 @@ it('computes a mixed answer set correctly', function () {
         primaryGoal: 2,
     );
 
-    expect($score)->toBe(47.0);
+    expect($score)->toBe(38.0);
+});
+
+it('throws on an out-of-range option index instead of silently scoring it as 0', function () {
+    // A silent 0 (from a missing array key -> null) would skew a client's risk
+    // score downward with no error; computeCapacityScore() must fail loudly.
+    expect(fn () => ClientRiskProfile::computeCapacityScore(
+        timeHorizon: 5, // only 1-4 are valid for this question
+        incomeStability: 3,
+        drawdownReaction: 3,
+        emergencySavings: 3,
+        primaryGoal: 4,
+    ))->toThrow(InvalidArgumentException::class);
 });
 
 // ---------------------------------------------------------------------------
@@ -137,4 +165,23 @@ it('treats a negative gap of 16 (one point past the boundary) as below tolerance
     $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = -16
 
     expect($message)->toContain('is 16 points below client tolerance');
+});
+
+// ---------------------------------------------------------------------------
+// F7 — documented, inherited display quirk (NOT a bug). Pinned so a future
+// reviewer does not re-discover and re-litigate it.
+// ---------------------------------------------------------------------------
+
+it('prints a portfolio score of 69.6 as "70 (MEDIUM)" — the number is rounded for display while the level comes from the unrounded score (<70 = MEDIUM). This is known, pre-existing behavior shared with the report summary table (risk-report.blade.php), not a new bug.', function () {
+    // The level string is supplied by the caller as $riskScore->level(), which
+    // reads the UNROUNDED score: 69.6 < 70 -> MEDIUM. The sentence then prints
+    // number_format(69.6, 0) = "70" next to it. So "70" can appear labelled
+    // MEDIUM even though 70 on its own reads as HIGH per config/risk.php.
+    $profile = makeProfile(60.0);
+
+    // gap = 69.6 - 60 = 9.6 -> within +/-15 -> the aligned sentence, which
+    // prints the portfolio number and level side by side.
+    $message = $profile->comparisonMessage(69.6, 'MEDIUM');
+
+    expect($message)->toContain('Portfolio risk (70, MEDIUM)');
 });

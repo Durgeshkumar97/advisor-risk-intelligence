@@ -36,8 +36,10 @@ return new class extends Migration
             $table->unsignedTinyInteger('emergency_savings');
             $table->unsignedTinyInteger('primary_goal');
 
-            // Computed 0-100 capacity score, same scale as PortfolioRiskCalculator's
-            // score, so the two are directly comparable.
+            // Computed capacity score on a genuine 0-100 scale — the same scale
+            // as PortfolioRiskCalculator's score (each of ClientRiskProfile's
+            // scoring maps spans a full 0-100), so the two are directly
+            // comparable in the report with no rescaling.
             $table->decimal('capacity_score', 5, 2);
 
             $table->timestamps();

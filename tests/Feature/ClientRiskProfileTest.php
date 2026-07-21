@@ -8,31 +8,30 @@ use App\Models\ClientRiskProfile;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
 function riskProfileAnswers(array $overrides = []): array
 {
     return array_merge([
-        'time_horizon'      => 4, // 90
-        'income_stability'  => 3, // 85
-        'drawdown_reaction' => 3, // 80
-        'emergency_savings' => 3, // 80
-        'primary_goal'      => 4, // 90
-        // avg = 85.0
+        'time_horizon' => 4, // 100
+        'income_stability' => 3, // 100
+        'drawdown_reaction' => 3, // 70
+        'emergency_savings' => 3, // 100
+        'primary_goal' => 4, // 100
+        // avg = 94.0
     ], $overrides);
 }
 
 describe('advisor fills in the client risk profile for one of their portfolios', function () {
 
     it('shows a blank edit form for a portfolio with no existing profile', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client A']);
 
         $response = $this->actingAs($user)->get(route('portfolio.risk-profile.edit', $portfolio->id));
@@ -43,7 +42,7 @@ describe('advisor fills in the client risk profile for one of their portfolios',
     });
 
     it('creates a new client risk profile with the correctly computed capacity score', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client A']);
 
         $this->actingAs($user)
@@ -53,13 +52,13 @@ describe('advisor fills in the client risk profile for one of their portfolios',
         $profile = ClientRiskProfile::where('portfolio_id', $portfolio->id)->first();
 
         expect($profile)->not->toBeNull();
-        expect((float) $profile->capacity_score)->toBe(85.0);
+        expect((float) $profile->capacity_score)->toBe(94.0);
         expect($profile->time_horizon)->toBe(4);
         expect($profile->primary_goal)->toBe(4);
     });
 
     it('updates the existing profile in place on resubmission, rather than creating a second row', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client A']);
 
         $this->actingAs($user)->post(
@@ -67,26 +66,26 @@ describe('advisor fills in the client risk profile for one of their portfolios',
             riskProfileAnswers(),
         );
 
-        // Resubmit with the most conservative answers (avg = 14.0).
+        // Resubmit with the most conservative answers (avg = 0.0).
         $this->actingAs($user)->post(
             route('portfolio.risk-profile.update', $portfolio->id),
             riskProfileAnswers([
-                'time_horizon'      => 1,
-                'income_stability'  => 1,
+                'time_horizon' => 1,
+                'income_stability' => 1,
                 'drawdown_reaction' => 1,
                 'emergency_savings' => 1,
-                'primary_goal'      => 1,
+                'primary_goal' => 1,
             ]),
         );
 
         expect(ClientRiskProfile::where('portfolio_id', $portfolio->id)->count())->toBe(1);
 
         $profile = ClientRiskProfile::where('portfolio_id', $portfolio->id)->first();
-        expect((float) $profile->capacity_score)->toBe(14.0);
+        expect((float) $profile->capacity_score)->toBe(0.0);
     });
 
     it('rejects an out-of-range answer and does not create a profile', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client A']);
 
         $this->actingAs($user)
@@ -100,9 +99,9 @@ describe('advisor fills in the client risk profile for one of their portfolios',
     });
 
     it('does not let an advisor view or edit another advisor\'s portfolio risk profile', function () {
-        $owner   = activeSubscriberUser();
-        $other   = activeSubscriberUser();
-        $theirs  = Portfolio::create(['user_id' => $owner->id, 'name' => 'Owner\'s Client']);
+        $owner = activeSubscriberUser();
+        $other = activeSubscriberUser();
+        $theirs = Portfolio::create(['user_id' => $owner->id, 'name' => 'Owner\'s Client']);
 
         $this->actingAs($other)
             ->get(route('portfolio.risk-profile.edit', $theirs->id))
@@ -123,73 +122,73 @@ describe('the PDF report renders the comparison — and is unchanged when no pro
         return view('reports.risk-report', [
             'portfolio' => $portfolio,
             'riskScore' => $riskScore,
-            'assets'    => collect(),
-            'file'      => $file,
+            'assets' => collect(),
+            'file' => $file,
         ])->render();
     }
 
     it('renders the client risk tolerance comparison when a profile exists', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client A']);
 
         ClientRiskProfile::create(array_merge(
             ['portfolio_id' => $portfolio->id],
             riskProfileAnswers(['time_horizon' => 2, 'income_stability' => 2, 'drawdown_reaction' => 2, 'emergency_savings' => 2, 'primary_goal' => 2]),
-            ['capacity_score' => 47.0],
+            ['capacity_score' => 38.0], // all-option-2 answers -> avg = 38.0
         ));
 
         $riskScore = RiskScore::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'portfolio_id' => $portfolio->id,
-            'score'        => 78.0,
-            'volatility'   => 10,
-            'drawdown'     => 5,
-            'meta'         => [],
+            'score' => 78.0,
+            'volatility' => 10,
+            'drawdown' => 5,
+            'meta' => [],
             'generated_at' => now(),
         ]);
 
         $file = PortfolioFile::create([
-            'user_id'       => $user->id,
-            'portfolio_id'  => $portfolio->id,
+            'user_id' => $user->id,
+            'portfolio_id' => $portfolio->id,
             'original_name' => 'client_a.csv',
-            'stored_name'   => 'client_a.csv',
-            'path'          => 'uploads/client_a.csv',
-            'mime_type'     => 'text/csv',
-            'file_size'     => 10,
-            'status'        => PortfolioFile::STATUS_PROCESSED,
+            'stored_name' => 'client_a.csv',
+            'path' => 'uploads/client_a.csv',
+            'mime_type' => 'text/csv',
+            'file_size' => 10,
+            'status' => PortfolioFile::STATUS_PROCESSED,
         ]);
 
         $html = renderReportHtml($portfolio, $riskScore, $file);
 
         expect($html)->toContain('Client Risk Tolerance Comparison');
-        expect($html)->toContain('exceeds client tolerance by 31 points');
+        expect($html)->toContain('exceeds client tolerance by 40 points'); // portfolio 78 - capacity 38
     });
 
     it('renders identically to before this feature existed when the portfolio has no client risk profile (purely additive regression check)', function () {
-        $user      = activeSubscriberUser();
+        $user = activeSubscriberUser();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Client B']);
 
         expect($portfolio->clientRiskProfile)->toBeNull();
 
         $riskScore = RiskScore::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'portfolio_id' => $portfolio->id,
-            'score'        => 78.0,
-            'volatility'   => 10,
-            'drawdown'     => 5,
-            'meta'         => [],
+            'score' => 78.0,
+            'volatility' => 10,
+            'drawdown' => 5,
+            'meta' => [],
             'generated_at' => now(),
         ]);
 
         $file = PortfolioFile::create([
-            'user_id'       => $user->id,
-            'portfolio_id'  => $portfolio->id,
+            'user_id' => $user->id,
+            'portfolio_id' => $portfolio->id,
             'original_name' => 'client_b.csv',
-            'stored_name'   => 'client_b.csv',
-            'path'          => 'uploads/client_b.csv',
-            'mime_type'     => 'text/csv',
-            'file_size'     => 10,
-            'status'        => PortfolioFile::STATUS_PROCESSED,
+            'stored_name' => 'client_b.csv',
+            'path' => 'uploads/client_b.csv',
+            'mime_type' => 'text/csv',
+            'file_size' => 10,
+            'status' => PortfolioFile::STATUS_PROCESSED,
         ]);
 
         $html = renderReportHtml($portfolio, $riskScore, $file);
