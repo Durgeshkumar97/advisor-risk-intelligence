@@ -23,6 +23,7 @@ class PortfolioController extends Controller
     {
         $portfolios = Portfolio::query()
             ->withCount(['files', 'assets'])
+            ->with('clientRiskProfile')
             ->where('user_id', Auth::id())
             ->latest()
             ->get();

@@ -79,6 +79,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 <div class="action-box">{{ $riskScore->meta['next_action'] }}</div>
 @endif
 
+@if($portfolio?->clientRiskProfile)
+<div class="section-heading">Client Risk Tolerance Comparison</div>
+<div class="action-box">{{ $portfolio->clientRiskProfile->comparisonMessage((float) $riskScore->score, $level) }}</div>
+@endif
+
 @if(!empty($riskScore->meta['risk_flags']))
 <div class="section-heading">Risk Flags</div>
 @foreach($riskScore->meta['risk_flags'] as $flag)

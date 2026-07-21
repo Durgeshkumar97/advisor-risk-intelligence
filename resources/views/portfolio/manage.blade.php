@@ -99,6 +99,12 @@
                     Upload File
                 </a>
 
+                {{-- RISK PROFILE --}}
+                <a href="{{ route('portfolio.risk-profile.edit', $portfolio->id) }}"
+                   style="padding:.5rem 1rem;border-radius:8px;border:1px solid var(--paper-3);font-size:.8rem;font-weight:600;text-decoration:none;color:inherit;white-space:nowrap;">
+                    {{ $portfolio->clientRiskProfile ? 'Edit Risk Profile' : 'Risk Profile' }}
+                </a>
+
                 {{-- RENAME --}}
                 <button
                     onclick="openRename({{ $portfolio->id }}, '{{ addslashes($portfolio->name) }}')"

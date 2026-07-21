@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Portfolio extends Model
 {
@@ -72,6 +73,15 @@ class Portfolio extends Model
     public function files(): HasMany
     {
         return $this->hasMany(PortfolioFile::class);
+    }
+
+    /**
+     * Client risk tolerance/capacity profile — one per portfolio (a
+     * portfolio is one advisor's one client in this data model).
+     */
+    public function clientRiskProfile(): HasOne
+    {
+        return $this->hasOne(ClientRiskProfile::class);
     }
 
     /*

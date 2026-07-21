@@ -17,6 +17,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\PortfolioRiskProfileController;
 
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\PortfolioUploadController;
@@ -267,6 +268,12 @@ Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::delete('/portfolios/{id}', [PortfolioController::class, 'destroy'])
         ->name('portfolio.destroy');
+
+    Route::get('/portfolios/{id}/risk-profile', [PortfolioRiskProfileController::class, 'edit'])
+        ->name('portfolio.risk-profile.edit');
+
+    Route::post('/portfolios/{id}/risk-profile', [PortfolioRiskProfileController::class, 'update'])
+        ->name('portfolio.risk-profile.update');
 });
 
 /*
