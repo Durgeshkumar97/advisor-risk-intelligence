@@ -268,7 +268,6 @@ li {
 
 p {
   margin: 0;
-  max-width: 65ch;
   color: var(--ink-2);
   font-size: clamp(0.95rem, 1.8vw, 1rem);
 }
@@ -1274,7 +1273,7 @@ html:not(.app-ready) .reveal {
   margin-bottom: 0.5rem;
 }
 
-.legal-section p  { line-height: 1.9; }
+.legal-section p  { line-height: 1.9; max-width: 65ch; }
 .legal-section ul { padding-left: 1.4rem; margin: 0; }
 .legal-section li { margin-bottom: 0.8rem; line-height: 1.8; }
 
