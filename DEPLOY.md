@@ -49,7 +49,7 @@ chmod -R 775 storage bootstrap/cache
 
 ## 3. Queue Worker (Supervisor)
 
-Supervisor keeps the queue worker running 24/7. Without it, jobs (portfolio processing, email, WhatsApp) won't execute.
+Supervisor keeps the queue worker running 24/7. Without it, jobs (portfolio processing, email) won't execute.
 
 ### Install Supervisor
 
@@ -75,20 +75,6 @@ numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/www/risksignal/storage/logs/worker-default.log
 stopwaitsecs=3600
-
-; ─── WhatsApp queue (isolated — rate-limit friendly) ─────────────────────────
-[program:risksignal-whatsapp]
-process_name=%(program_name)s_%(process_num)02d
-command=php /var/www/risksignal/artisan queue:work database --queue=whatsapp --sleep=5 --tries=3 --max-time=3600
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-user=www-data
-numprocs=1
-redirect_stderr=true
-stdout_logfile=/var/www/risksignal/storage/logs/worker-whatsapp.log
-stopwaitsecs=3600
 ```
 
 ### Activate
@@ -97,7 +83,6 @@ stopwaitsecs=3600
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl start risksignal-default:*
-sudo supervisorctl start risksignal-whatsapp:*
 
 # Check status
 sudo supervisorctl status
@@ -107,14 +92,13 @@ sudo supervisorctl status
 
 ```bash
 sudo supervisorctl restart risksignal-default:*
-sudo supervisorctl restart risksignal-whatsapp:*
 ```
 
 ---
 
 ## 4. Cron — Laravel Scheduler
 
-One cron entry runs all scheduled commands (risk:generate, whatsapp:signal, subscriptions:expire, payment cleanup).
+One cron entry runs all scheduled commands — see the schedule overview below.
 
 ```bash
 sudo crontab -e -u www-data
@@ -130,10 +114,13 @@ Add this single line:
 
 | Time | Command | Purpose |
 |---|---|---|
+| Every minute | `queue:work --stop-when-empty` | Process queued jobs (portfolio processing, email) |
 | 00:05 daily | `subscriptions:expire` | Mark expired subscriptions |
+| 02:00 daily | `users:purge` | Permanently delete users soft-deleted past the 30-day retention window |
+| 03:00 daily | `backup:database` | Daily database backup |
 | Every 30 min | Closure | Fail stale pending payments (>30 min old) |
+| Hourly | `portfolio:cleanup-temp-dirs` | Remove orphaned ZIP-extraction temp directories left behind by a killed job |
 | 08:00 daily | `risk:generate` | Calculate risk scores + send email signals |
-| 16:30 daily | `whatsapp:signal` | Send WhatsApp risk signal messages |
 
 ---
 
