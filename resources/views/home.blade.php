@@ -53,8 +53,7 @@
         </div>
 
         <!-- RIGHT SIDE CARD -->
-        <div class="reveal reveal-right reveal-delay-2"
-            style="display:flex; justify-content:center; width:100%;">
+        <div class="hero-card-wrap" style="display:flex; justify-content:center; width:100%;">
 
             <div class="card card-hover"
                 style="

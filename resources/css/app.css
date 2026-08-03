@@ -1055,13 +1055,15 @@ html:not(.app-ready) .reveal {
     order: 1;
   }
 
-  .reveal.reveal-right {
+  .reveal.reveal-right,
+  .hero-card-wrap {
     order: 2;
     margin-top: 1rem;
     width: 100%;
   }
 
   .reveal.reveal-right .card,
+  .hero-card-wrap .card,
   .hero-grid .card,
   .card,
   .pricing-card {
