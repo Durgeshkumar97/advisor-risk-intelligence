@@ -388,6 +388,37 @@ Route::middleware(['admin'])
 
 /*
 |--------------------------------------------------------------------------
+| TEMPORARY — OPcache reset (remove after use)
+|--------------------------------------------------------------------------
+|
+| FPM's OPcache is holding stale bytecode for the compiled home.blade.php
+| view — `artisan view:clear` only touches the CLI SAPI's cache, not FPM's.
+| No sudo access to reload PHP-FPM, so this hits opcache_reset() from
+| inside an actual FPM worker request instead. Gated by a shared-secret
+| query param rather than auth middleware, since an auth check could
+| itself be served from the same stale OPcache. Wrong/missing key ->
+| 404, not 403, so an unauthenticated prober can't confirm the route
+| exists. Hit once, then delete this route.
+|
+*/
+
+Route::get('/temp-opcache-reset-8f3a2b1c9e', function (\Illuminate\Http\Request $request) {
+
+    if ($request->query('key') !== 'cd9dab94f22d311afbc05cc65c2b0a06') {
+        abort(404);
+    }
+
+    if (!function_exists('opcache_reset')) {
+        return response('opcache not available', 200);
+    }
+
+    $result = opcache_reset();
+
+    return response($result ? 'done' : 'opcache_reset returned false', 200);
+});
+
+/*
+|--------------------------------------------------------------------------
 | FALLBACK — proper 404 (not a 302 redirect to home)
 |--------------------------------------------------------------------------
 |
