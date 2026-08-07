@@ -122,3 +122,39 @@ app/
 ### Testing
 
 Tests use Pest 3, in-memory SQLite, and synchronous queues. The test env is configured in `phpunit.xml`.
+
+## Model + Effort Routing Policy
+
+Automatically decide the right model tier for EACH subtask before
+starting it. Never default to the highest tier "to be safe." Never use
+Fable, under any circumstance, for this project. State which tier you're
+using and why, in one line, before starting any non-trivial subtask.
+
+**Haiku** — mechanical/high-volume work: reading files, grepping,
+listing directories, simple lint fixes, running a command and reporting
+raw output.
+
+**Sonnet** — default for actual work, use unless there's a clear reason
+to escalate: implementing an already-confirmed design, writing tests for
+known behavior, routine bug fixes with a single clear cause, standard
+refactors following an existing pattern, bounded investigation/reporting.
+
+**Opus** — escalate only when Sonnet genuinely struggles, state the
+reason: a Sonnet fix failed revert-and-confirm verification, tracing a
+race condition or multi-file interaction with no obvious single cause,
+a genuine design decision with real tradeoffs, security-sensitive logic
+(auth/payments/PII) with real-consequence edge cases.
+
+**Effort level** — set independently of model tier. Low/default for
+Haiku and most Sonnet tasks. Higher effort only for Opus escalations or
+Sonnet tasks with genuine multi-STEP reasoning (not just multi-file).
+Never set high effort by default "just in case."
+
+**Hard rules:**
+1. Never use Fable, ever. If a task seems to need Fable-level capability,
+   break it into smaller, better-scoped subtasks for Opus instead.
+2. Never start on Opus "to be safe" — start at the tier the task shape
+   calls for, escalate only with a concrete stated reason.
+3. If unsure between two tiers, pick the cheaper one first.
+4. At the end of multi-step work, briefly summarize which tiers were
+   used and why.
