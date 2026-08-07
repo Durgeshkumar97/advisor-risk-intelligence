@@ -12,8 +12,11 @@ class RiskAlertMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public $user;
+
     public $score;
+
     public $level;
+
     public $action;
 
     public function __construct($user, $score, $level, $action)
@@ -26,7 +29,7 @@ class RiskAlertMail extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject("Your Daily Risk Signal")
+        return $this->subject('Your Daily Risk Signal')
             ->view('emails.risk-alert');
     }
 }

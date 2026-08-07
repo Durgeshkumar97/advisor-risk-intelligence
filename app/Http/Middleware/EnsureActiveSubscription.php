@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Subscription;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Subscription;
 
 /**
  * Alias: 'active.sub'
@@ -24,7 +24,7 @@ class EnsureActiveSubscription
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect('/pricing');
         }
 
@@ -45,7 +45,7 @@ class EnsureActiveSubscription
             ->latest()
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return redirect('/pricing')
                 ->with('error', 'No subscription found. Choose a plan to continue.');
         }

@@ -9,13 +9,13 @@ uses(\Tests\TestCase::class);
 
 beforeEach(function () {
     config([
-        'services.risk_service.url'     => 'http://risk-service.test',
+        'services.risk_service.url' => 'http://risk-service.test',
         'services.risk_service.timeout' => 2,
     ]);
 
     Cache::flush();
 
-    $this->service = new StockRiskService();
+    $this->service = new StockRiskService;
 });
 
 // ---------------------------------------------------------------------------
@@ -36,20 +36,20 @@ it('returns parsed risk classifications for a successful batch response', functi
     $results = $this->service->classifyBatch(['RELIANCE', 'ZOMATO']);
 
     expect($results['RELIANCE'])->toBe([
-        'risk_level'  => 'Low',
-        'volatility'  => 18.4,
-        'confidence'  => 0.91,
-        'as_of_date'  => '2026-07-01',
-        'stale'       => false,
+        'risk_level' => 'Low',
+        'volatility' => 18.4,
+        'confidence' => 0.91,
+        'as_of_date' => '2026-07-01',
+        'stale' => false,
         'unavailable' => false,
     ]);
 
     expect($results['ZOMATO'])->toBe([
-        'risk_level'  => 'High',
-        'volatility'  => 52.1,
-        'confidence'  => 0.87,
-        'as_of_date'  => '2026-07-01',
-        'stale'       => true,
+        'risk_level' => 'High',
+        'volatility' => 52.1,
+        'confidence' => 0.87,
+        'as_of_date' => '2026-07-01',
+        'stale' => true,
         'unavailable' => false,
     ]);
 
@@ -82,11 +82,11 @@ it('returns an unavailable result without throwing when risk_service times out',
     })->not->toThrow(\Throwable::class);
 
     expect($results['RELIANCE'])->toBe([
-        'risk_level'  => null,
-        'volatility'  => null,
-        'confidence'  => null,
-        'as_of_date'  => null,
-        'stale'       => false,
+        'risk_level' => null,
+        'volatility' => null,
+        'confidence' => null,
+        'as_of_date' => null,
+        'stale' => false,
         'unavailable' => true,
     ]);
 });
@@ -137,7 +137,7 @@ it('does not repeat an HTTP call for a symbol already cached within the TTL wind
         ], 200),
     ]);
 
-    $first  = $this->service->classifyBatch(['RELIANCE']);
+    $first = $this->service->classifyBatch(['RELIANCE']);
     $second = $this->service->classifyBatch(['reliance']); // same symbol, different case
 
     expect($first['RELIANCE']['risk_level'])->toBe('Low');
@@ -157,7 +157,7 @@ it('does not cache a failed lookup, so the next call retries the HTTP request', 
             ], 200),
     ]);
 
-    $first  = $this->service->classifyBatch(['RELIANCE']);
+    $first = $this->service->classifyBatch(['RELIANCE']);
     $second = $this->service->classifyBatch(['RELIANCE']);
 
     expect($first['RELIANCE']['unavailable'])->toBeTrue();
@@ -258,7 +258,7 @@ it('still processes a batch at exactly the cap normally', function () {
 it('derives a per-attempt timeout so worst-case total time never exceeds the configured budget', function () {
     foreach ([0.5, 1.0, 2.0, 3.0, 5.0, 10.0] as $timeout) {
         config(['services.risk_service.timeout' => $timeout]);
-        $service = new StockRiskService();
+        $service = new StockRiskService;
 
         $plan = new ReflectionMethod($service, 'requestPlan');
         [$attempts, $perAttemptTimeout, $retryDelayMs] = $plan->invoke($service);
@@ -273,7 +273,7 @@ it('derives a per-attempt timeout so worst-case total time never exceeds the con
 
 it('retries once within a 2-second budget without exceeding it', function () {
     config(['services.risk_service.timeout' => 2.0]);
-    $service = new StockRiskService();
+    $service = new StockRiskService;
 
     [$attempts, $perAttemptTimeout, $retryDelayMs] = (new ReflectionMethod($service, 'requestPlan'))->invoke($service);
 
@@ -284,7 +284,7 @@ it('retries once within a 2-second budget without exceeding it', function () {
 
 it('collapses to a single attempt when the budget is too small to retry meaningfully', function () {
     config(['services.risk_service.timeout' => 1.0]);
-    $service = new StockRiskService();
+    $service = new StockRiskService;
 
     [$attempts, $perAttemptTimeout, $retryDelayMs] = (new ReflectionMethod($service, 'requestPlan'))->invoke($service);
 

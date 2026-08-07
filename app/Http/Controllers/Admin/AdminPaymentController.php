@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
-
 use Illuminate\Http\Request;
 
 class AdminPaymentController extends Controller
@@ -23,9 +22,9 @@ class AdminPaymentController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('email', 'like', "%{$s}%")
-                  ->orWhere('order_id', 'like', "%{$s}%")
-                  ->orWhere('payment_id', 'like', "%{$s}%")
-                  ->orWhere('name', 'like', "%{$s}%");
+                    ->orWhere('order_id', 'like', "%{$s}%")
+                    ->orWhere('payment_id', 'like', "%{$s}%")
+                    ->orWhere('name', 'like', "%{$s}%");
             });
         }
 
@@ -36,9 +35,9 @@ class AdminPaymentController extends Controller
         $payments = $query->paginate(30)->withQueryString();
 
         $totals = [
-            'paid'    => Payment::where('status', 'paid')->sum('amount'),
+            'paid' => Payment::where('status', 'paid')->sum('amount'),
             'pending' => Payment::where('status', 'pending')->count(),
-            'failed'  => Payment::where('status', 'failed')->count(),
+            'failed' => Payment::where('status', 'failed')->count(),
         ];
 
         return view('admin.payments.index', compact('payments', 'totals'));

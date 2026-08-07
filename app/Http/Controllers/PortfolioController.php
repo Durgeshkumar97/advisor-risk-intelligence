@@ -74,7 +74,7 @@ class PortfolioController extends Controller
 
         Portfolio::create([
             'user_id' => Auth::id(),
-            'name'    => $validated['name'],
+            'name' => $validated['name'],
         ]);
 
         return redirect()
@@ -142,9 +142,9 @@ class PortfolioController extends Controller
 
                         Log::error('Portfolio destroy: failed to delete storage file', [
                             'portfolio_id' => $portfolio->id,
-                            'file_id'      => $file->id,
-                            'path'         => $file->path,
-                            'user_id'      => Auth::id(),
+                            'file_id' => $file->id,
+                            'path' => $file->path,
+                            'user_id' => Auth::id(),
                         ]);
 
                         throw new \RuntimeException(
@@ -165,10 +165,10 @@ class PortfolioController extends Controller
 
             Log::error('Portfolio destroy: failed', [
                 'portfolio_id' => $portfolio->id,
-                'user_id'      => Auth::id(),
-                'message'      => $e->getMessage(),
-                'file'         => $e->getFile(),
-                'line'         => $e->getLine(),
+                'user_id' => Auth::id(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return redirect()

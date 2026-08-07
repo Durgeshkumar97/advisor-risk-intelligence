@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 class UserAccountRecoveryService
 {
     public const RESTORED_FLASH_KEY = 'restored_account';
+
     public const RESTORED_MESSAGE = 'Welcome back - your previous account and data have been restored.';
 
     /**

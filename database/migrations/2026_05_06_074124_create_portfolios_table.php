@@ -27,7 +27,7 @@ return new class extends Migration
             $table->enum('risk_level', [
                 'LOW',
                 'MEDIUM',
-                'HIGH'
+                'HIGH',
             ])->default('LOW');
 
             $table->timestamps();

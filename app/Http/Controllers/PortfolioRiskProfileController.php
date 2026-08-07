@@ -20,7 +20,7 @@ class PortfolioRiskProfileController extends Controller
     public function edit(int $id): View
     {
         $portfolio = Portfolio::where('user_id', Auth::id())->findOrFail($id);
-        $profile   = $portfolio->clientRiskProfile;
+        $profile = $portfolio->clientRiskProfile;
 
         return view('portfolio.risk-profile', compact('portfolio', 'profile'));
     }
@@ -37,11 +37,11 @@ class PortfolioRiskProfileController extends Controller
         $validated = $request->validated();
 
         $capacityScore = ClientRiskProfile::computeCapacityScore(
-            timeHorizon:      $validated['time_horizon'],
-            incomeStability:  $validated['income_stability'],
+            timeHorizon: $validated['time_horizon'],
+            incomeStability: $validated['income_stability'],
             drawdownReaction: $validated['drawdown_reaction'],
             emergencySavings: $validated['emergency_savings'],
-            primaryGoal:      $validated['primary_goal'],
+            primaryGoal: $validated['primary_goal'],
         );
 
         ClientRiskProfile::updateOrCreate(

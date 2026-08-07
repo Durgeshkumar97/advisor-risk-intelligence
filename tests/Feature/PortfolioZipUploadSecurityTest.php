@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 class PortfolioZipUploadSecurityTest extends TestCase
 {
@@ -25,8 +25,8 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
     private function buildZip(callable $populate): string
     {
-        $path = tempnam(sys_get_temp_dir(), 'testzip_') . '.zip';
-        $zip  = new \ZipArchive();
+        $path = tempnam(sys_get_temp_dir(), 'testzip_').'.zip';
+        $zip = new \ZipArchive;
         $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         $populate($zip);
         $zip->close();
@@ -39,21 +39,21 @@ class PortfolioZipUploadSecurityTest extends TestCase
         Storage::fake('portfolios');
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Test Portfolio']);
 
         $storedPath = 'uploads/clients.zip';
         Storage::disk('portfolios')->put($storedPath, file_get_contents($zipRealPath));
 
         return PortfolioFile::create([
-            'user_id'       => $user->id,
-            'portfolio_id'  => $portfolio->id,
+            'user_id' => $user->id,
+            'portfolio_id' => $portfolio->id,
             'original_name' => 'clients.zip',
-            'stored_name'   => 'clients.zip',
-            'path'          => $storedPath,
-            'mime_type'     => 'application/zip',
-            'file_size'     => filesize($zipRealPath),
-            'status'        => PortfolioFile::STATUS_PENDING,
+            'stored_name' => 'clients.zip',
+            'path' => $storedPath,
+            'mime_type' => 'application/zip',
+            'file_size' => filesize($zipRealPath),
+            'status' => PortfolioFile::STATUS_PENDING,
         ]);
     }
 
@@ -69,7 +69,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
      */
     private function runZipExtraction(PortfolioFile $file): void
     {
-        $job    = new ProcessPortfolioFile($file);
+        $job = new ProcessPortfolioFile($file);
         $method = new \ReflectionMethod($job, 'handleZipExtraction');
         $method->setAccessible(true);
         $method->invoke($job, $file, Storage::disk('portfolios')->path($file->path));
@@ -156,12 +156,17 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
         $file = $this->makeZipPortfolioFile($zipPath);
 
-        app()->instance(StockRiskService::class, new class extends StockRiskService {
+        app()->instance(StockRiskService::class, new class extends StockRiskService
+        {
             public function __construct() {}
-            public function classifyBatch(array $symbols): array { return []; }
+
+            public function classifyBatch(array $symbols): array
+            {
+                return [];
+            }
         });
 
-        $escapeTarget = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'evil_marker.txt';
+        $escapeTarget = sys_get_temp_dir().DIRECTORY_SEPARATOR.'evil_marker.txt';
         @unlink($escapeTarget); // in case a prior failed run left it behind
 
         ProcessPortfolioFile::dispatchSync($file);
@@ -192,7 +197,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
     public function test_is_unsafe_zip_entry_name_correctly_classifies_every_pattern(): void
     {
-        $job = new ProcessPortfolioFile(new PortfolioFile());
+        $job = new ProcessPortfolioFile(new PortfolioFile);
 
         $method = new \ReflectionMethod($job, 'isUnsafeZipEntryName');
         $method->setAccessible(true);
@@ -235,12 +240,12 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
     public function test_temp_extraction_dir_is_created_owner_only_regardless_of_mode_argument(): void
     {
-        $job = new ProcessPortfolioFile(new PortfolioFile());
+        $job = new ProcessPortfolioFile(new PortfolioFile);
 
         $method = new \ReflectionMethod($job, 'createOwnerOnlyTempDir');
         $method->setAccessible(true);
 
-        $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_permtest_' . uniqid('', true);
+        $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'portfolio_zip_permtest_'.uniqid('', true);
 
         $method->invoke($job, $dir);
 
@@ -259,12 +264,12 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
     public function test_cleanup_command_removes_old_orphaned_dirs_but_not_fresh_ones(): void
     {
-        $oldDir   = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('old_', true);
-        $freshDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_' . uniqid('fresh_', true);
+        $oldDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'portfolio_zip_'.uniqid('old_', true);
+        $freshDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'portfolio_zip_'.uniqid('fresh_', true);
 
         mkdir($oldDir, 0755, true);
         mkdir($freshDir, 0755, true);
-        file_put_contents($oldDir . '/leftover.csv', 'x');
+        file_put_contents($oldDir.'/leftover.csv', 'x');
 
         touch($oldDir, time() - 7200); // 2 hours old — past the 1-hour cutoff
         // $freshDir keeps its just-created mtime (now)
@@ -276,7 +281,7 @@ class PortfolioZipUploadSecurityTest extends TestCase
             $this->assertDirectoryExists($freshDir);
         } finally {
             if (is_dir($oldDir)) {
-                @unlink($oldDir . '/leftover.csv');
+                @unlink($oldDir.'/leftover.csv');
                 @rmdir($oldDir);
             }
             @rmdir($freshDir);
@@ -297,9 +302,14 @@ class PortfolioZipUploadSecurityTest extends TestCase
 
         $file = $this->makeZipPortfolioFile($zipPath);
 
-        app()->instance(StockRiskService::class, new class extends StockRiskService {
+        app()->instance(StockRiskService::class, new class extends StockRiskService
+        {
             public function __construct() {}
-            public function classifyBatch(array $symbols): array { return []; }
+
+            public function classifyBatch(array $symbols): array
+            {
+                return [];
+            }
         });
 
         ProcessPortfolioFile::dispatchSync($file);

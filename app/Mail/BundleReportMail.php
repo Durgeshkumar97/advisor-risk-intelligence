@@ -21,7 +21,7 @@ class BundleReportMail extends Mailable implements ShouldQueue
     {
         $name = $this->portfolioFile->original_name ?? 'Multi-Client Bundle';
 
-        return new Envelope(subject: 'All Client Reports — ' . $name);
+        return new Envelope(subject: 'All Client Reports — '.$name);
     }
 
     public function content(): Content
@@ -31,9 +31,9 @@ class BundleReportMail extends Mailable implements ShouldQueue
 
     public function attachments(): array
     {
-        $base     = pathinfo($this->portfolioFile->original_name ?? '', PATHINFO_FILENAME);
+        $base = pathinfo($this->portfolioFile->original_name ?? '', PATHINFO_FILENAME);
         $safeBase = trim(preg_replace('/[^a-zA-Z0-9_\-]/', '_', $base), '_') ?: 'reports';
-        $filename = $safeBase . '_reports_' . now()->format('Y-m-d') . '.zip';
+        $filename = $safeBase.'_reports_'.now()->format('Y-m-d').'.zip';
 
         return [
             Attachment::fromStorageDisk('portfolios', $this->portfolioFile->bundle_report_path)

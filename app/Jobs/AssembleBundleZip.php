@@ -19,7 +19,8 @@ class AssembleBundleZip implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
-    public int $tries   = 2;
+
+    public int $tries = 2;
 
     private const DISK = 'portfolios';
 
@@ -29,8 +30,9 @@ class AssembleBundleZip implements ShouldQueue
     {
         $parent = PortfolioFile::find($this->parentFileId);
 
-        if (!$parent) {
+        if (! $parent) {
             Log::warning('AssembleBundleZip: parent PortfolioFile not found.', ['id' => $this->parentFileId]);
+
             return;
         }
 
@@ -41,41 +43,42 @@ class AssembleBundleZip implements ShouldQueue
 
         if ($children->isEmpty()) {
             Log::warning('AssembleBundleZip: no children found.', ['id' => $this->parentFileId]);
+
             return;
         }
 
         $skipReasons = $parent->meta['skip_reasons'] ?? [];
-        $withReport  = $children->filter(fn($c) => $c->isProcessed() && $c->report_path);
-        $without     = $children->reject(fn($c) => $c->isProcessed() && $c->report_path);
+        $withReport = $children->filter(fn ($c) => $c->isProcessed() && $c->report_path);
+        $without = $children->reject(fn ($c) => $c->isProcessed() && $c->report_path);
 
-        $tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . Str::uuid()->toString() . '-bundle.zip';
+        $tempZipPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.Str::uuid()->toString().'-bundle.zip';
 
         $assembled = false;
 
         try {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             $zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
             foreach ($withReport as $child) {
                 $clientName = $child->meta['client_name'] ?? pathinfo($child->original_name, PATHINFO_FILENAME);
-                $pdfName    = Str::slug($clientName, '_') . '_report.pdf';
+                $pdfName = Str::slug($clientName, '_').'_report.pdf';
                 $zip->addFromString($pdfName, Storage::disk(self::DISK)->get($child->report_path));
             }
 
             $zip->addFromString('_SUMMARY.txt', $this->buildSummary($parent, $withReport, $without));
             $zip->close();
 
-            $bundlePath = 'reports/' . now()->format('Y/m') . '/' . Str::uuid()->toString() . '-bundle.zip';
+            $bundlePath = 'reports/'.now()->format('Y/m').'/'.Str::uuid()->toString().'-bundle.zip';
             Storage::disk(self::DISK)->put($bundlePath, file_get_contents($tempZipPath));
 
             $parent->update([
-                'status'             => PortfolioFile::STATUS_PROCESSED,
-                'processed_at'       => now(),
+                'status' => PortfolioFile::STATUS_PROCESSED,
+                'processed_at' => now(),
                 'bundle_report_path' => $bundlePath,
-                'meta'               => array_merge($parent->meta ?? [], [
+                'meta' => array_merge($parent->meta ?? [], [
                     'processing_completed_at' => now()->toIso8601String(),
-                    'bundle_processed_count'  => $withReport->count(),
-                    'bundle_failed_count'     => $without->count() + \count($skipReasons),
+                    'bundle_processed_count' => $withReport->count(),
+                    'bundle_failed_count' => $without->count() + \count($skipReasons),
                 ]),
             ]);
 
@@ -84,7 +87,7 @@ class AssembleBundleZip implements ShouldQueue
             Log::info('AssembleBundleZip: bundle created.', [
                 'parent_id' => $this->parentFileId,
                 'processed' => $withReport->count(),
-                'failed'    => $without->count() + \count($skipReasons),
+                'failed' => $without->count() + \count($skipReasons),
             ]);
 
             $parent->loadMissing('user');
@@ -98,21 +101,20 @@ class AssembleBundleZip implements ShouldQueue
         } catch (\Throwable $e) {
             Log::error('AssembleBundleZip: failed.', [
                 'parent_id' => $this->parentFileId,
-                'message'   => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
 
-            if (!$assembled && $parent) {
+            if (! $assembled && $parent) {
                 $parent->update([
                     'status' => PortfolioFile::STATUS_FAILED,
-                    'meta'   => array_merge($parent->meta ?? [], [
-                        'failed_at'     => now()->toIso8601String(),
+                    'meta' => array_merge($parent->meta ?? [], [
+                        'failed_at' => now()->toIso8601String(),
                         'error_message' => $e->getMessage(),
                     ]),
                 ]);
             }
 
             throw $e;
-
         } finally {
             @unlink($tempZipPath);
         }
@@ -121,19 +123,19 @@ class AssembleBundleZip implements ShouldQueue
     private function buildSummary(PortfolioFile $parent, $withReport, $without): string
     {
         $skipReasons = $parent->meta['skip_reasons'] ?? [];
-        $totalFound  = $withReport->count() + $without->count() + count($skipReasons);
+        $totalFound = $withReport->count() + $without->count() + count($skipReasons);
 
         $lines = [
             'RiskSignal — Multi-Client Portfolio Report Bundle',
             str_repeat('=', 50),
-            'Source ZIP:  ' . ($parent->original_name ?? 'unknown'),
-            'Generated:   ' . now()->format('d M Y H:i:s') . ' UTC',
+            'Source ZIP:  '.($parent->original_name ?? 'unknown'),
+            'Generated:   '.now()->format('d M Y H:i:s').' UTC',
             '',
             'SUMMARY',
             '-------',
-            'Total files found:       ' . $totalFound,
-            'Successfully processed:  ' . $withReport->count(),
-            'Failed / skipped:        ' . ($without->count() + count($skipReasons)),
+            'Total files found:       '.$totalFound,
+            'Successfully processed:  '.$withReport->count(),
+            'Failed / skipped:        '.($without->count() + count($skipReasons)),
         ];
 
         if ($without->isNotEmpty()) {
@@ -141,17 +143,17 @@ class AssembleBundleZip implements ShouldQueue
             $lines[] = 'FAILED DURING PROCESSING';
             $lines[] = '------------------------';
             foreach ($without as $f) {
-                $reason  = $f->meta['error_message'] ?? 'Processing failed — no report generated';
-                $lines[] = '  ' . $f->original_name . ': ' . $reason;
+                $reason = $f->meta['error_message'] ?? 'Processing failed — no report generated';
+                $lines[] = '  '.$f->original_name.': '.$reason;
             }
         }
 
-        if (!empty($skipReasons)) {
+        if (! empty($skipReasons)) {
             $lines[] = '';
             $lines[] = 'SKIPPED BEFORE PROCESSING';
             $lines[] = '-------------------------';
             foreach ($skipReasons as $name => $reason) {
-                $lines[] = '  ' . $name . ': ' . $reason;
+                $lines[] = '  '.$name.': '.$reason;
             }
         }
 
@@ -161,7 +163,7 @@ class AssembleBundleZip implements ShouldQueue
             $lines[] = '-----------------';
             foreach ($withReport as $p) {
                 $clientName = $p->meta['client_name'] ?? pathinfo($p->original_name, PATHINFO_FILENAME);
-                $lines[]    = '  OK  ' . $clientName . ' (' . $p->original_name . ')';
+                $lines[] = '  OK  '.$clientName.' ('.$p->original_name.')';
             }
         }
 

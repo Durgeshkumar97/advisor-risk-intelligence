@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 describe('admin_logs is written to on every admin auth / impersonation event', function () {
 
@@ -18,7 +18,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         $admin = adminUserFixture();
 
         $this->post(route('admin.login.submit'), [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'password' => 'correct-password',
         ])->assertRedirect(route('admin.dashboard'));
 
@@ -35,7 +35,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         $admin = adminUserFixture();
 
         $this->post(route('admin.login.submit'), [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'password' => 'wrong-password',
         ])->assertSessionHasErrors('email');
 
@@ -48,7 +48,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
 
     it('records admin_login_failed with both user_id and target_user_id null when the email does not exist at all', function () {
         $this->post(route('admin.login.submit'), [
-            'email'    => 'nobody-'.uniqid().'@example.com',
+            'email' => 'nobody-'.uniqid().'@example.com',
             'password' => 'whatever',
         ])->assertSessionHasErrors('email');
 
@@ -69,7 +69,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         $admin->delete();
 
         $this->post(route('admin.login.submit'), [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'password' => 'wrong-password',
         ])->assertSessionHasErrors('email');
 
@@ -87,7 +87,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
         ]);
 
         $this->post(route('admin.login.submit'), [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'correct-password',
         ])->assertSessionHasErrors('email');
 
@@ -99,7 +99,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
     });
 
     it('records impersonation_link_minted with both the admin, the target user, and the token hash', function () {
-        $admin  = adminUserFixture();
+        $admin = adminUserFixture();
         $target = User::factory()->create();
 
         $this->actingAs($admin)
@@ -117,9 +117,9 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
 
     it('records impersonation_link_used against the target user, with a matching token hash, when the magic link is consumed', function () {
         $target = User::factory()->create([
-            'login_token'            => 'a-valid-token-123',
+            'login_token' => 'a-valid-token-123',
             'login_token_expires_at' => now()->addMinutes(15),
-            'onboarding_completed'   => true,
+            'onboarding_completed' => true,
         ]);
 
         $this->get(route('auto.login', 'a-valid-token-123'))
@@ -134,7 +134,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
     });
 
     it('lets a mint + use pair be joined by token_hash, and distinguishes a retry mint for the same target', function () {
-        $admin  = adminUserFixture();
+        $admin = adminUserFixture();
         $target = User::factory()->create(['onboarding_completed' => true]);
 
         // First mint — e.g. the admin's first attempt, link never actually used.
@@ -150,7 +150,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
             ->post(route('admin.users.login-link', $target->id))
             ->assertRedirect(route('admin.users.show', $target->id));
 
-        $secondMint  = AdminLog::where('event', 'impersonation_link_minted')->latest('id')->first();
+        $secondMint = AdminLog::where('event', 'impersonation_link_minted')->latest('id')->first();
         $secondToken = $target->fresh()->login_token;
 
         expect($secondMint->id)->not->toBe($firstMint->id);
@@ -190,7 +190,7 @@ describe('self-service login links (no admin involved) get their own, distinctly
 
         app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($target);
 
-        $log      = AdminLog::where('event', 'self_service_login_link_minted')->first();
+        $log = AdminLog::where('event', 'self_service_login_link_minted')->first();
         $rawToken = $target->fresh()->login_token;
 
         expect($log)->not->toBeNull();
@@ -221,9 +221,9 @@ describe('self-service login links (no admin involved) get their own, distinctly
     });
 
     it('keeps admin-initiated and self-service mint/use pairs independently queryable by event name', function () {
-        $admin        = adminUserFixture();
-        $adminTarget  = User::factory()->create(['onboarding_completed' => true]);
-        $selfTarget   = User::factory()->create(['onboarding_completed' => true]);
+        $admin = adminUserFixture();
+        $adminTarget = User::factory()->create(['onboarding_completed' => true]);
+        $selfTarget = User::factory()->create(['onboarding_completed' => true]);
 
         $this->actingAs($admin)
             ->post(route('admin.users.login-link', $adminTarget->id))
@@ -244,15 +244,15 @@ describe('self-service login links (no admin involved) get their own, distinctly
 describe('admin_logs rows survive the purge of the target user they reference', function () {
 
     it('nullifies target_user_id (does not delete the log row) when the target user is force-deleted', function () {
-        $admin  = adminUserFixture();
+        $admin = adminUserFixture();
         $target = User::factory()->create();
 
         $log = AdminLog::create([
-            'user_id'        => $admin->id,
+            'user_id' => $admin->id,
             'target_user_id' => $target->id,
-            'event'          => 'impersonation_link_minted',
-            'ip'             => '127.0.0.1',
-            'user_agent'     => 'PestTest',
+            'event' => 'impersonation_link_minted',
+            'ip' => '127.0.0.1',
+            'user_agent' => 'PestTest',
         ]);
 
         $target->forceDelete();

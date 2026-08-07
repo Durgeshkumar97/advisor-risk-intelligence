@@ -25,10 +25,10 @@ class BackupDatabase extends Command
 
     public function handle(): int
     {
-        $filename  = 'backup_' . now()->format('Y-m-d_His') . '.sql.gz';
-        $outputDir = storage_path('app/' . self::BACKUPS_DIR);
-        $outputPath = $outputDir . DIRECTORY_SEPARATOR . $filename;
-        $dryRun    = (bool) $this->option('dry-run');
+        $filename = 'backup_'.now()->format('Y-m-d_His').'.sql.gz';
+        $outputDir = storage_path('app/'.self::BACKUPS_DIR);
+        $outputPath = $outputDir.DIRECTORY_SEPARATOR.$filename;
+        $dryRun = (bool) $this->option('dry-run');
 
         $this->ensureDirectory($outputDir);
 
@@ -44,12 +44,12 @@ class BackupDatabase extends Command
             ));
 
             Log::info('BackupDatabase: dump created', [
-                'file'       => $filename,
+                'file' => $filename,
                 'size_bytes' => $sizeBytes,
             ]);
         } catch (Throwable $e) {
             Log::error('BackupDatabase: dump generation failed', ['error' => $e->getMessage()]);
-            $this->error('Dump failed: ' . $e->getMessage());
+            $this->error('Dump failed: '.$e->getMessage());
 
             return Command::FAILURE;
         }
@@ -86,7 +86,7 @@ class BackupDatabase extends Command
         if (! function_exists('gzopen')) {
             throw new \RuntimeException(
                 'PHP zlib extension is not available — cannot create .gz backup. '
-                . 'Enable zlib in php.ini or contact Hostinger support.'
+                .'Enable zlib in php.ini or contact Hostinger support.'
             );
         }
 
@@ -97,11 +97,11 @@ class BackupDatabase extends Command
         }
 
         try {
-            $pdo    = DB::getPdo();
+            $pdo = DB::getPdo();
             $dbName = config('database.connections.mysql.database');
 
             gzwrite($gz, "-- RiskSignal database backup\n");
-            gzwrite($gz, '-- Generated: ' . now()->toDateTimeString() . "\n");
+            gzwrite($gz, '-- Generated: '.now()->toDateTimeString()."\n");
             gzwrite($gz, "-- Database:  {$dbName}\n\n");
             gzwrite($gz, "SET FOREIGN_KEY_CHECKS=0;\n\n");
 
@@ -130,11 +130,11 @@ class BackupDatabase extends Command
     {
         // DROP + CREATE
         $createResult = DB::select("SHOW CREATE TABLE `{$table}`");
-        $createSql    = $createResult[0]->{'Create Table'};
+        $createSql = $createResult[0]->{'Create Table'};
 
         gzwrite($gz, "-- Table: {$table}\n");
         gzwrite($gz, "DROP TABLE IF EXISTS `{$table}`;\n");
-        gzwrite($gz, $createSql . ";\n\n");
+        gzwrite($gz, $createSql.";\n\n");
 
         // Column list from schema — avoids an extra data query
         $columnDefs = DB::select("SHOW COLUMNS FROM `{$table}`");
@@ -144,7 +144,7 @@ class BackupDatabase extends Command
         }
 
         $columnList = implode(', ', array_map(
-            fn ($col) => '`' . $col->Field . '`',
+            fn ($col) => '`'.$col->Field.'`',
             $columnDefs,
         ));
 
@@ -158,7 +158,7 @@ class BackupDatabase extends Command
                 (array) $rowObj,
             );
 
-            gzwrite($gz, "INSERT INTO `{$table}` ({$columnList}) VALUES (" . implode(', ', $values) . ");\n");
+            gzwrite($gz, "INSERT INTO `{$table}` ({$columnList}) VALUES (".implode(', ', $values).");\n");
             $rowCount++;
         }
 
@@ -179,18 +179,18 @@ class BackupDatabase extends Command
             ]);
             $this->warn(
                 "Dump is {$sizeMb} MB — email delivery may be rejected by the SMTP relay. "
-                . 'Consider adding AWS_* credentials to .env to enable S3 offload.'
+                .'Consider adding AWS_* credentials to .env to enable S3 offload.'
             );
         }
 
         try {
             $sizeKb = round($sizeBytes / 1024, 1);
-            $body   = implode("\n", [
+            $body = implode("\n", [
                 'RiskSignal automated database backup.',
                 '',
-                'Date:     ' . now()->toDateString(),
-                'File:     ' . $filename,
-                'Size:     ' . $sizeKb . ' KB (gzipped SQL)',
+                'Date:     '.now()->toDateString(),
+                'File:     '.$filename,
+                'Size:     '.$sizeKb.' KB (gzipped SQL)',
                 '',
                 'Restore: gunzip backup.sql.gz && mysql -u user -p dbname < backup.sql',
             ]);
@@ -198,9 +198,9 @@ class BackupDatabase extends Command
             Mail::raw($body, function ($message) use ($recipient, $filePath, $filename): void {
                 $message
                     ->to($recipient)
-                    ->subject('[RiskSignal] DB Backup — ' . now()->toDateString())
+                    ->subject('[RiskSignal] DB Backup — '.now()->toDateString())
                     ->attach($filePath, [
-                        'as'   => $filename,
+                        'as' => $filename,
                         'mime' => 'application/gzip',
                     ]);
             });
@@ -211,9 +211,9 @@ class BackupDatabase extends Command
             // Email failure is non-fatal — the dump is still kept locally.
             Log::error('BackupDatabase: email delivery failed', [
                 'error' => $e->getMessage(),
-                'file'  => $filePath,
+                'file' => $filePath,
             ]);
-            $this->error('Email delivery failed: ' . $e->getMessage());
+            $this->error('Email delivery failed: '.$e->getMessage());
             $this->warn("Dump retained locally at: {$filePath}");
         }
     }
@@ -223,7 +223,7 @@ class BackupDatabase extends Command
         $cutoff = now()->subDays(self::RETENTION_DAYS)->getTimestamp();
         $pruned = 0;
 
-        foreach (glob($dir . DIRECTORY_SEPARATOR . 'backup_*.sql.gz') as $file) {
+        foreach (glob($dir.DIRECTORY_SEPARATOR.'backup_*.sql.gz') as $file) {
             if (filemtime($file) < $cutoff) {
                 unlink($file);
                 $pruned++;
@@ -232,7 +232,7 @@ class BackupDatabase extends Command
 
         if ($pruned > 0) {
             Log::info('BackupDatabase: pruned old backups', ['count' => $pruned, 'days' => self::RETENTION_DAYS]);
-            $this->info("Pruned {$pruned} backup(s) older than " . self::RETENTION_DAYS . ' days.');
+            $this->info("Pruned {$pruned} backup(s) older than ".self::RETENTION_DAYS.' days.');
         }
     }
 }

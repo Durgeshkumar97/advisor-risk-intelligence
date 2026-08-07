@@ -4,7 +4,6 @@ namespace App\Actions\Payments;
 
 use App\Models\Payment;
 use App\Models\Subscription;
-
 use Illuminate\Support\Facades\Log;
 
 class CreateSubscriptionFromPaymentAction
@@ -19,7 +18,7 @@ class CreateSubscriptionFromPaymentAction
 
         $plan = $payment->plan;
 
-        if (!$plan) {
+        if (! $plan) {
 
             Log::error(
                 'CreateSubscriptionFromPaymentAction: plan not found.',
@@ -86,8 +85,8 @@ class CreateSubscriptionFromPaymentAction
         Log::info(
             'CreateSubscriptionFromPaymentAction: subscription created.',
             [
-                'user_id'      => $payment->user_id,
-                'plan_id'      => $payment->plan_id,
+                'user_id' => $payment->user_id,
+                'plan_id' => $payment->plan_id,
                 'duration_days' => $durationDays,
             ]
         );

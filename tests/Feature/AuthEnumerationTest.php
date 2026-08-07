@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\RateLimiter;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
@@ -46,19 +45,19 @@ describe('/login no longer distinguishes a deactivated account from a nonexisten
         $deactivated->delete();
 
         $this->post(route('login'), [
-            'email'    => $active->email,
+            'email' => $active->email,
             'password' => 'wrong-password',
         ])->assertSessionHasErrors('email');
         $wrongPasswordMessage = session('errors')->first('email');
 
         $this->post(route('login'), [
-            'email'    => 'nobody-'.uniqid().'@example.com',
+            'email' => 'nobody-'.uniqid().'@example.com',
             'password' => 'whatever',
         ])->assertSessionHasErrors('email');
         $nonExistentMessage = session('errors')->first('email');
 
         $this->post(route('login'), [
-            'email'    => $deactivated->email,
+            'email' => $deactivated->email,
             'password' => 'correct-password',
         ])->assertSessionHasErrors('email');
         $deactivatedMessage = session('errors')->first('email');
@@ -74,13 +73,13 @@ describe('/login no longer distinguishes a deactivated account from a nonexisten
 
         for ($i = 0; $i < 5; $i++) {
             $this->post(route('login'), [
-                'email'    => $deactivated->email,
+                'email' => $deactivated->email,
                 'password' => 'whatever',
             ]);
         }
 
         $response = $this->post(route('login'), [
-            'email'    => $deactivated->email,
+            'email' => $deactivated->email,
             'password' => 'whatever',
         ]);
 
@@ -106,12 +105,13 @@ describe('/login no longer distinguishes a deactivated account from a nonexisten
         $time = function (string $email, string $password): float {
             $start = microtime(true);
             test()->post(route('login'), ['email' => $email, 'password' => $password]);
+
             return (microtime(true) - $start) * 1000;
         };
 
-        $deactivatedMs   = $time($deactivated->email, 'whatever');
+        $deactivatedMs = $time($deactivated->email, 'whatever');
         $wrongPasswordMs = $time($active->email, 'wrong-password');
-        $nonExistentMs   = $time('nobody-'.uniqid().'@example.com', 'whatever');
+        $nonExistentMs = $time('nobody-'.uniqid().'@example.com', 'whatever');
 
         expect($deactivatedMs)->toBeGreaterThan(100);
         expect($wrongPasswordMs)->toBeGreaterThan(100);

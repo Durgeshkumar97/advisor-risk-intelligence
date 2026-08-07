@@ -107,8 +107,8 @@ class StockRiskService
 
             Log::error('StockRiskService: classifyBatch() called with a batch exceeding the hard cap — the caller should have enforced its own limit before reaching here.', [
                 'requested_count' => $requested->count(),
-                'max_allowed'     => self::MAX_BATCH_SYMBOLS,
-                'caller'          => $this->formatCallerFrame($caller),
+                'max_allowed' => self::MAX_BATCH_SYMBOLS,
+                'caller' => $this->formatCallerFrame($caller),
             ]);
 
             return $requested->mapWithKeys(fn ($symbol) => [$symbol => $this->unavailable()])->all();
@@ -135,7 +135,7 @@ class StockRiskService
             foreach ($misses as $symbol) {
                 $result = $fetched[$this->normalize($symbol)] ?? $this->unavailable();
 
-                if (!$result['unavailable']) {
+                if (! $result['unavailable']) {
                     // Stale results get a short TTL: risk_service already told us this
                     // data is old, so we shouldn't lock in that staleness locally for
                     // as long as a fresh result — recheck soon in case it recovers.
@@ -163,8 +163,8 @@ class StockRiskService
      * One batched POST /stock-risk call.
      *
      * @param  array<int, string>  $symbols  Normalized (trimmed, uppercased) symbols
-     * @return array<string, array>  Parsed results keyed by normalized symbol;
-     *                               empty when the service can't be used at all.
+     * @return array<string, array> Parsed results keyed by normalized symbol;
+     *                              empty when the service can't be used at all.
      */
     protected function fetchBatch(array $symbols): array
     {
@@ -181,11 +181,11 @@ class StockRiskService
         try {
             $response = Http::timeout($perAttemptTimeout)
                 ->retry($attempts, $retryDelayMs, fn ($exception) => $exception instanceof ConnectionException, throw: false)
-                ->post($this->url . '/stock-risk', [
+                ->post($this->url.'/stock-risk', [
                     'holdings' => array_map(fn ($symbol) => ['symbol' => $symbol], $symbols),
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('StockRiskService: risk_service returned an error response.', [
                     'status' => $response->status(),
                     'symbols' => $symbols,
@@ -195,7 +195,7 @@ class StockRiskService
             }
 
             return collect($response->json('results') ?? [])
-                ->filter(fn ($result) => is_array($result) && !empty($result['symbol']))
+                ->filter(fn ($result) => is_array($result) && ! empty($result['symbol']))
                 ->keyBy(fn ($result) => $this->normalize($result['symbol']))
                 ->map(fn ($result) => $this->parse($result))
                 ->all();
@@ -221,8 +221,8 @@ class StockRiskService
         // schemas.py declares risk_level Optional, with `error` set instead.
         // Anything outside the Low/Medium/High contract is unavailable —
         // never coerced into a number.
-        if (!in_array($riskLevel, self::RISK_LEVELS, true)) {
-            if (!empty($raw['error'])) {
+        if (! in_array($riskLevel, self::RISK_LEVELS, true)) {
+            if (! empty($raw['error'])) {
                 Log::warning('StockRiskService: symbol classification failed upstream.', [
                     'symbol' => $raw['symbol'] ?? null,
                     'error' => $raw['error'],
@@ -295,7 +295,7 @@ class StockRiskService
         }
 
         $function = $frame['function'] ?? 'unknown';
-        $class    = $frame['class'] ?? null;
+        $class = $frame['class'] ?? null;
 
         return $class ? "{$class}::{$function}()" : "{$function}()";
     }
@@ -307,6 +307,6 @@ class StockRiskService
 
     protected function cacheKey(string $symbol): string
     {
-        return 'stock_risk:' . $this->normalize($symbol) . ':' . now()->toDateString();
+        return 'stock_risk:'.$this->normalize($symbol).':'.now()->toDateString();
     }
 }

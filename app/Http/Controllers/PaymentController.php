@@ -37,7 +37,7 @@ class PaymentController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $rateKey = 'payment-create:' . $request->ip();
+        $rateKey = 'payment-create:'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($rateKey, 10)) {
 
@@ -67,10 +67,10 @@ class PaymentController extends Controller
         try {
 
             $validated = $request->validate([
-                'name'  => ['required', 'string', 'max:255'],
+                'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email:rfc,dns', 'max:255'],
                 'phone' => ['required', 'string', 'min:7', 'max:20'],
-                'plan'  => ['required', 'string', 'exists:plans,slug'],
+                'plan' => ['required', 'string', 'exists:plans,slug'],
             ]);
         } catch (ValidationException $e) {
 
@@ -110,20 +110,20 @@ class PaymentController extends Controller
                 ->execute($plan, $validated);
 
             return response()->json([
-                'success'  => true,
+                'success' => true,
                 'order_id' => $payment->order_id,
-                'amount'   => (int) round($payment->amount * 100),  // paise
+                'amount' => (int) round($payment->amount * 100),  // paise
                 'currency' => 'INR',
-                'key'      => config('services.razorpay.key'),
+                'key' => config('services.razorpay.key'),
             ]);
         } catch (\Throwable $e) {
 
             Log::error('Payment create: order creation failed', [
-                'ip'      => $request->ip(),
-                'plan'    => $validated['plan'],
+                'ip' => $request->ip(),
+                'plan' => $validated['plan'],
                 'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 // Do NOT log full trace in production — too verbose; use Sentry/Flare instead
             ]);
 
@@ -207,10 +207,10 @@ class PaymentController extends Controller
 
             Log::error('Payment failure: status update failed', [
                 'order_id' => $validated['order_id'] ?? null,
-                'ip'       => $request->ip(),
-                'message'  => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
+                'ip' => $request->ip(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return response()->json(

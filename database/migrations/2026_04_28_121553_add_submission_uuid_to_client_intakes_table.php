@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::table('client_intakes', function (Blueprint $table) {
 
             $table->uuid('submission_uuid')
-                  ->nullable()
-                  ->after('id');
+                ->nullable()
+                ->after('id');
 
         });
     }
@@ -25,4 +25,4 @@ return new class extends Migration
 
         });
     }
-}; 
+};

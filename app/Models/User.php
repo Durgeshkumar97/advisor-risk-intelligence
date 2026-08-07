@@ -33,13 +33,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'      => 'datetime',
-            'last_login_at'          => 'datetime',
+            'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'login_token_expires_at' => 'datetime',
             'onboarding_completed' => 'boolean',
-            'email_reports'        => 'boolean',
-            'is_admin'             => 'boolean',
-            'password'             => 'hashed',
+            'email_reports' => 'boolean',
+            'is_admin' => 'boolean',
+            'password' => 'hashed',
         ];
     }
 
@@ -71,7 +71,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Payment::class);
     }
-
 
     /*
     |--------------------------------------------------------------------------

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Rules\PortfolioFileType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -14,14 +13,14 @@ use Illuminate\Support\Facades\Validator;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
 function portfolioFileTypeUpload(string $content, string $originalName): UploadedFile
 {
     $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-    $tmpPath   = tempnam(sys_get_temp_dir(), 'porttype_') . '.' . $extension;
+    $tmpPath = tempnam(sys_get_temp_dir(), 'porttype_').'.'.$extension;
     file_put_contents($tmpPath, $content);
 
     return new UploadedFile($tmpPath, $originalName, null, null, true);
@@ -29,8 +28,8 @@ function portfolioFileTypeUpload(string $content, string $originalName): Uploade
 
 function portfolioFileTypeMinimalZip(): string
 {
-    $tmp = tempnam(sys_get_temp_dir(), 'zip_') . '.zip';
-    $zip = new \ZipArchive();
+    $tmp = tempnam(sys_get_temp_dir(), 'zip_').'.zip';
+    $zip = new \ZipArchive;
     $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
     $zip->addFromString('holding.csv', "name,asset_type,current_value\nAlice,stock,1000\nBob,stock,2000\nCarol,stock,3000\n");
     $zip->close();
@@ -67,12 +66,12 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
 
     it('validates xlsx, pdf, zip, and disguised non-csv payloads identically to the old mimes: rule (parity check)', function () {
         $samples = [
-            'valid xlsx'             => [minimalValidXlsxContent(), 'file.xlsx'],
-            'valid pdf'              => ["%PDF-1.4\n%useless\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>", 'file.pdf'],
-            'valid zip'              => [portfolioFileTypeMinimalZip(), 'file.zip'],
-            'random binary as xlsx'  => [random_bytes(200), 'file.xlsx'],
-            'random binary as xls'   => [random_bytes(200), 'file.xls'],
-            'php payload as pdf'     => ["<?php echo 1; ?>", 'file.pdf'],
+            'valid xlsx' => [minimalValidXlsxContent(), 'file.xlsx'],
+            'valid pdf' => ["%PDF-1.4\n%useless\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>", 'file.pdf'],
+            'valid zip' => [portfolioFileTypeMinimalZip(), 'file.zip'],
+            'random binary as xlsx' => [random_bytes(200), 'file.xlsx'],
+            'random binary as xls' => [random_bytes(200), 'file.xls'],
+            'php payload as pdf' => ['<?php echo 1; ?>', 'file.pdf'],
             'multi-row csv (5 rows)' => ["name,asset_type,current_value\nA,stock,1\nB,stock,2\nC,stock,3\nD,stock,4\nE,stock,5\n", 'file.csv'],
         ];
 
@@ -86,7 +85,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
 
             $newFails = Validator::make(
                 ['file' => $file],
-                ['file' => new PortfolioFileType()]
+                ['file' => new PortfolioFileType]
             )->fails();
 
             expect($newFails)->toBe($oldFails, sprintf(
@@ -126,7 +125,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
         // doesn't catch it and execution reaches guessExtension()/
         // getMimeType() on a file that doesn't actually exist/isn't readable.
         $file = new UploadedFile(
-            '/tmp/nonexistent_failed_upload_' . uniqid(),
+            '/tmp/nonexistent_failed_upload_'.uniqid(),
             'portfolio.csv',
             'text/csv',
             UPLOAD_ERR_INI_SIZE,
@@ -138,7 +137,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
 
         $validator = Validator::make(
             ['file' => $file],
-            ['file' => new PortfolioFileType()]
+            ['file' => new PortfolioFileType]
         );
 
         expect($validator->fails())->toBeTrue();
@@ -157,7 +156,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
 
     it('contentMatchesAllowedType() reports unacceptable rather than throwing for an unreadable file', function () {
         $file = new \Symfony\Component\HttpFoundation\File\File(
-            '/tmp/nonexistent_' . uniqid() . '.csv',
+            '/tmp/nonexistent_'.uniqid().'.csv',
             false
         );
 

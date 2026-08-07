@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\PortfolioUploadException;
 use App\Http\Requests\StorePortfolioUploadRequest;
 use App\Jobs\ProcessPortfolioFile;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\Subscription;
-use App\Exceptions\PortfolioUploadException;
 use App\Services\PortfolioUploadService;
-
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortfolioUploadController extends Controller
@@ -39,8 +36,9 @@ class PortfolioUploadController extends Controller
     |
     */
 
-    private const MAX_ZIP_ENTRIES             = 2000;
-    private const MAX_ZIP_UNCOMPRESSED_BYTES  = 500 * 1024 * 1024;
+    private const MAX_ZIP_ENTRIES = 2000;
+
+    private const MAX_ZIP_UNCOMPRESSED_BYTES = 500 * 1024 * 1024;
 
     public function __construct(
         private readonly PortfolioUploadService $uploadService
@@ -61,15 +59,15 @@ class PortfolioUploadController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription || (!$subscription->isActive() && !$subscription->isTrial() && !$subscription->isInGracePeriod())) {
+        if (! $subscription || (! $subscription->isActive() && ! $subscription->isTrial() && ! $subscription->isInGracePeriod())) {
             return redirect()->route('pricing')
                 ->with('error', 'An active subscription is required to upload portfolios.');
         }
 
-        $plan               = $subscription->plan;
+        $plan = $subscription->plan;
         $monthlyClientLimit = $plan->monthly_client_limit ?? 50;
         $monthlyClientCount = PortfolioFile::monthlyClientCount($user->id);
-        $monthlyResetDate   = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+        $monthlyResetDate = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
 
         $portfolios = Portfolio::query()
             ->where('user_id', $user->id)
@@ -83,12 +81,12 @@ class PortfolioUploadController extends Controller
             ->get();
 
         return view('portfolio.upload', [
-            'portfolios'         => $portfolios,
-            'files'              => $files,
+            'portfolios' => $portfolios,
+            'files' => $files,
             'monthlyClientCount' => $monthlyClientCount,
             'monthlyClientLimit' => $monthlyClientLimit,
-            'monthlyResetDate'   => $monthlyResetDate,
-            'planName'           => $plan->name ?? 'Unknown',
+            'monthlyResetDate' => $monthlyResetDate,
+            'planName' => $plan->name ?? 'Unknown',
         ]);
     }
 
@@ -107,35 +105,36 @@ class PortfolioUploadController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription || (!$subscription->isActive() && !$subscription->isTrial() && !$subscription->isInGracePeriod())) {
+        if (! $subscription || (! $subscription->isActive() && ! $subscription->isTrial() && ! $subscription->isInGracePeriod())) {
             return redirect()->route('pricing')
                 ->with('error', 'An active subscription is required to upload portfolios.');
         }
 
         // Monthly client limit check.
         // NOTE: race window — concurrent uploads from the same user could both pass this check simultaneously.
-        $limit        = $subscription->plan?->monthly_client_limit ?? 50;
+        $limit = $subscription->plan?->monthly_client_limit ?? 50;
         $currentCount = PortfolioFile::monthlyClientCount($user->id);
-        $resetDate    = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+        $resetDate = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
 
         if (strtolower($request->getFile()->getClientOriginalExtension()) === 'zip') {
             $zipMeta = $this->peekZipMetadata($request->getFile()->getRealPath());
 
             if ($zipMeta['entry_count'] > self::MAX_ZIP_ENTRIES) {
                 return back()
-                    ->withErrors(['file' => 'This ZIP contains too many files (' . number_format($zipMeta['entry_count']) . '). Maximum allowed is ' . number_format(self::MAX_ZIP_ENTRIES) . ' — please split it into smaller batches.'])
+                    ->withErrors(['file' => 'This ZIP contains too many files ('.number_format($zipMeta['entry_count']).'). Maximum allowed is '.number_format(self::MAX_ZIP_ENTRIES).' — please split it into smaller batches.'])
                     ->withInput();
             }
 
             if ($zipMeta['total_uncompressed_size'] !== null && $zipMeta['total_uncompressed_size'] > self::MAX_ZIP_UNCOMPRESSED_BYTES) {
                 return back()
-                    ->withErrors(['file' => 'This ZIP is too large once uncompressed (over ' . number_format(self::MAX_ZIP_UNCOMPRESSED_BYTES / 1048576) . 'MB). Please split it into smaller batches.'])
+                    ->withErrors(['file' => 'This ZIP is too large once uncompressed (over '.number_format(self::MAX_ZIP_UNCOMPRESSED_BYTES / 1048576).'MB). Please split it into smaller batches.'])
                     ->withInput();
             }
 
             $peekCount = $zipMeta['client_count'];
             if ($peekCount > 0 && $currentCount + $peekCount > $limit) {
                 $remaining = max(0, $limit - $currentCount);
+
                 return back()
                     ->withErrors(['file' => "Monthly limit reached ({$currentCount}/{$limit} clients used this month). This ZIP has {$peekCount} client(s) but only {$remaining} slot(s) remain. Resets {$resetDate}."])
                     ->withInput();
@@ -148,8 +147,8 @@ class PortfolioUploadController extends Controller
 
         try {
             $portfolioFile = $this->uploadService->handleUpload(
-                userId:      $user->id,
-                file:        $request->getFile(),
+                userId: $user->id,
+                file: $request->getFile(),
                 portfolioId: $request->getPortfolioId(),
             );
 
@@ -172,7 +171,7 @@ class PortfolioUploadController extends Controller
         } catch (\Throwable $e) {
             Log::error('Portfolio upload failed unexpectedly.', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
             ]);
 
@@ -195,12 +194,12 @@ class PortfolioUploadController extends Controller
      * untrusted upload before committing any disk/CPU work to it.
      *
      * @return array{opened: bool, entry_count: int, total_uncompressed_size: ?int, client_count: int}
-     *   total_uncompressed_size is null when entry_count already exceeded
-     *   MAX_ZIP_ENTRIES — rejected before the summing loop even starts.
+     *                                                                                                 total_uncompressed_size is null when entry_count already exceeded
+     *                                                                                                 MAX_ZIP_ENTRIES — rejected before the summing loop even starts.
      */
     private function peekZipMetadata(string $zipPath): array
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
 
         if ($zip->open($zipPath) !== true) {
             return ['opened' => false, 'entry_count' => 0, 'total_uncompressed_size' => 0, 'client_count' => 0];
@@ -217,14 +216,14 @@ class PortfolioUploadController extends Controller
             return ['opened' => true, 'entry_count' => $entryCount, 'total_uncompressed_size' => null, 'client_count' => 0];
         }
 
-        $allowed     = ['csv', 'xlsx', 'xls', 'pdf'];
+        $allowed = ['csv', 'xlsx', 'xls', 'pdf'];
         $clientCount = 0;
-        $totalSize   = 0;
+        $totalSize = 0;
 
         for ($i = 0; $i < $entryCount; $i++) {
             $stat = $zip->statIndex($i);
 
-            if (!$stat) {
+            if (! $stat) {
                 continue;
             }
 
@@ -280,18 +279,18 @@ class PortfolioUploadController extends Controller
 
             Log::info('Portfolio file deleted by user.', [
                 'portfolio_file_id' => $id,
-                'user_id'           => $user->id,
+                'user_id' => $user->id,
             ]);
 
             return redirect()
                 ->route('portfolio.upload')
-                ->with('success', 'File "' . $file->original_name . '" deleted.');
+                ->with('success', 'File "'.$file->original_name.'" deleted.');
 
         } catch (\Throwable $e) {
             Log::error('Portfolio file deletion failed.', [
                 'portfolio_file_id' => $id,
-                'user_id'           => $user->id,
-                'message'           => $e->getMessage(),
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
             ]);
 
             return back()->with('error', 'Deletion failed. Please try again.');

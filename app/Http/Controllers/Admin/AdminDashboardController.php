@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Lead;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\PortfolioFile;
 use App\Models\Subscription;
 use App\Models\User;
-
 use Illuminate\Support\Carbon;
 
 class AdminDashboardController extends Controller
@@ -23,10 +21,10 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $plans        = Plan::pluck('price', 'slug');
+        $plans = Plan::pluck('price', 'slug');
         $starterPrice = $plans['starter'] ?? 999;
-        $proPrice     = $plans['pro']     ?? 2499;
-        $teamPrice    = $plans['team']    ?? 4999;
+        $proPrice = $plans['pro'] ?? 2499;
+        $teamPrice = $plans['team'] ?? 4999;
 
         /*
         |--------------------------------------------------------------------------
@@ -34,8 +32,8 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalUsers   = User::count();
-        $adminCount   = User::where('is_admin', true)->count();
+        $totalUsers = User::count();
+        $adminCount = User::where('is_admin', true)->count();
         $newUsersWeek = User::where('created_at', '>=', now()->subDays(7))->count();
 
         /*
@@ -44,9 +42,9 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalLeads   = Lead::count();
+        $totalLeads = Lead::count();
         $activeTrials = Subscription::where('status', 'trial')->count();
-        $paidUsers    = Subscription::where('status', 'active')->count();
+        $paidUsers = Subscription::where('status', 'active')->count();
         $expiredUsers = Subscription::where('status', 'expired')->count();
 
         /*
@@ -59,7 +57,7 @@ class AdminDashboardController extends Controller
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->sum('plans.price');
 
-        $arr          = $mrr * 12;
+        $arr = $mrr * 12;
         $totalRevenue = (float) Payment::where('status', Payment::STATUS_PAID)->sum('amount');
 
         /*
@@ -69,7 +67,7 @@ class AdminDashboardController extends Controller
         */
 
         $pipelineMRR = $totalLeads * $starterPrice;
-        $conversion  = $totalLeads > 0
+        $conversion = $totalLeads > 0
             ? round(($paidUsers / $totalLeads) * 100)
             : 0;
 
@@ -94,9 +92,9 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $cac         = 320;
-        $ltv         = $mrr > 0 ? $mrr * 8 : 0;
-        $ltvCac      = $cac > 0 ? round($ltv / $cac, 1) : 0;
+        $cac = 320;
+        $ltv = $mrr > 0 ? $mrr * 8 : 0;
+        $ltvCac = $cac > 0 ? round($ltv / $cac, 1) : 0;
         $runwayMonths = 17;
 
         /*
@@ -105,9 +103,9 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalPortfolioFiles     = PortfolioFile::count();
-        $processingFiles         = PortfolioFile::where('status', PortfolioFile::STATUS_PROCESSING)->count();
-        $failedFiles             = PortfolioFile::where('status', PortfolioFile::STATUS_FAILED)->count();
+        $totalPortfolioFiles = PortfolioFile::count();
+        $processingFiles = PortfolioFile::where('status', PortfolioFile::STATUS_PROCESSING)->count();
+        $failedFiles = PortfolioFile::where('status', PortfolioFile::STATUS_FAILED)->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -148,14 +146,14 @@ class AdminDashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $threatScore          = 0;
-        $riskLevel            = 'LOW';
-        $riskColor            = '#22c55e';
-        $topAttacker          = null;
-        $aiRecommendation     = 'All systems stable.';
-        $threatAttemptsToday  = 0;
-        $unknownIpAlerts      = 0;
-        $lastLogin            = Auth()->user()?->last_login_at?->format('d M Y, h:i A');
+        $threatScore = 0;
+        $riskLevel = 'LOW';
+        $riskColor = '#22c55e';
+        $topAttacker = null;
+        $aiRecommendation = 'All systems stable.';
+        $threatAttemptsToday = 0;
+        $unknownIpAlerts = 0;
+        $lastLogin = Auth()->user()?->last_login_at?->format('d M Y, h:i A');
         $recentSecurityEvents = collect();
 
         /*

@@ -26,7 +26,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
-            'phone'         => ['nullable', 'string', 'min:10', 'max:20'],
+            'phone' => ['nullable', 'string', 'min:10', 'max:20'],
             'email_reports' => ['sometimes', 'boolean'],
         ];
     }

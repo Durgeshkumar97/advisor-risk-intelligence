@@ -11,21 +11,21 @@ uses(\Tests\TestCase::class);
 
 function makeAsset(array $attrs): PortfolioAsset
 {
-    return (new PortfolioAsset())->forceFill(array_merge([
-        'asset_type'     => 'stock',
-        'name'           => 'Test Asset',
-        'quantity'       => 1,
-        'buy_price'      => 0,
-        'current_price'  => 0,
-        'symbol'         => null,
-        'isin'           => null,
-        'risk_level'     => 'MEDIUM',
+    return (new PortfolioAsset)->forceFill(array_merge([
+        'asset_type' => 'stock',
+        'name' => 'Test Asset',
+        'quantity' => 1,
+        'buy_price' => 0,
+        'current_price' => 0,
+        'symbol' => null,
+        'isin' => null,
+        'risk_level' => 'MEDIUM',
     ], $attrs));
 }
 
 function calc(): PortfolioRiskCalculator
 {
-    return new PortfolioRiskCalculator();
+    return new PortfolioRiskCalculator;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,8 +98,8 @@ it('sets HIGH_CONCENTRATION flag when one asset dominates the portfolio', functi
     // 3 assets: 900 / 50 / 50 → concentration score ≈ 72%
     $assets = collect([
         makeAsset(['current_value' => 900, 'invested_value' => 900, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  50, 'invested_value' =>  50, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  50, 'invested_value' =>  50, 'risk_score' => 65]),
+        makeAsset(['current_value' => 50, 'invested_value' => 50, 'risk_score' => 65]),
+        makeAsset(['current_value' => 50, 'invested_value' => 50, 'risk_score' => 65]),
     ]);
 
     expect(calc()->calculate($assets)['risk_flags'])->toContain('HIGH_CONCENTRATION');
@@ -109,10 +109,10 @@ it('sets MODERATE_CONCENTRATION flag for an uneven but not extreme split', funct
     // 5 assets: 700 / 75 / 75 / 75 / 75 → concentration score ≈ 39%
     $assets = collect([
         makeAsset(['current_value' => 700, 'invested_value' => 700, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  75, 'invested_value' =>  75, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  75, 'invested_value' =>  75, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  75, 'invested_value' =>  75, 'risk_score' => 65]),
-        makeAsset(['current_value' =>  75, 'invested_value' =>  75, 'risk_score' => 65]),
+        makeAsset(['current_value' => 75, 'invested_value' => 75, 'risk_score' => 65]),
+        makeAsset(['current_value' => 75, 'invested_value' => 75, 'risk_score' => 65]),
+        makeAsset(['current_value' => 75, 'invested_value' => 75, 'risk_score' => 65]),
+        makeAsset(['current_value' => 75, 'invested_value' => 75, 'risk_score' => 65]),
     ]);
 
     $flags = calc()->calculate($assets)['risk_flags'];
@@ -149,7 +149,7 @@ it('sets UNDERWEIGHTED_EQUITY flag when equity is less than 10% of the portfolio
     // 950 in bonds + 50 in stock
     $assets = collect([
         makeAsset(['asset_type' => 'bond', 'current_value' => 950, 'invested_value' => 950, 'risk_score' => 15]),
-        makeAsset(['asset_type' => 'stock', 'current_value' =>  50, 'invested_value' =>  50, 'risk_score' => 65]),
+        makeAsset(['asset_type' => 'stock', 'current_value' => 50, 'invested_value' => 50, 'risk_score' => 65]),
     ]);
 
     expect(calc()->calculate($assets)['risk_flags'])->toContain('UNDERWEIGHTED_EQUITY');
@@ -329,8 +329,8 @@ it('next_action returns the default message when no special condition is trigger
         makeAsset(['asset_type' => 'mutual_fund', 'current_value' => 210, 'invested_value' => 210, 'risk_score' => 45]),
         makeAsset(['asset_type' => 'mutual_fund', 'current_value' => 210, 'invested_value' => 210, 'risk_score' => 45]),
         makeAsset(['asset_type' => 'mutual_fund', 'current_value' => 210, 'invested_value' => 210, 'risk_score' => 45]),
-        makeAsset(['asset_type' => 'bond',        'current_value' =>  80, 'invested_value' =>  80, 'risk_score' => 15]),
-        makeAsset(['asset_type' => 'bond',        'current_value' =>  80, 'invested_value' =>  80, 'risk_score' => 15]),
+        makeAsset(['asset_type' => 'bond',        'current_value' => 80, 'invested_value' => 80, 'risk_score' => 15]),
+        makeAsset(['asset_type' => 'bond',        'current_value' => 80, 'invested_value' => 80, 'risk_score' => 15]),
     ]);
 
     config(['risk.low_threshold' => 30, 'risk.high_threshold' => 70]);

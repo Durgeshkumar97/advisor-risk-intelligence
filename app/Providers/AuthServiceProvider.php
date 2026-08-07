@@ -16,7 +16,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        Portfolio::class     => PortfolioPolicy::class,
+        Portfolio::class => PortfolioPolicy::class,
         PortfolioFile::class => PortfolioFilePolicy::class,
     ];
 

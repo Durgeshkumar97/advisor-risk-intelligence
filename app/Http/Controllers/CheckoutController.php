@@ -47,15 +47,15 @@ class CheckoutController extends Controller
 
             if ($existing) {
                 return view('checkout-already-subscribed', [
-                    'plan'         => $plan,
+                    'plan' => $plan,
                     'subscription' => $existing,
-                    'currentPlan'  => $existing->plan,
+                    'currentPlan' => $existing->plan,
                 ]);
             }
         }
 
         return view('checkout', [
-            'plan'        => $plan,
+            'plan' => $plan,
             'razorpayKey' => config('services.razorpay.key'),
         ]);
     }
@@ -79,10 +79,11 @@ class CheckoutController extends Controller
 
     public function success(Request $request): JsonResponse
     {
-        $rateKey = 'checkout-success:' . $request->ip();
+        $rateKey = 'checkout-success:'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($rateKey, 15)) {
             Log::warning('Checkout success: rate limit exceeded', ['ip' => $request->ip()]);
+
             return response()->json(
                 ['success' => false, 'message' => 'Too many attempts. Please wait.'],
                 Response::HTTP_TOO_MANY_REQUESTS
@@ -94,8 +95,8 @@ class CheckoutController extends Controller
         try {
             $validated = $request->validate([
                 'razorpay_payment_id' => ['required', 'string', 'max:255'],
-                'razorpay_order_id'   => ['required', 'string', 'max:255'],
-                'razorpay_signature'  => ['required', 'string', 'max:500'],
+                'razorpay_order_id' => ['required', 'string', 'max:255'],
+                'razorpay_signature' => ['required', 'string', 'max:500'],
             ]);
         } catch (ValidationException $e) {
             return response()->json(
@@ -108,20 +109,22 @@ class CheckoutController extends Controller
             $payment = app(VerifyRazorpayPayment::class)->execute($validated);
         } catch (ValidationException $e) {
             Log::warning('Checkout success: signature verification failed', [
-                'ip'       => $request->ip(),
+                'ip' => $request->ip(),
                 'order_id' => $validated['razorpay_order_id'],
-                'message'  => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
+
             return response()->json(
                 ['success' => false, 'message' => 'Payment verification failed.'],
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         } catch (\Throwable $e) {
             Log::critical('Checkout success: verification threw unexpected error', [
-                'ip'       => $request->ip(),
+                'ip' => $request->ip(),
                 'order_id' => $validated['razorpay_order_id'],
-                'message'  => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
+
             return response()->json(
                 ['success' => false, 'message' => 'Unable to process payment.'],
                 Response::HTTP_INTERNAL_SERVER_ERROR
@@ -142,15 +145,16 @@ class CheckoutController extends Controller
 
                 $locked->update(['status' => Payment::STATUS_PROCESSING]);
 
-                DB::afterCommit(fn() => ProcessSuccessfulPayment::dispatch($locked->fresh()));
+                DB::afterCommit(fn () => ProcessSuccessfulPayment::dispatch($locked->fresh()));
             });
         } catch (\Throwable $e) {
             Log::critical('Checkout success: transaction/dispatch failed', [
                 'payment_id' => $payment->id,
-                'order_id'   => $validated['razorpay_order_id'],
-                'ip'         => $request->ip(),
-                'message'    => $e->getMessage(),
+                'order_id' => $validated['razorpay_order_id'],
+                'ip' => $request->ip(),
+                'message' => $e->getMessage(),
             ]);
+
             return response()->json(
                 ['success' => false, 'message' => 'Unable to process payment.'],
                 Response::HTTP_INTERNAL_SERVER_ERROR
@@ -178,7 +182,7 @@ class CheckoutController extends Controller
         }
 
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'redirect' => $redirect,
         ]);
     }

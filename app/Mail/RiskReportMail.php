@@ -25,7 +25,7 @@ class RiskReportMail extends Mailable implements ShouldQueue
     {
         $name = $this->portfolioFile->portfolio?->name ?? $this->portfolioFile->original_name;
 
-        return new Envelope(subject: 'Your Risk Report — ' . $name);
+        return new Envelope(subject: 'Your Risk Report — '.$name);
     }
 
     public function content(): Content

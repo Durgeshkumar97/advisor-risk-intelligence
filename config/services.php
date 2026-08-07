@@ -26,13 +26,13 @@ return [
     'founder_email' => env('FOUNDER_EMAIL', 'founder@risksignal.in'),
 
     'razorpay' => [
-        'key'            => env('RAZORPAY_KEY'),
-        'secret'         => env('RAZORPAY_SECRET'),
+        'key' => env('RAZORPAY_KEY'),
+        'secret' => env('RAZORPAY_SECRET'),
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
     'risk_service' => [
-        'url'     => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
+        'url' => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
         'timeout' => (float) env('RISK_SERVICE_TIMEOUT', 2),
     ],
 

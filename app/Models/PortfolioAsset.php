@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class PortfolioAsset extends Model
 {
@@ -114,7 +114,7 @@ class PortfolioAsset extends Model
      */
     public function allocationPercentage()
     {
-        if (!$this->portfolio || $this->portfolio->total_value <= 0) {
+        if (! $this->portfolio || $this->portfolio->total_value <= 0) {
             return 0;
         }
 

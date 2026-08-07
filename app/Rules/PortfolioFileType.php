@@ -44,7 +44,7 @@ class PortfolioFileType implements ValidationRule
     {
         try {
             $detectedExtension = $file->guessExtension();
-            $detectedMimeType  = $file->getMimeType();
+            $detectedMimeType = $file->getMimeType();
         } catch (\Throwable $e) {
             return ['acceptable' => false, 'detectedExtension' => null, 'detectedMimeType' => null];
         }
@@ -53,16 +53,17 @@ class PortfolioFileType implements ValidationRule
             || ($claimedExtension === 'csv' && $detectedMimeType === 'text/plain');
 
         return [
-            'acceptable'        => $acceptable,
+            'acceptable' => $acceptable,
             'detectedExtension' => $detectedExtension,
-            'detectedMimeType'  => $detectedMimeType,
+            'detectedMimeType' => $detectedMimeType,
         ];
     }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$value instanceof UploadedFile || $value->getPath() === '') {
+        if (! $value instanceof UploadedFile || $value->getPath() === '') {
             $fail('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');
+
             return;
         }
 
@@ -70,7 +71,7 @@ class PortfolioFileType implements ValidationRule
 
         $result = self::contentMatchesAllowedType($value, $claimedExtension, self::ALLOWED_EXTENSIONS);
 
-        if (!$result['acceptable']) {
+        if (! $result['acceptable']) {
             $fail('Only PDF, CSV, XLSX, XLS, and ZIP files are allowed.');
         }
     }

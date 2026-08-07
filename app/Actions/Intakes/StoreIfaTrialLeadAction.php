@@ -27,17 +27,17 @@ class StoreIfaTrialLeadAction
     /**
      * @param  array<string, mixed>  $validated
      * @return array{intake: ClientIntake, user: User, created: bool}|null
-     *   Returns null on duplicate submission (existing live user).
+     *                                                                     Returns null on duplicate submission (existing live user).
      */
     public function execute(
         array $validated,
         ?UploadedFile $document = null,
     ): ?array {
-        $documentPath          = null;
-        $newUser               = null;   // captured via reference — read AFTER transaction commits
-        $setPasswordUrl        = null;   // captured via reference — read AFTER transaction commits
-        $committedUser         = null;   // captured via reference — User object for auto-login
-        $restoredExistingUser  = null;   // captured via reference — notified AFTER transaction commits
+        $documentPath = null;
+        $newUser = null;   // captured via reference — read AFTER transaction commits
+        $setPasswordUrl = null;   // captured via reference — read AFTER transaction commits
+        $committedUser = null;   // captured via reference — User object for auto-login
+        $restoredExistingUser = null;   // captured via reference — notified AFTER transaction commits
 
         try {
             $intake = DB::transaction(function () use (
@@ -78,7 +78,7 @@ class StoreIfaTrialLeadAction
                     }
 
                     Log::info('Duplicate IFA free trial lead ignored.', [
-                        'email_hash'    => $this->hashValue($validated['email']),
+                        'email_hash' => $this->hashValue($validated['email']),
                         'whatsapp_hash' => $this->hashValue($validated['whatsapp']),
                     ]);
 
@@ -88,20 +88,20 @@ class StoreIfaTrialLeadAction
                 $documentPath = $this->storeDocument($document);
 
                 $intake = ClientIntake::query()->create([
-                    'submission_uuid'   => (string) Str::uuid(),
-                    'name'              => $validated['advisor_name'],
-                    'email'             => $validated['email'],
-                    'whatsapp'          => $validated['whatsapp'],
-                    'firm_name'         => $validated['firm_name'],
-                    'document_path'     => $documentPath,
-                    'plan'              => null,
-                    'status'            => 'trial',
-                    'trial_started_at'  => now(),
-                    'trial_ends_at'     => now()->addDays($plan->trial_days),
-                    'plan_price'        => 0,
+                    'submission_uuid' => (string) Str::uuid(),
+                    'name' => $validated['advisor_name'],
+                    'email' => $validated['email'],
+                    'whatsapp' => $validated['whatsapp'],
+                    'firm_name' => $validated['firm_name'],
+                    'document_path' => $documentPath,
+                    'plan' => null,
+                    'status' => 'trial',
+                    'trial_started_at' => now(),
+                    'trial_ends_at' => now()->addDays($plan->trial_days),
+                    'plan_price' => 0,
                     'revenue_generated' => 0,
-                    'lead_score'        => 50,
-                    'ai_status'         => 'pending',
+                    'lead_score' => 50,
+                    'ai_status' => 'pending',
                 ]);
 
                 $result = $this->restoreOrCreateTrialUser($validated);
@@ -111,16 +111,16 @@ class StoreIfaTrialLeadAction
 
                 if ($result['created']) {
                     Portfolio::create([
-                        'user_id'     => $user->id,
-                        'name'        => 'My Portfolio',
+                        'user_id' => $user->id,
+                        'name' => 'My Portfolio',
                         'total_value' => 0,
-                        'risk_score'  => 0,
-                        'risk_level'  => 'LOW',
+                        'risk_score' => 0,
+                        'risk_level' => 'LOW',
                     ]);
 
-                    $resetToken     = Password::broker()->createToken($user);
+                    $resetToken = Password::broker()->createToken($user);
                     $setPasswordUrl = route('password.reset', ['token' => $resetToken])
-                        . '?email=' . urlencode($user->email);
+                        .'?email='.urlencode($user->email);
                     $newUser = $user;
                 }
 
@@ -128,9 +128,9 @@ class StoreIfaTrialLeadAction
 
                 Log::info('IFA free trial lead stored.', [
                     'client_intake_id' => $intake->getKey(),
-                    'submission_uuid'  => $intake->submission_uuid,
-                    'email_hash'       => $this->hashValue($intake->email),
-                    'user_id'          => $user->id,
+                    'submission_uuid' => $intake->submission_uuid,
+                    'email_hash' => $this->hashValue($intake->email),
+                    'user_id' => $user->id,
                     'user_was_created' => $result['created'],
                     'user_was_restored' => $result['restored'],
                 ]);
@@ -144,7 +144,7 @@ class StoreIfaTrialLeadAction
 
             Log::error('IFA free trial lead storage failed.', [
                 'email_hash' => $this->hashValue($validated['email'] ?? null),
-                'message'    => $exception->getMessage(),
+                'message' => $exception->getMessage(),
             ]);
 
             throw $exception;
@@ -165,8 +165,8 @@ class StoreIfaTrialLeadAction
         }
 
         return [
-            'intake'  => $intake,
-            'user'    => $committedUser,
+            'intake' => $intake,
+            'user' => $committedUser,
             'created' => $newUser !== null,
         ];
     }
@@ -216,7 +216,7 @@ class StoreIfaTrialLeadAction
         return $this->accounts->findRestoreOrCreateUserByEmail(
             $validated['email'],
             [
-                'name'     => $validated['advisor_name'],
+                'name' => $validated['advisor_name'],
                 'password' => Hash::make(str()->random(32)),
             ],
             [
@@ -232,10 +232,10 @@ class StoreIfaTrialLeadAction
         }
 
         $user->subscriptions()->create([
-            'plan_id'          => $plan->id,
-            'status'           => 'trial',
+            'plan_id' => $plan->id,
+            'status' => 'trial',
             'trial_started_at' => now(),
-            'trial_ends_at'    => now()->addDays($plan->trial_days),
+            'trial_ends_at' => now()->addDays($plan->trial_days),
         ]);
     }
 

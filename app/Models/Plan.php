@@ -36,18 +36,18 @@ class Plan extends Model
     */
 
     protected $casts = [
-        'price'              => 'decimal:2',
-        'duration_days'      => 'integer',
-        'portfolio_limit'       => 'integer',
-        'monthly_client_limit'  => 'integer',
-        'trial_days'            => 'integer',
-        'daily_reports'      => 'boolean',
-        'client_script'      => 'boolean',
-        'whatsapp_delivery'  => 'boolean',
-        'branded_pdf'        => 'boolean',
-        'priority_support'   => 'boolean',
-        'multi_advisor'      => 'boolean',
-        'is_active'          => 'boolean',
+        'price' => 'decimal:2',
+        'duration_days' => 'integer',
+        'portfolio_limit' => 'integer',
+        'monthly_client_limit' => 'integer',
+        'trial_days' => 'integer',
+        'daily_reports' => 'boolean',
+        'client_script' => 'boolean',
+        'whatsapp_delivery' => 'boolean',
+        'branded_pdf' => 'boolean',
+        'priority_support' => 'boolean',
+        'multi_advisor' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /*

@@ -22,10 +22,10 @@ class Subscription extends Model
 
     protected $casts = [
         'trial_started_at' => 'datetime',
-        'trial_ends_at'    => 'datetime',
-        'starts_at'        => 'datetime',
-        'ends_at'          => 'datetime',
-        'renewal_at'       => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'renewal_at' => 'datetime',
     ];
 
     /*
@@ -90,7 +90,7 @@ class Subscription extends Model
 
     public function isInGracePeriod(): bool
     {
-        if (!$this->isExpired()) {
+        if (! $this->isExpired()) {
             return false;
         }
 
@@ -102,7 +102,7 @@ class Subscription extends Model
     {
         $end = $this->ends_at ?? $this->trial_ends_at;
 
-        if (!$end || $end->isPast()) {
+        if (! $end || $end->isPast()) {
             return 0;
         }
 

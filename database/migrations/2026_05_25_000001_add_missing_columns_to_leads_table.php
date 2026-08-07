@@ -18,23 +18,23 @@ return new class extends Migration
     {
         Schema::table('leads', function (Blueprint $table) {
 
-            if (!Schema::hasColumn('leads', 'notes')) {
+            if (! Schema::hasColumn('leads', 'notes')) {
                 $table->text('notes')->nullable()->after('status');
             }
 
-            if (!Schema::hasColumn('leads', 'contacted_at')) {
+            if (! Schema::hasColumn('leads', 'contacted_at')) {
                 $table->timestamp('contacted_at')->nullable()->after('notes');
             }
 
-            if (!Schema::hasColumn('leads', 'utm_source')) {
+            if (! Schema::hasColumn('leads', 'utm_source')) {
                 $table->string('utm_source', 100)->nullable()->after('contacted_at');
             }
 
-            if (!Schema::hasColumn('leads', 'utm_campaign')) {
+            if (! Schema::hasColumn('leads', 'utm_campaign')) {
                 $table->string('utm_campaign', 100)->nullable()->after('utm_source');
             }
 
-            if (!Schema::hasColumn('leads', 'utm_medium')) {
+            if (! Schema::hasColumn('leads', 'utm_medium')) {
                 $table->string('utm_medium', 100)->nullable()->after('utm_campaign');
             }
         });

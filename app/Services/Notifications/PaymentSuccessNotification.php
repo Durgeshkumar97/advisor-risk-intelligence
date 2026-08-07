@@ -21,8 +21,8 @@ class PaymentSuccessNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $planName     = $this->payment->plan->name;
-        $amount       = number_format((float) $this->payment->amount, 0);
+        $planName = $this->payment->plan->name;
+        $amount = number_format((float) $this->payment->amount, 0);
         $dashboardUrl = route('dashboard');
 
         return (new MailMessage)

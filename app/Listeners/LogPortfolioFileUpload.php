@@ -3,7 +3,6 @@
 namespace App\Listeners;
 
 use App\Events\PortfolioFileUploaded;
-
 use Illuminate\Support\Facades\Log;
 
 class LogPortfolioFileUpload
@@ -36,14 +35,11 @@ class LogPortfolioFileUpload
                 |--------------------------------------------------------------------------
                 */
 
-                'portfolio_file_id' =>
-                $file->id,
+                'portfolio_file_id' => $file->id,
 
-                'user_id' =>
-                $file->user_id,
+                'user_id' => $file->user_id,
 
-                'portfolio_id' =>
-                $file->portfolio_id,
+                'portfolio_id' => $file->portfolio_id,
 
                 /*
                 |--------------------------------------------------------------------------
@@ -51,20 +47,15 @@ class LogPortfolioFileUpload
                 |--------------------------------------------------------------------------
                 */
 
-                'original_name' =>
-                $file->original_name,
+                'original_name' => $file->original_name,
 
-                'stored_name' =>
-                $file->stored_name,
+                'stored_name' => $file->stored_name,
 
-                'path' =>
-                $file->path,
+                'path' => $file->path,
 
-                'mime_type' =>
-                $file->mime_type,
+                'mime_type' => $file->mime_type,
 
-                'file_size' =>
-                $file->file_size,
+                'file_size' => $file->file_size,
 
                 /*
                 |--------------------------------------------------------------------------
@@ -72,8 +63,7 @@ class LogPortfolioFileUpload
                 |--------------------------------------------------------------------------
                 */
 
-                'status' =>
-                $file->status,
+                'status' => $file->status,
 
                 /*
                 |--------------------------------------------------------------------------
@@ -81,8 +71,7 @@ class LogPortfolioFileUpload
                 |--------------------------------------------------------------------------
                 */
 
-                'uploaded_at' =>
-                now()->toIso8601String(),
+                'uploaded_at' => now()->toIso8601String(),
             ]
         );
     }

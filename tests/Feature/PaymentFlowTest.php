@@ -18,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ function razorpayWebhookBody(
     string $event = 'payment.captured',
 ): array {
     $body = json_encode([
-        'event'   => $event,
+        'event' => $event,
         'payload' => [
             'payment' => [
                 'entity' => ['id' => $paymentId, 'order_id' => $orderId],
@@ -44,7 +44,7 @@ function razorpayWebhookBody(
 
     return [
         'body' => $body,
-        'sig'  => hash_hmac('sha256', $body, $secret),
+        'sig' => hash_hmac('sha256', $body, $secret),
     ];
 }
 
@@ -66,16 +66,16 @@ function postWebhook(string $body, string $sig): \Illuminate\Testing\TestRespons
 function pendingPayment(Plan $plan, ?User $user = null, string $orderId = ''): Payment
 {
     return Payment::create([
-        'plan_id'  => $plan->id,
-        'user_id'  => $user?->id,
-        'order_id' => $orderId ?: 'order_' . uniqid(),
-        'name'     => 'Test IFA',
-        'email'    => 'ifa@example.com',
-        'phone'    => '9876543210',
-        'amount'   => '999.00',
+        'plan_id' => $plan->id,
+        'user_id' => $user?->id,
+        'order_id' => $orderId ?: 'order_'.uniqid(),
+        'name' => 'Test IFA',
+        'email' => 'ifa@example.com',
+        'phone' => '9876543210',
+        'amount' => '999.00',
         'currency' => 'INR',
-        'gateway'  => 'razorpay',
-        'status'   => Payment::STATUS_PENDING,
+        'gateway' => 'razorpay',
+        'status' => Payment::STATUS_PENDING,
     ]);
 }
 
@@ -96,12 +96,12 @@ describe('CheckoutController::success()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_happy_001',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_happy_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_happy_001',
         ])
-        ->assertOk()
-        ->assertJson(['success' => true])
-        ->assertJsonStructure(['success', 'redirect']);
+            ->assertOk()
+            ->assertJson(['success' => true])
+            ->assertJsonStructure(['success', 'redirect']);
 
         // VerifyRazorpayPayment sets status=paid; CheckoutController then sets
         // status=processing before dispatching the fulfilment job.
@@ -119,11 +119,11 @@ describe('CheckoutController::success()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_tampered',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'forged_sig',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'forged_sig',
         ])
-        ->assertUnprocessable()
-        ->assertJson(['success' => false]);
+            ->assertUnprocessable()
+            ->assertJson(['success' => false]);
 
         expect($payment->fresh()->status)->toBe(Payment::STATUS_PENDING);
         expect($payment->fresh()->payment_id)->toBeNull();
@@ -134,15 +134,15 @@ describe('CheckoutController::success()', function () {
         // Missing order_id
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_abc',
-            'razorpay_signature'  => 'sig_abc',
+            'razorpay_signature' => 'sig_abc',
         ])
-        ->assertUnprocessable()
-        ->assertJson(['success' => false]);
+            ->assertUnprocessable()
+            ->assertJson(['success' => false]);
 
         // Empty body
         $this->postJson(route('payment.verify'), [])
-             ->assertUnprocessable()
-             ->assertJson(['success' => false]);
+            ->assertUnprocessable()
+            ->assertJson(['success' => false]);
     });
 
     it('never auto-logs in based on the payment\'s resolved user, and redirects to login', function () {
@@ -152,7 +152,7 @@ describe('CheckoutController::success()', function () {
         // checkout must never be logged in as that account — it could be
         // anyone who typed in that email, not its real owner. See
         // CheckoutController::success() and SubscriptionService::activate().
-        $user    = User::factory()->create(['onboarding_completed' => true]);
+        $user = User::factory()->create(['onboarding_completed' => true]);
         $payment = pendingPayment($this->plan, $user, 'order_existing_user');
 
         $this->mock(RazorpayService::class)
@@ -160,11 +160,11 @@ describe('CheckoutController::success()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_user_001',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_user_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_user_001',
         ])
-        ->assertOk()
-        ->assertJson(['success' => true, 'redirect' => route('login')]);
+            ->assertOk()
+            ->assertJson(['success' => true, 'redirect' => route('login')]);
 
         $this->assertGuest();
     });
@@ -183,11 +183,11 @@ describe('CheckoutController::success()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_loggedin_001',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_loggedin_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_loggedin_001',
         ])
-        ->assertOk()
-        ->assertJson(['success' => true, 'redirect' => route('dashboard')]);
+            ->assertOk()
+            ->assertJson(['success' => true, 'redirect' => route('dashboard')]);
 
         $this->assertAuthenticatedAs($user);
     });
@@ -196,15 +196,15 @@ describe('CheckoutController::success()', function () {
         // Simulates a client retry after the first call already completed:
         // processed_at is set (job ran), so CheckoutController's guard fires.
         $payment = Payment::create([
-            'plan_id'      => $this->plan->id,
-            'order_id'     => 'order_already_done',
-            'name'         => 'Test IFA',
-            'email'        => 'ifa@example.com',
-            'phone'        => '9876543210',
-            'amount'       => '999.00',
-            'currency'     => 'INR',
-            'gateway'      => 'razorpay',
-            'status'       => Payment::STATUS_PAID,
+            'plan_id' => $this->plan->id,
+            'order_id' => 'order_already_done',
+            'name' => 'Test IFA',
+            'email' => 'ifa@example.com',
+            'phone' => '9876543210',
+            'amount' => '999.00',
+            'currency' => 'INR',
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PAID,
             'processed_at' => now(),
         ]);
 
@@ -215,11 +215,11 @@ describe('CheckoutController::success()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_dup',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_dup',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_dup',
         ])
-        ->assertOk()
-        ->assertJson(['success' => true]);
+            ->assertOk()
+            ->assertJson(['success' => true]);
 
         Queue::assertNotPushed(ProcessSuccessfulPayment::class);
     });
@@ -303,7 +303,7 @@ describe('WebhookController::handle()', function () {
     it('is idempotent when processed_at is set (job already completed)', function () {
         $payment = pendingPayment($this->plan, orderId: 'order_wh_done');
         $payment->update([
-            'status'       => Payment::STATUS_PROCESSING,
+            'status' => Payment::STATUS_PROCESSING,
             'processed_at' => now(),
         ]);
 
@@ -324,9 +324,9 @@ describe('WebhookController::handle()', function () {
         // silently reopen this gap.
         $payment = pendingPayment($this->plan, orderId: 'order_wh_already_paid');
         $payment->update([
-            'status'     => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
             'payment_id' => 'pay_already_paid',
-            'paid_at'    => now()->subMinutes(3),
+            'paid_at' => now()->subMinutes(3),
         ]);
 
         $beforeAttributes = $payment->fresh()->getAttributes();
@@ -345,7 +345,7 @@ describe('WebhookController::handle()', function () {
 
     it('returns 400 when the payment entity is absent from the payload', function () {
         $body = json_encode(['event' => 'payment.captured', 'payload' => []]);
-        $sig  = hash_hmac('sha256', $body, $this->secret);
+        $sig = hash_hmac('sha256', $body, $this->secret);
 
         postWebhook($body, $sig)
             ->assertStatus(400)
@@ -356,15 +356,15 @@ describe('WebhookController::handle()', function () {
         Log::spy();
 
         $entityWithPii = [
-            'id'      => 'pay_pii_test_001',
-            'email'   => 'realcustomer@example.com',
+            'id' => 'pay_pii_test_001',
+            'email' => 'realcustomer@example.com',
             'contact' => '+919876543210',
-            'notes'   => ['secret' => 'do-not-leak-this-value'],
+            'notes' => ['secret' => 'do-not-leak-this-value'],
             // order_id deliberately omitted — this is what triggers the branch.
         ];
 
         $body = json_encode([
-            'event'   => 'payment.captured',
+            'event' => 'payment.captured',
             'payload' => ['payment' => ['entity' => $entityWithPii]],
         ]);
         $sig = hash_hmac('sha256', $body, $this->secret);
@@ -379,6 +379,7 @@ describe('WebhookController::handle()', function () {
             ->once()
             ->withArgs(function (string $message, array $context) use (&$capturedContext) {
                 $capturedContext = $context;
+
                 return $message === 'Razorpay webhook: missing payment entity or order_id';
             });
 
@@ -399,7 +400,7 @@ describe('WebhookController::handle()', function () {
 
     it('returns 400 for a malformed JSON body even with a valid signature', function () {
         $body = 'not-valid-json';
-        $sig  = hash_hmac('sha256', $body, $this->secret);
+        $sig = hash_hmac('sha256', $body, $this->secret);
 
         postWebhook($body, $sig)->assertStatus(400);
     });
@@ -408,28 +409,28 @@ describe('WebhookController::handle()', function () {
         $user = User::factory()->create();
 
         $payment = Payment::create([
-            'plan_id'      => $this->plan->id,
-            'user_id'      => $user->id,
-            'order_id'     => 'order_refund_gate',
-            'payment_id'   => 'pay_refund_gate',
-            'name'         => 'Test IFA',
-            'email'        => 'ifa@example.com',
-            'phone'        => '9876543210',
-            'amount'       => '999.00',
-            'currency'     => 'INR',
-            'gateway'      => 'razorpay',
-            'status'       => Payment::STATUS_PAID,
+            'plan_id' => $this->plan->id,
+            'user_id' => $user->id,
+            'order_id' => 'order_refund_gate',
+            'payment_id' => 'pay_refund_gate',
+            'name' => 'Test IFA',
+            'email' => 'ifa@example.com',
+            'phone' => '9876543210',
+            'amount' => '999.00',
+            'currency' => 'INR',
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PAID,
             'processed_at' => now(),
         ]);
 
         $subscription = Subscription::create([
-            'user_id'                  => $user->id,
-            'plan_id'                  => $this->plan->id,
-            'status'                   => 'active',
-            'starts_at'                => now(),
-            'ends_at'                  => now()->addDays(20),
-            'renewal_at'               => now()->addDays(20),
-            'provider'                 => 'razorpay',
+            'user_id' => $user->id,
+            'plan_id' => $this->plan->id,
+            'status' => 'active',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays(20),
+            'renewal_at' => now()->addDays(20),
+            'provider' => 'razorpay',
             'provider_subscription_id' => 'pay_refund_gate',
         ]);
 
@@ -459,28 +460,28 @@ describe('WebhookController::handle()', function () {
         $user = User::factory()->create();
 
         Payment::create([
-            'plan_id'      => $this->plan->id,
-            'user_id'      => $user->id,
-            'order_id'     => 'order_refund_idem',
-            'payment_id'   => 'pay_refund_idem',
-            'name'         => 'Test IFA',
-            'email'        => 'ifa@example.com',
-            'phone'        => '9876543210',
-            'amount'       => '999.00',
-            'currency'     => 'INR',
-            'gateway'      => 'razorpay',
-            'status'       => Payment::STATUS_PAID,
+            'plan_id' => $this->plan->id,
+            'user_id' => $user->id,
+            'order_id' => 'order_refund_idem',
+            'payment_id' => 'pay_refund_idem',
+            'name' => 'Test IFA',
+            'email' => 'ifa@example.com',
+            'phone' => '9876543210',
+            'amount' => '999.00',
+            'currency' => 'INR',
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PAID,
             'processed_at' => now(),
         ]);
 
         Subscription::create([
-            'user_id'                  => $user->id,
-            'plan_id'                  => $this->plan->id,
-            'status'                   => 'active',
-            'starts_at'                => now(),
-            'ends_at'                  => now()->addDays(20),
-            'renewal_at'               => now()->addDays(20),
-            'provider'                 => 'razorpay',
+            'user_id' => $user->id,
+            'plan_id' => $this->plan->id,
+            'status' => 'active',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays(20),
+            'renewal_at' => now()->addDays(20),
+            'provider' => 'razorpay',
             'provider_subscription_id' => 'pay_refund_idem',
         ]);
 
@@ -541,8 +542,8 @@ describe('WebhookController::handle()', function () {
 
         $this->postJson(route('payment.verify'), [
             'razorpay_payment_id' => 'pay_race_001',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_race_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_race_001',
         ])->assertOk()->assertJson(['success' => true]);
 
         // Status must still be 'processing' — VerifyRazorpayPayment must not
@@ -559,7 +560,7 @@ describe('WebhookController::handle()', function () {
 describe('VerifyRazorpayPayment', function () {
 
     beforeEach(function () {
-        $this->plan   = minimalActivePlan();
+        $this->plan = minimalActivePlan();
         $this->action = app(VerifyRazorpayPayment::class);
     });
 
@@ -574,8 +575,8 @@ describe('VerifyRazorpayPayment', function () {
 
         expect(fn () => $this->action->execute([
             'razorpay_payment_id' => 'pay_bad',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'forged',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'forged',
         ]))->toThrow(ValidationException::class);
 
         // If the old ordering were still in place the DB write could mutate these.
@@ -592,8 +593,8 @@ describe('VerifyRazorpayPayment', function () {
 
         $result = $this->action->execute([
             'razorpay_payment_id' => 'pay_real_001',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_real_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_real_001',
         ]);
 
         expect($result->status)->toBe(Payment::STATUS_PAID)
@@ -606,7 +607,7 @@ describe('VerifyRazorpayPayment', function () {
     it('is idempotent when payment is already paid — returns without overwriting', function () {
         $payment = pendingPayment($this->plan, orderId: 'order_already_paid');
         $payment->update([
-            'status'     => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
             'payment_id' => 'pay_original_001',
         ]);
 
@@ -616,8 +617,8 @@ describe('VerifyRazorpayPayment', function () {
         // Replay with a different payment_id — original must be preserved.
         $result = $this->action->execute([
             'razorpay_payment_id' => 'pay_duplicate_attempt',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_any',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_any',
         ]);
 
         expect($result->status)->toBe(Payment::STATUS_PAID)
@@ -633,9 +634,9 @@ describe('VerifyRazorpayPayment', function () {
         // caller's own dedup check — see the end-to-end race test above).
         $payment = pendingPayment($this->plan, orderId: 'order_already_processing');
         $payment->update([
-            'status'     => Payment::STATUS_PROCESSING,
+            'status' => Payment::STATUS_PROCESSING,
             'payment_id' => 'pay_original_processing',
-            'paid_at'    => now()->subMinutes(5),
+            'paid_at' => now()->subMinutes(5),
         ]);
 
         $beforeAttributes = $payment->fresh()->getAttributes();
@@ -646,8 +647,8 @@ describe('VerifyRazorpayPayment', function () {
         // Replay with a different payment_id/signature — nothing must change.
         $result = $this->action->execute([
             'razorpay_payment_id' => 'pay_race_attempt',
-            'razorpay_order_id'   => $payment->order_id,
-            'razorpay_signature'  => 'sig_any',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_any',
         ]);
 
         expect($result->status)->toBe(Payment::STATUS_PROCESSING);
@@ -663,8 +664,8 @@ describe('VerifyRazorpayPayment', function () {
 
         expect(fn () => $this->action->execute([
             'razorpay_payment_id' => 'pay_ghost',
-            'razorpay_order_id'   => 'order_does_not_exist',
-            'razorpay_signature'  => 'sig_ghost',
+            'razorpay_order_id' => 'order_does_not_exist',
+            'razorpay_signature' => 'sig_ghost',
         ]))->toThrow(ValidationException::class);
     });
 });

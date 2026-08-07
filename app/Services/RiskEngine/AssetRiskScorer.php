@@ -39,9 +39,9 @@ class AssetRiskScorer
     */
 
     private const STOCK_RISK_LEVEL_SCORES = [
-        'Low'    => 50,
+        'Low' => 50,
         'Medium' => 65,
-        'High'   => 80,
+        'High' => 80,
     ];
 
     /*
@@ -56,9 +56,11 @@ class AssetRiskScorer
     |
     */
 
-    public const SOURCE_LIVE                = 'live';
+    public const SOURCE_LIVE = 'live';
+
     public const SOURCE_FALLBACK_UNAVAILABLE = 'fallback_unavailable';
-    public const SOURCE_CATEGORY_DEFAULT     = 'category_default';
+
+    public const SOURCE_CATEGORY_DEFAULT = 'category_default';
 
     /*
     |--------------------------------------------------------------------------
@@ -76,14 +78,14 @@ class AssetRiskScorer
     */
 
     private const BASE_SCORES = [
-        'cash'         => 5,
-        'bond'         => 15,
-        'etf'          => 35,
-        'mutual_fund'  => 45,
-        'commodity'    => 60,
-        'stock'        => 65,
-        'foreign_stock'=> 75,
-        'crypto'       => 90,
+        'cash' => 5,
+        'bond' => 15,
+        'etf' => 35,
+        'mutual_fund' => 45,
+        'commodity' => 60,
+        'stock' => 65,
+        'foreign_stock' => 75,
+        'crypto' => 90,
     ];
 
     /*
@@ -125,7 +127,7 @@ class AssetRiskScorer
      * Return a 0–100 risk score for one holding, plus its provenance.
      *
      * @param  string  $assetType  One of the keys in BASE_SCORES (or unknown)
-     * @param  string  $name       Holding name / scheme name
+     * @param  string  $name  Holding name / scheme name
      * @param  ?array  $stockRisk  Pre-fetched StockRiskService result for this
      *                             symbol (see StockRiskService::classifyBatch()),
      *                             or null. Only consulted when $assetType is
@@ -134,31 +136,31 @@ class AssetRiskScorer
      *                             'unavailable' => bool, ...]. This method never
      *                             calls StockRiskService itself — the caller
      *                             must batch-fetch and pass results in per asset.
-     * @return array{score: float, source: string}  source is one of
-     *                             self::SOURCE_LIVE, SOURCE_FALLBACK_UNAVAILABLE,
-     *                             or SOURCE_CATEGORY_DEFAULT.
+     * @return array{score: float, source: string} source is one of
+     *                                             self::SOURCE_LIVE, SOURCE_FALLBACK_UNAVAILABLE,
+     *                                             or SOURCE_CATEGORY_DEFAULT.
      */
     public function score(string $assetType, string $name, ?array $stockRisk = null): array
     {
         $assetType = strtolower(trim($assetType));
 
         if ($assetType === 'stock') {
-            $riskLevel   = $stockRisk['risk_level'] ?? null;
+            $riskLevel = $stockRisk['risk_level'] ?? null;
             $unavailable = (bool) ($stockRisk['unavailable'] ?? true);
 
             // `stale` is a caveat flag, not a failure — a stale-but-valid
             // classification is still the best available data and is used
             // as live. Only unavailable (or an unrecognized risk_level —
             // never coerce garbage into a real score) falls back.
-            if (!$unavailable && isset(self::STOCK_RISK_LEVEL_SCORES[$riskLevel])) {
+            if (! $unavailable && isset(self::STOCK_RISK_LEVEL_SCORES[$riskLevel])) {
                 return [
-                    'score'  => (float) self::STOCK_RISK_LEVEL_SCORES[$riskLevel],
+                    'score' => (float) self::STOCK_RISK_LEVEL_SCORES[$riskLevel],
                     'source' => self::SOURCE_LIVE,
                 ];
             }
 
             return [
-                'score'  => (float) self::BASE_SCORES['stock'],
+                'score' => (float) self::BASE_SCORES['stock'],
                 'source' => self::SOURCE_FALLBACK_UNAVAILABLE,
             ];
         }
@@ -172,7 +174,7 @@ class AssetRiskScorer
         }
 
         return [
-            'score'  => (float) max(0, min(100, $base)),
+            'score' => (float) max(0, min(100, $base)),
             'source' => self::SOURCE_CATEGORY_DEFAULT,
         ];
     }
@@ -185,13 +187,13 @@ class AssetRiskScorer
 
     public function level(float $score): string
     {
-        $low  = config('risk.low_threshold', 30);
+        $low = config('risk.low_threshold', 30);
         $high = config('risk.high_threshold', 70);
 
         return match (true) {
-            $score < $low  => 'LOW',
+            $score < $low => 'LOW',
             $score < $high => 'MEDIUM',
-            default        => 'HIGH',
+            default => 'HIGH',
         };
     }
 

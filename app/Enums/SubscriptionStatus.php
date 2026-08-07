@@ -12,8 +12,8 @@ namespace App\Enums;
  */
 enum SubscriptionStatus: string
 {
-    case Trial   = 'trial';
-    case Active  = 'active';
+    case Trial = 'trial';
+    case Active = 'active';
     case Expired = 'expired';
     case Cancelled = 'cancelled';
 
@@ -26,9 +26,9 @@ enum SubscriptionStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Trial     => 'Free Trial',
-            self::Active    => 'Active',
-            self::Expired   => 'Expired',
+            self::Trial => 'Free Trial',
+            self::Active => 'Active',
+            self::Expired => 'Expired',
             self::Cancelled => 'Cancelled',
         };
     }
@@ -37,7 +37,7 @@ enum SubscriptionStatus: string
     {
         return match ($this) {
             self::Trial, self::Active => true,
-            default                   => false,
+            default => false,
         };
     }
 }

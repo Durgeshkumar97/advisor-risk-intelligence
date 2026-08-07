@@ -133,7 +133,7 @@ return [
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
-            'prefix' => Str::slug(env('APP_NAME', 'laravel')) . '-',
+            'prefix' => Str::slug(env('APP_NAME', 'laravel')).'-',
         ],
 
         'default' => [

@@ -28,19 +28,19 @@ class AdminUserController extends Controller
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
-                $q->where('name',  'LIKE', "%{$s}%")
-                  ->orWhere('email', 'LIKE', "%{$s}%")
-                  ->orWhere('phone', 'LIKE', "%{$s}%");
+                $q->where('name', 'LIKE', "%{$s}%")
+                    ->orWhere('email', 'LIKE', "%{$s}%")
+                    ->orWhere('phone', 'LIKE', "%{$s}%");
             });
         }
 
         if ($request->filled('status')) {
             match ($request->status) {
-                'admin'  => $query->where('is_admin', true),
-                'active' => $query->whereHas('subscription', fn($q) => $q->where('status', 'active')),
-                'trial'  => $query->whereHas('subscription', fn($q) => $q->where('status', 'trial')),
+                'admin' => $query->where('is_admin', true),
+                'active' => $query->whereHas('subscription', fn ($q) => $q->where('status', 'active')),
+                'trial' => $query->whereHas('subscription', fn ($q) => $q->where('status', 'trial')),
                 'no_sub' => $query->doesntHave('subscription'),
-                default  => null,
+                default => null,
             };
         }
 
@@ -105,7 +105,7 @@ class AdminUserController extends Controller
         $token = Str::random(64);
 
         $user->forceFill([
-            'login_token'            => $token,
+            'login_token' => $token,
             'login_token_expires_at' => now()->addMinutes(15),
         ])->save();
 

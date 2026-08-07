@@ -1,30 +1,28 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Admin\AdminDashboardController;
 /*
 |--------------------------------------------------------------------------
 | CONTROLLERS
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\PageController;
+use App\Http\Controllers\Admin\AdminIntakeController;
+use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\WebhookController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\IntakeController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PortfolioRiskProfileController;
-
-use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\PortfolioUploadController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminIntakeController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\WebhookController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -122,14 +120,14 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
 
     $user = \App\Models\User::where('login_token', $token)->first();
 
-    if (!$user) {
+    if (! $user) {
         return redirect()->route('login')
             ->with('error', 'This login link is invalid or has expired. Please use Forgot Password to access your account.');
     }
 
     if ($user->login_token_expires_at?->isPast()) {
         $user->forceFill([
-            'login_token'            => null,
+            'login_token' => null,
             'login_token_expires_at' => null,
         ])->save();
 
@@ -140,9 +138,9 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
     \Illuminate\Support\Facades\Auth::login($user);
 
     $user->forceFill([
-        'login_token'            => null,
+        'login_token' => null,
         'login_token_expires_at' => null,
-        'last_login_at'          => now(),
+        'last_login_at' => now(),
     ])->save();
 
     // This route consumes tokens from two distinct mint sites (admin-initiated
@@ -165,7 +163,7 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
 
     \App\Models\AdminLog::record($usedEvent, targetUserId: $user->id, tokenHash: $tokenHash);
 
-    if (!$user->onboarding_completed) {
+    if (! $user->onboarding_completed) {
         return redirect()->route('onboarding');
     }
 
@@ -188,13 +186,13 @@ Route::middleware('auth')->group(function () {
 
         $request->validate([
             'access_type' => 'required|in:email',
-            'phone'       => 'nullable|string|min:10|max:20',
+            'phone' => 'nullable|string|min:10|max:20',
         ]);
 
         $user = \Illuminate\Support\Facades\Auth::user();
 
         $updates = [
-            'login_method'         => $request->access_type,
+            'login_method' => $request->access_type,
             'onboarding_completed' => true,
         ];
 
@@ -408,4 +406,4 @@ Route::fallback(function () {
 |--------------------------------------------------------------------------
 */
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

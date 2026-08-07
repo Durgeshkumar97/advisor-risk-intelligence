@@ -24,20 +24,20 @@ class ProcessPortfolioFileTest extends TestCase
         Storage::fake('portfolios');
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'Test Portfolio']);
 
         Storage::disk('portfolios')->put('uploads/portfolio.csv', $csv);
 
         return PortfolioFile::create([
-            'user_id'       => $user->id,
-            'portfolio_id'  => $portfolio->id,
+            'user_id' => $user->id,
+            'portfolio_id' => $portfolio->id,
             'original_name' => 'portfolio.csv',
-            'stored_name'   => 'portfolio.csv',
-            'path'          => 'uploads/portfolio.csv',
-            'mime_type'     => 'text/csv',
-            'file_size'     => strlen($csv),
-            'status'        => PortfolioFile::STATUS_PENDING,
+            'stored_name' => 'portfolio.csv',
+            'path' => 'uploads/portfolio.csv',
+            'mime_type' => 'text/csv',
+            'file_size' => strlen($csv),
+            'status' => PortfolioFile::STATUS_PENDING,
         ]);
     }
 
@@ -68,11 +68,11 @@ class ProcessPortfolioFileTest extends TestCase
 
                 return [
                     'RELIANCE' => [
-                        'risk_level'  => 'Medium',
-                        'volatility'  => 30.0,
-                        'confidence'  => 0.8,
-                        'as_of_date'  => '2026-07-01',
-                        'stale'       => false,
+                        'risk_level' => 'Medium',
+                        'volatility' => 30.0,
+                        'confidence' => 0.8,
+                        'as_of_date' => '2026-07-01',
+                        'stale' => false,
                         'unavailable' => false,
                     ],
                 ];
@@ -86,7 +86,7 @@ class ProcessPortfolioFileTest extends TestCase
 
         $reliance1 = PortfolioAsset::where('name', 'Reliance Industries')->first();
         $reliance2 = PortfolioAsset::where('name', 'Reliance Industries Again')->first();
-        $bond      = PortfolioAsset::where('name', 'Govt Bond')->first();
+        $bond = PortfolioAsset::where('name', 'Govt Bond')->first();
 
         expect((float) $reliance1->risk_score)->toBe(65.0)
             ->and($reliance1->meta['stock_risk']['source'])->toBe(AssetRiskScorer::SOURCE_LIVE)
@@ -214,7 +214,7 @@ class ProcessPortfolioFileTest extends TestCase
     public function test_portfolio_with_distinct_stock_symbols_under_the_cap_still_processes_end_to_end(): void
     {
         $symbolCount = 50;
-        $file        = $this->makePortfolioFile($this->csvWithDistinctStockSymbols($symbolCount));
+        $file = $this->makePortfolioFile($this->csvWithDistinctStockSymbols($symbolCount));
 
         $expectedSymbols = collect(range(1, $symbolCount))->map(fn ($i) => "SYM{$i}")->all();
 

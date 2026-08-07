@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('lead_id')->nullable()->constrained()->nullOnDelete();
 
             $table->enum('status', [
-                'trial','active','expired','cancelled','past_due'
+                'trial', 'active', 'expired', 'cancelled', 'past_due',
             ])->default('trial');
 
             $table->timestamp('trial_started_at')->nullable();

@@ -30,7 +30,7 @@ return new class extends Migration
                 'commodity',
                 'foreign_stock',
                 'crypto',
-                'cash'
+                'cash',
             ]);
 
             /*
@@ -81,7 +81,7 @@ return new class extends Migration
             $table->enum('risk_level', [
                 'LOW',
                 'MEDIUM',
-                'HIGH'
+                'HIGH',
             ])->default('LOW');
 
             /*

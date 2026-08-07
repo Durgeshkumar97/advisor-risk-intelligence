@@ -29,7 +29,7 @@ class WebhookController extends Controller
 
     public function handle(Request $request): \Illuminate\Http\JsonResponse
     {
-        $payload   = $request->getContent();
+        $payload = $request->getContent();
         $signature = $request->header('X-Razorpay-Signature');
 
         $expected = hash_hmac(
@@ -38,8 +38,9 @@ class WebhookController extends Controller
             (string) config('services.razorpay.webhook_secret')
         );
 
-        if (!hash_equals($expected, (string) $signature)) {
+        if (! hash_equals($expected, (string) $signature)) {
             Log::warning('Razorpay webhook: invalid signature', ['ip' => $request->ip()]);
+
             return response()->json(['error' => 'invalid signature'], 400);
         }
 
@@ -47,6 +48,7 @@ class WebhookController extends Controller
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             Log::warning('Razorpay webhook: invalid JSON body');
+
             return response()->json(['error' => 'invalid payload'], 400);
         }
 
@@ -62,7 +64,7 @@ class WebhookController extends Controller
 
         $entity = $body['payload']['payment']['entity'] ?? null;
 
-        if (!$entity || empty($entity['order_id'])) {
+        if (! $entity || empty($entity['order_id'])) {
             // Keys only, never values — a Razorpay payment entity can carry
             // email/contact/vpa/bank/notes, and this is the actual PII risk,
             // not the LOG_LEVEL config (currently 'error', which happens to
@@ -71,12 +73,13 @@ class WebhookController extends Controller
             // here is structural: there is no value to leak regardless of
             // what level this ends up being logged at.
             Log::warning('Razorpay webhook: missing payment entity or order_id', [
-                'event'                => $event,
-                'payment_id'           => $entity['id'] ?? null,
-                'order_id'             => $entity['order_id'] ?? null,
-                'top_level_body_keys'  => array_keys($body),
+                'event' => $event,
+                'payment_id' => $entity['id'] ?? null,
+                'order_id' => $entity['order_id'] ?? null,
+                'top_level_body_keys' => array_keys($body),
                 'payload_payment_keys' => array_keys($entity ?? []),
             ]);
+
             return response()->json(['error' => 'missing entity'], 400);
         }
 
@@ -87,10 +90,11 @@ class WebhookController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (!$payment) {
+                if (! $payment) {
                     Log::warning('Razorpay webhook: payment record not found', [
                         'order_id' => $entity['order_id'],
                     ]);
+
                     return;
                 }
 
@@ -110,20 +114,20 @@ class WebhookController extends Controller
 
                 $payment->update([
                     'payment_id' => $entity['id'],
-                    'status'     => Payment::STATUS_PROCESSING,
-                    'paid_at'    => $payment->paid_at ?? now(),
+                    'status' => Payment::STATUS_PROCESSING,
+                    'paid_at' => $payment->paid_at ?? now(),
                 ]);
 
-                DB::afterCommit(fn() => ProcessSuccessfulPayment::dispatch($payment->fresh()));
+                DB::afterCommit(fn () => ProcessSuccessfulPayment::dispatch($payment->fresh()));
             });
 
             return response()->json(['status' => 'ok']);
 
         } catch (\Throwable $e) {
             Log::error('Razorpay webhook: processing failed', [
-                'message'  => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'order_id' => $entity['order_id'] ?? null,
             ]);
 
@@ -161,8 +165,9 @@ class WebhookController extends Controller
     {
         $entity = $body['payload']['payment']['entity'] ?? null;
 
-        if (!$entity || empty($entity['order_id'])) {
+        if (! $entity || empty($entity['order_id'])) {
             Log::warning('Razorpay webhook: refund event missing payment entity or order_id');
+
             return response()->json(['error' => 'missing entity'], 400);
         }
 
@@ -173,10 +178,11 @@ class WebhookController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (!$payment) {
+                if (! $payment) {
                     Log::warning('Razorpay webhook: refund for unknown payment', [
                         'order_id' => $entity['order_id'],
                     ]);
+
                     return;
                 }
 
@@ -198,13 +204,13 @@ class WebhookController extends Controller
                     // satisfy that check (diff = -1), leaving access open for
                     // 3 more days. subDays(4) gives diff = -4, safely past it.
                     $subscription->update([
-                        'status'   => 'cancelled',
-                        'ends_at'  => now()->subDays(4),
+                        'status' => 'cancelled',
+                        'ends_at' => now()->subDays(4),
                     ]);
                 }
 
                 Log::info('Razorpay webhook: payment refunded, access revoked', [
-                    'payment_id'      => $payment->id,
+                    'payment_id' => $payment->id,
                     'subscription_id' => $subscription?->id,
                 ]);
             });
@@ -213,9 +219,9 @@ class WebhookController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Razorpay webhook: refund processing failed', [
-                'message'  => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'order_id' => $entity['order_id'] ?? null,
             ]);
 

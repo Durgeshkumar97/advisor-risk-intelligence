@@ -29,13 +29,13 @@ class AccountTakeoverPreventionTest extends TestCase
     private function starterPlan(): Plan
     {
         return Plan::create([
-            'name'            => 'Starter',
-            'slug'            => 'starter',
-            'price'           => 0,
-            'duration_days'   => 30,
+            'name' => 'Starter',
+            'slug' => 'starter',
+            'price' => 0,
+            'duration_days' => 30,
             'portfolio_limit' => 1,
-            'trial_days'      => 14,
-            'is_active'       => true,
+            'trial_days' => 14,
+            'is_active' => true,
         ]);
     }
 
@@ -50,9 +50,9 @@ class AccountTakeoverPreventionTest extends TestCase
 
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Attacker',
-            'whatsapp'     => '+91 99999 00000',
-            'email'        => 'victim@example.test',
-            'firm_name'    => 'Fake Firm',
+            'whatsapp' => '+91 99999 00000',
+            'email' => 'victim@example.test',
+            'firm_name' => 'Fake Firm',
         ]);
 
         $this->assertGuest();
@@ -76,9 +76,9 @@ class AccountTakeoverPreventionTest extends TestCase
 
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Brand New Advisor',
-            'whatsapp'     => '+91 98765 43210',
-            'email'        => 'new-advisor@example.test',
-            'firm_name'    => 'New Advisor Firm',
+            'whatsapp' => '+91 98765 43210',
+            'email' => 'new-advisor@example.test',
+            'firm_name' => 'New Advisor Firm',
         ]);
 
         $newUser = User::where('email', 'new-advisor@example.test')->first();
@@ -95,19 +95,19 @@ class AccountTakeoverPreventionTest extends TestCase
     public function test_activating_a_payment_for_an_existing_email_sends_a_login_link_and_never_authenticates_anyone(): void
     {
         Notification::fake();
-        $plan   = $this->starterPlan();
+        $plan = $this->starterPlan();
         $victim = User::factory()->create(['email' => 'victim2@example.test']);
 
         $payment = Payment::create([
-            'plan_id'  => $plan->id,
-            'order_id' => 'order_existing_' . uniqid(),
-            'name'     => 'Whoever Paid',
-            'email'    => 'victim2@example.test',
-            'phone'    => '9876543210',
-            'amount'   => '999.00',
+            'plan_id' => $plan->id,
+            'order_id' => 'order_existing_'.uniqid(),
+            'name' => 'Whoever Paid',
+            'email' => 'victim2@example.test',
+            'phone' => '9876543210',
+            'amount' => '999.00',
             'currency' => 'INR',
-            'gateway'  => 'razorpay',
-            'status'   => Payment::STATUS_PENDING,
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PENDING,
         ]);
 
         $user = app(SubscriptionService::class)->activate($payment);
@@ -125,15 +125,15 @@ class AccountTakeoverPreventionTest extends TestCase
         $plan = $this->starterPlan();
 
         $payment = Payment::create([
-            'plan_id'  => $plan->id,
-            'order_id' => 'order_new_' . uniqid(),
-            'name'     => 'Brand New Customer',
-            'email'    => 'brand-new@example.test',
-            'phone'    => '9876543210',
-            'amount'   => '999.00',
+            'plan_id' => $plan->id,
+            'order_id' => 'order_new_'.uniqid(),
+            'name' => 'Brand New Customer',
+            'email' => 'brand-new@example.test',
+            'phone' => '9876543210',
+            'amount' => '999.00',
             'currency' => 'INR',
-            'gateway'  => 'razorpay',
-            'status'   => Payment::STATUS_PENDING,
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PENDING,
         ]);
 
         $user = app(SubscriptionService::class)->activate($payment);
@@ -149,19 +149,19 @@ class AccountTakeoverPreventionTest extends TestCase
     public function test_complete_payment_action_does_not_login_when_email_matches_an_existing_user(): void
     {
         Notification::fake();
-        $plan   = $this->starterPlan();
+        $plan = $this->starterPlan();
         $victim = User::factory()->create(['email' => 'victim3@example.test']);
 
         $payment = Payment::create([
-            'plan_id'  => $plan->id,
-            'order_id' => 'order_dormant_existing_' . uniqid(),
-            'name'     => 'Whoever Paid',
-            'email'    => 'victim3@example.test',
-            'phone'    => '9876543210',
-            'amount'   => '999.00',
+            'plan_id' => $plan->id,
+            'order_id' => 'order_dormant_existing_'.uniqid(),
+            'name' => 'Whoever Paid',
+            'email' => 'victim3@example.test',
+            'phone' => '9876543210',
+            'amount' => '999.00',
             'currency' => 'INR',
-            'gateway'  => 'razorpay',
-            'status'   => Payment::STATUS_PAID,
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PAID,
         ]);
 
         app(CompletePaymentAction::class)->execute($payment);
@@ -184,15 +184,15 @@ class AccountTakeoverPreventionTest extends TestCase
         $plan = $this->starterPlan();
 
         $payment = Payment::create([
-            'plan_id'  => $plan->id,
-            'order_id' => 'order_dormant_new_' . uniqid(),
-            'name'     => 'Brand New Customer',
-            'email'    => 'brand-new-dormant@example.test',
-            'phone'    => '9876543210',
-            'amount'   => '999.00',
+            'plan_id' => $plan->id,
+            'order_id' => 'order_dormant_new_'.uniqid(),
+            'name' => 'Brand New Customer',
+            'email' => 'brand-new-dormant@example.test',
+            'phone' => '9876543210',
+            'amount' => '999.00',
             'currency' => 'INR',
-            'gateway'  => 'razorpay',
-            'status'   => Payment::STATUS_PAID,
+            'gateway' => 'razorpay',
+            'status' => Payment::STATUS_PAID,
         ]);
 
         app(CompletePaymentAction::class)->execute($payment);
@@ -210,15 +210,15 @@ class AccountTakeoverPreventionTest extends TestCase
         Notification::fake();
 
         $victim = User::factory()->create([
-            'email'    => 'trashed-victim@example.test',
+            'email' => 'trashed-victim@example.test',
             'password' => 'original-password-123',
         ]);
         $victim->delete(); // soft delete
 
         $response = $this->post(route('register'), [
-            'name'                  => 'Attacker',
-            'email'                 => 'trashed-victim@example.test',
-            'password'              => 'attacker-chosen-password',
+            'name' => 'Attacker',
+            'email' => 'trashed-victim@example.test',
+            'password' => 'attacker-chosen-password',
             'password_confirmation' => 'attacker-chosen-password',
         ]);
 
@@ -243,14 +243,14 @@ class AccountTakeoverPreventionTest extends TestCase
         // in with the attacker-chosen password via the real, password-verified
         // /login form. This must fail.
         $this->post(route('login'), [
-            'email'    => 'trashed-victim@example.test',
+            'email' => 'trashed-victim@example.test',
             'password' => 'attacker-chosen-password',
         ]);
         $this->assertGuest();
 
         // The real owner's original password still works.
         $this->post(route('login'), [
-            'email'    => 'trashed-victim@example.test',
+            'email' => 'trashed-victim@example.test',
             'password' => 'original-password-123',
         ]);
         $this->assertAuthenticatedAs($victim);
@@ -259,9 +259,9 @@ class AccountTakeoverPreventionTest extends TestCase
     public function test_registering_with_a_genuinely_new_email_still_works_end_to_end(): void
     {
         $response = $this->post(route('register'), [
-            'name'                  => 'Brand New User',
-            'email'                 => 'brand-new-register@example.test',
-            'password'              => 'a-secure-password-1',
+            'name' => 'Brand New User',
+            'email' => 'brand-new-register@example.test',
+            'password' => 'a-secure-password-1',
             'password_confirmation' => 'a-secure-password-1',
         ]);
 
@@ -277,9 +277,9 @@ class AccountTakeoverPreventionTest extends TestCase
         User::factory()->create(['email' => 'already-active@example.test']);
 
         $response = $this->post(route('register'), [
-            'name'                  => 'Someone Else',
-            'email'                 => 'already-active@example.test',
-            'password'              => 'a-secure-password-1',
+            'name' => 'Someone Else',
+            'email' => 'already-active@example.test',
+            'password' => 'a-secure-password-1',
             'password_confirmation' => 'a-secure-password-1',
         ]);
 
@@ -299,18 +299,18 @@ class AccountTakeoverPreventionTest extends TestCase
 
         ClientIntake::create([
             'submission_uuid' => (string) Str::uuid(),
-            'name'            => 'Original Advisor',
-            'email'           => 'trashed-trial@example.test',
-            'whatsapp'        => '+91 90000 00000',
-            'firm_name'       => 'Original Firm',
-            'status'          => 'trial',
+            'name' => 'Original Advisor',
+            'email' => 'trashed-trial@example.test',
+            'whatsapp' => '+91 90000 00000',
+            'firm_name' => 'Original Firm',
+            'status' => 'trial',
         ]);
 
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Attacker',
-            'whatsapp'     => '+91 99999 99999',
-            'email'        => 'trashed-trial@example.test',
-            'firm_name'    => 'Fake Firm',
+            'whatsapp' => '+91 99999 99999',
+            'email' => 'trashed-trial@example.test',
+            'firm_name' => 'Fake Firm',
         ]);
 
         $this->assertGuest();

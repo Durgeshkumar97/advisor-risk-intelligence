@@ -29,25 +29,27 @@ class CleanupOrphanedZipTempDirs extends Command
 
     public function handle(): int
     {
-        $dryRun  = (bool) $this->option('dry-run');
-        $cutoff  = time() - self::MAX_AGE_SECONDS;
-        $pattern = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'portfolio_zip_*';
+        $dryRun = (bool) $this->option('dry-run');
+        $cutoff = time() - self::MAX_AGE_SECONDS;
+        $pattern = sys_get_temp_dir().DIRECTORY_SEPARATOR.'portfolio_zip_*';
 
         $candidates = glob($pattern, GLOB_ONLYDIR) ?: [];
-        $removed    = 0;
-        $skipped    = 0;
+        $removed = 0;
+        $skipped = 0;
 
         foreach ($candidates as $dir) {
             $mtime = @filemtime($dir);
 
             if ($mtime === false || $mtime >= $cutoff) {
                 $skipped++;
+
                 continue;
             }
 
             if ($dryRun) {
                 $this->info("[DRY RUN] Would remove: {$dir}");
                 $removed++;
+
                 continue;
             }
 
@@ -57,9 +59,9 @@ class CleanupOrphanedZipTempDirs extends Command
         }
 
         Log::info('CleanupOrphanedZipTempDirs: completed', [
-            'removed'  => $removed,
-            'skipped'  => $skipped,
-            'dry_run'  => $dryRun,
+            'removed' => $removed,
+            'skipped' => $skipped,
+            'dry_run' => $dryRun,
         ]);
 
         $this->info("Done. Removed: {$removed}, skipped (too recent): {$skipped}.");

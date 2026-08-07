@@ -60,16 +60,16 @@ class PurgeDeletedUsers extends Command
 
                 // Hash the email — never log PII in plain text.
                 Log::info('PurgeDeletedUsers: purged user', [
-                    'id'         => $user->id,
+                    'id' => $user->id,
                     'email_hash' => hash('sha256', $user->email),
                 ]);
 
                 $purged++;
             } catch (Throwable $e) {
                 Log::error('PurgeDeletedUsers: failed to purge user', [
-                    'id'         => $user->id,
+                    'id' => $user->id,
                     'email_hash' => hash('sha256', $user->email),
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 $this->error("Failed to purge user #{$user->id}: {$e->getMessage()}");
@@ -98,7 +98,7 @@ class PurgeDeletedUsers extends Command
      */
     private function purgeUser(User $user): void
     {
-        $email        = $user->email;
+        $email = $user->email;
         $portfolioIds = DB::table('portfolios')->where('user_id', $user->id)->pluck('id');
 
         // 1. portfolio_files (FK user_id cascades, but delete explicitly)
@@ -143,19 +143,19 @@ class PurgeDeletedUsers extends Command
         $portfolioIds = DB::table('portfolios')->where('user_id', $user->id)->pluck('id');
 
         $counts = [
-            'portfolio_files'       => DB::table('portfolio_files')->where('user_id', $user->id)->count(),
-            'portfolio_assets'      => $portfolioIds->isNotEmpty()
+            'portfolio_files' => DB::table('portfolio_files')->where('user_id', $user->id)->count(),
+            'portfolio_assets' => $portfolioIds->isNotEmpty()
                 ? DB::table('portfolio_assets')->whereIn('portfolio_id', $portfolioIds)->count()
                 : 0,
-            'portfolios'            => $portfolioIds->count(),
-            'risk_scores'           => DB::table('risk_scores')->where('user_id', $user->id)->count(),
-            'subscriptions'         => DB::table('subscriptions')->where('user_id', $user->id)->count(),
-            'payments'              => DB::table('payments')
+            'portfolios' => $portfolioIds->count(),
+            'risk_scores' => DB::table('risk_scores')->where('user_id', $user->id)->count(),
+            'subscriptions' => DB::table('subscriptions')->where('user_id', $user->id)->count(),
+            'payments' => DB::table('payments')
                 ->where('user_id', $user->id)
                 ->orWhere('email', $user->email)
                 ->count(),
             'password_reset_tokens' => DB::table('password_reset_tokens')->where('email', $user->email)->count(),
-            'client_intakes'        => DB::table('client_intakes')->where('email', $user->email)->count(),
+            'client_intakes' => DB::table('client_intakes')->where('email', $user->email)->count(),
         ];
 
         $summary = collect($counts)
@@ -165,9 +165,9 @@ class PurgeDeletedUsers extends Command
         $this->line("  user #{$user->id} (deleted_at {$user->deleted_at->toDateTimeString()}): {$summary}");
 
         Log::info('PurgeDeletedUsers: [DRY RUN] would purge user', [
-            'id'         => $user->id,
+            'id' => $user->id,
             'email_hash' => hash('sha256', $user->email),
-            'related'    => $counts,
+            'related' => $counts,
         ]);
     }
 }

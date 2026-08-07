@@ -62,12 +62,12 @@ class AdminLog extends Model
         ?string $tokenHash = null,
     ): self {
         return self::create([
-            'user_id'        => $userId,
+            'user_id' => $userId,
             'target_user_id' => $targetUserId,
-            'token_hash'     => $tokenHash,
-            'event'          => $event,
-            'ip'             => request()->ip(),
-            'user_agent'     => request()->userAgent(),
+            'token_hash' => $tokenHash,
+            'event' => $event,
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
         ]);
     }
 }

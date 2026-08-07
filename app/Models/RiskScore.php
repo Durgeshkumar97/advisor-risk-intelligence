@@ -18,10 +18,10 @@ class RiskScore extends Model
     ];
 
     protected $casts = [
-        'score'        => 'decimal:2',
-        'volatility'   => 'decimal:2',
-        'drawdown'     => 'decimal:2',
-        'meta'         => 'array',
+        'score' => 'decimal:2',
+        'volatility' => 'decimal:2',
+        'drawdown' => 'decimal:2',
+        'meta' => 'array',
         'generated_at' => 'datetime',
     ];
 
@@ -63,7 +63,7 @@ class RiskScore extends Model
         return match (true) {
             $this->score < 30 => 'LOW',
             $this->score < 70 => 'MEDIUM',
-            default           => 'HIGH',
+            default => 'HIGH',
         };
     }
 

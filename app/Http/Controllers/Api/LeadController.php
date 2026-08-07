@@ -13,7 +13,7 @@ class LeadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'  => 'required|string|min:2|max:100',
+            'name' => 'required|string|min:2|max:100',
             'phone' => 'required|string|min:10|max:15',
             'email' => 'nullable|email|max:150',
         ]);
@@ -28,8 +28,8 @@ class LeadController extends Controller
 
         if ($existingLead) {
             return response()->json([
-                'success'      => true,
-                'message'      => 'Existing trial found',
+                'success' => true,
+                'message' => 'Existing trial found',
                 'redirect_url' => route('login'),
             ]);
         }
@@ -46,7 +46,7 @@ class LeadController extends Controller
 
         $plan = Plan::where('slug', 'starter')->first();
 
-        if (!$plan) {
+        if (! $plan) {
             return response()->json([
                 'success' => false,
                 'message' => 'Trial plan is not available at this time. Please contact support.',
@@ -60,12 +60,12 @@ class LeadController extends Controller
         */
 
         $lead = Lead::create([
-            'name'          => $request->name,
-            'phone'         => $request->phone,
-            'email'         => $request->email,
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'email' => $request->email,
             'selected_plan' => 'starter',
-            'source'        => 'landing_page',
-            'status'        => 'new',
+            'source' => 'landing_page',
+            'status' => 'new',
         ]);
 
         /*
@@ -75,17 +75,17 @@ class LeadController extends Controller
         */
 
         Subscription::create([
-            'lead_id'          => $lead->id,
-            'plan_id'          => $plan->id,
-            'status'           => 'trial',
+            'lead_id' => $lead->id,
+            'plan_id' => $plan->id,
+            'status' => 'trial',
             'trial_started_at' => now(),
-            'trial_ends_at'    => now()->addDays(7),
-            'renewal_at'       => now()->addDays(7),
+            'trial_ends_at' => now()->addDays(7),
+            'renewal_at' => now()->addDays(7),
         ]);
 
         return response()->json([
-            'success'      => true,
-            'message'      => '7-day trial started successfully',
+            'success' => true,
+            'message' => '7-day trial started successfully',
             'redirect_url' => route('login'),
         ], 201);
     }

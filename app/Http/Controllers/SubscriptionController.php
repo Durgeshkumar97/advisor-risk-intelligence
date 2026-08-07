@@ -18,14 +18,14 @@ class SubscriptionController extends Controller
 
     public function index(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
-        $user         = Auth::user();
+        $user = Auth::user();
         $subscription = Subscription::with('plan')
             ->where('user_id', $user->id)
             ->latest()
             ->first();
 
-        $plan     = $subscription?->plan;
-        $plans    = Plan::where('is_active', true)->orderBy('price')->get();
+        $plan = $subscription?->plan;
+        $plans = Plan::where('is_active', true)->orderBy('price')->get();
         $daysLeft = $subscription ? $subscription->daysRemaining() : 0;
 
         return view('user.subscription', compact('subscription', 'plan', 'plans', 'daysLeft'));
@@ -46,7 +46,7 @@ class SubscriptionController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return redirect()->route('subscription.index')
                 ->with('error', 'No active subscription to cancel.');
         }
@@ -55,19 +55,19 @@ class SubscriptionController extends Controller
             $subscription->update(['status' => 'cancelled']);
 
             Log::info('Subscription cancelled by user.', [
-                'user_id'         => $user->id,
+                'user_id' => $user->id,
                 'subscription_id' => $subscription->id,
             ]);
 
             $endDate = ($subscription->ends_at ?? $subscription->trial_ends_at)?->format('d M Y');
 
             return redirect()->route('subscription.index')
-                ->with('success', 'Your subscription has been cancelled. You retain access until ' . $endDate . '.');
+                ->with('success', 'Your subscription has been cancelled. You retain access until '.$endDate.'.');
         } catch (\Throwable $e) {
             Log::error('Subscription cancellation failed.', [
-                'user_id'         => $user->id,
+                'user_id' => $user->id,
                 'subscription_id' => $subscription->id,
-                'message'         => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
 
             return redirect()->route('subscription.index')

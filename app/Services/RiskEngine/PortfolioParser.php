@@ -3,7 +3,6 @@
 namespace App\Services\RiskEngine;
 
 use App\Models\PortfolioFile;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -101,17 +100,17 @@ class PortfolioParser
     */
 
     private const ASSET_TYPE_MAP = [
-        'stock'        => ['stock', 'equity', 'share', 'shares', 'eq'],
-        'mutual_fund'  => ['mutual fund', 'mf', 'mutual_fund', 'fund'],
-        'etf'          => ['etf', 'exchange traded fund'],
-        'bond'         => ['bond', 'ncd', 'debenture', 'sgb', 'sovereign gold bond', 'gilt', 'g-sec',
-                           'fixed deposit', 'fd', 'ppf', 'public provident fund',
-                           'treasury', 't-bill', 'tbill', 'nsc', 'kisan vikas',
-                           'debt', 'fixed income', 'debt fund'],
-        'commodity'    => ['commodity', 'gold', 'silver', 'commodity etf'],
-        'foreign_stock'=> ['foreign stock', 'us stock', 'global stock', 'international'],
-        'crypto'       => ['crypto', 'cryptocurrency', 'bitcoin', 'btc', 'ethereum'],
-        'cash'         => ['cash', 'liquid', 'liquid fund', 'overnight'],
+        'stock' => ['stock', 'equity', 'share', 'shares', 'eq'],
+        'mutual_fund' => ['mutual fund', 'mf', 'mutual_fund', 'fund'],
+        'etf' => ['etf', 'exchange traded fund'],
+        'bond' => ['bond', 'ncd', 'debenture', 'sgb', 'sovereign gold bond', 'gilt', 'g-sec',
+            'fixed deposit', 'fd', 'ppf', 'public provident fund',
+            'treasury', 't-bill', 'tbill', 'nsc', 'kisan vikas',
+            'debt', 'fixed income', 'debt fund'],
+        'commodity' => ['commodity', 'gold', 'silver', 'commodity etf'],
+        'foreign_stock' => ['foreign stock', 'us stock', 'global stock', 'international'],
+        'crypto' => ['crypto', 'cryptocurrency', 'bitcoin', 'btc', 'ethereum'],
+        'cash' => ['cash', 'liquid', 'liquid fund', 'overnight'],
     ];
 
     /*
@@ -121,21 +120,20 @@ class PortfolioParser
     */
 
     /**
-     * @param  PortfolioFile  $portfolioFile
      * @return array{rows: array, errors: array, count: int}
      */
     public function parse(PortfolioFile $portfolioFile): array
     {
         $path = Storage::disk(self::DISK)->path($portfolioFile->path);
-        $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
         return match ($ext) {
-            'csv'           => $this->parseCSV($path),
-            'xlsx', 'xls'   => $this->parseXLSX($path),
-            default         => [
-                'rows'   => [],
+            'csv' => $this->parseCSV($path),
+            'xlsx', 'xls' => $this->parseXLSX($path),
+            default => [
+                'rows' => [],
                 'errors' => ["File type .{$ext} is not supported. Please upload a CSV or XLSX file."],
-                'count'  => 0,
+                'count' => 0,
             ],
         };
     }
@@ -148,11 +146,11 @@ class PortfolioParser
 
     private function parseCSV(string $path): array
     {
-        $rows   = [];
+        $rows = [];
         $errors = [];
 
         $handle = @fopen($path, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return ['rows' => [], 'errors' => ['Could not open file for reading.'], 'count' => 0];
         }
 
@@ -163,15 +161,17 @@ class PortfolioParser
 
         // Read header
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return ['rows' => [], 'errors' => ['File appears to be empty.'], 'count' => 0];
         }
 
         $headerMap = $this->buildHeaderMap($rawHeaders);
 
-        if (!isset($headerMap['name'])) {
+        if (! isset($headerMap['name'])) {
             fclose($handle);
+
             return ['rows' => [], 'errors' => ['Could not find a "name" column. Please include a column with the holding name.'], 'count' => 0];
         }
 
@@ -189,6 +189,7 @@ class PortfolioParser
 
             if ($row === null) {
                 $errors[] = "Row {$lineNum}: skipped (missing required data).";
+
                 continue;
             }
 
@@ -208,15 +209,15 @@ class PortfolioParser
 
     private function parseXLSX(string $path): array
     {
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             return [
-                'rows'   => [],
+                'rows' => [],
                 'errors' => ['ZipArchive extension is not available on this server. Please upload a CSV instead.'],
-                'count'  => 0,
+                'count' => 0,
             ];
         }
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($path) !== true) {
             return ['rows' => [], 'errors' => ['Could not read XLSX file — it may be corrupted.'], 'count' => 0];
         }
@@ -247,13 +248,13 @@ class PortfolioParser
             return ['rows' => [], 'errors' => ['Could not read worksheet from XLSX file.'], 'count' => 0];
         }
 
-        $ws   = simplexml_load_string($worksheetXml);
+        $ws = simplexml_load_string($worksheetXml);
         $data = [];
 
         foreach ($ws->sheetData->row as $row) {
             $rowData = [];
             foreach ($row->c as $cell) {
-                $type  = (string) $cell['t'];
+                $type = (string) $cell['t'];
                 $value = (string) $cell->v;
 
                 if ($type === 's') {
@@ -274,13 +275,13 @@ class PortfolioParser
 
         // First row = headers
         $rawHeaders = array_shift($data);
-        $headerMap  = $this->buildHeaderMap($rawHeaders);
+        $headerMap = $this->buildHeaderMap($rawHeaders);
 
-        if (!isset($headerMap['name'])) {
+        if (! isset($headerMap['name'])) {
             return ['rows' => [], 'errors' => ['Could not find a "name" column. Please check the file format.'], 'count' => 0];
         }
 
-        $rows   = [];
+        $rows = [];
         $errors = [];
         $lineNum = 1;
 
@@ -294,6 +295,7 @@ class PortfolioParser
             $row = $this->mapRow($rawRow, $headerMap);
             if ($row === null) {
                 $errors[] = "Row {$lineNum}: skipped (missing required data).";
+
                 continue;
             }
             $rows[] = $row;
@@ -316,6 +318,7 @@ class PortfolioParser
     {
         $get = function (string $field) use ($rawRow, $headerMap): string {
             $idx = $headerMap[$field] ?? null;
+
             return ($idx !== null && isset($rawRow[$idx])) ? trim((string) $rawRow[$idx]) : '';
         };
 
@@ -329,11 +332,11 @@ class PortfolioParser
         $assetType = $this->normaliseAssetType($get('asset_type'), $name);
 
         // Values — derive what we can
-        $quantity       = $this->toFloat($get('quantity'));
-        $buyPrice       = $this->toFloat($get('buy_price'));
-        $currentPrice   = $this->toFloat($get('current_price'));
-        $investedValue  = $this->toFloat($get('invested_value'));
-        $currentValue   = $this->toFloat($get('current_value'));
+        $quantity = $this->toFloat($get('quantity'));
+        $buyPrice = $this->toFloat($get('buy_price'));
+        $currentPrice = $this->toFloat($get('current_price'));
+        $investedValue = $this->toFloat($get('invested_value'));
+        $currentValue = $this->toFloat($get('current_value'));
 
         // Derive current_value from quantity × current_price if not given
         if ($currentValue <= 0 && $quantity > 0 && $currentPrice > 0) {
@@ -363,16 +366,16 @@ class PortfolioParser
         $profitLoss = round($currentValue - $investedValue, 2);
 
         return [
-            'name'           => $name,
-            'asset_type'     => $assetType,
-            'symbol'         => $get('symbol') ?: null,
-            'isin'           => $get('isin')   ?: null,
-            'quantity'       => $quantity,
-            'buy_price'      => $buyPrice,
-            'current_price'  => $currentPrice,
+            'name' => $name,
+            'asset_type' => $assetType,
+            'symbol' => $get('symbol') ?: null,
+            'isin' => $get('isin') ?: null,
+            'quantity' => $quantity,
+            'buy_price' => $buyPrice,
+            'current_price' => $currentPrice,
             'invested_value' => $investedValue,
-            'current_value'  => $currentValue,
-            'profit_loss'    => $profitLoss,
+            'current_value' => $currentValue,
+            'profit_loss' => $profitLoss,
         ];
     }
 
@@ -438,12 +441,13 @@ class PortfolioParser
     private function detectDelimiter(string $line): string
     {
         $counts = [
-            ','  => substr_count($line, ','),
-            ';'  => substr_count($line, ';'),
+            ',' => substr_count($line, ','),
+            ';' => substr_count($line, ';'),
             "\t" => substr_count($line, "\t"),
-            '|'  => substr_count($line, '|'),
+            '|' => substr_count($line, '|'),
         ];
         arsort($counts);
+
         return array_key_first($counts);
     }
 
@@ -451,6 +455,7 @@ class PortfolioParser
     {
         // Remove currency symbols, commas, spaces
         $cleaned = preg_replace('/[₹$£€,\s]/', '', $value);
+
         return is_numeric($cleaned) ? (float) $cleaned : 0.0;
     }
 }

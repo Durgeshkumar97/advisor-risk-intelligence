@@ -7,7 +7,6 @@ use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
 use App\Models\Subscription;
-
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -22,12 +21,12 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        $plan               = $subscription?->plan;
-        $planName           = $plan?->name ?? null;
+        $plan = $subscription?->plan;
+        $planName = $plan?->name ?? null;
         $monthlyClientLimit = $plan?->monthly_client_limit ?? 0;
         $monthlyClientCount = PortfolioFile::monthlyClientCount($user->id);
-        $monthlyResetDate   = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
-        $expiryDate         = $subscription?->ends_at ?? $subscription?->trial_ends_at;
+        $monthlyResetDate = now()->addMonthNoOverflow()->startOfMonth()->format('d M Y');
+        $expiryDate = $subscription?->ends_at ?? $subscription?->trial_ends_at;
 
         $daysLeft = $subscription?->daysRemaining() ?? 0;
 
@@ -41,28 +40,28 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        $riskScore       = $risk ? (float) $risk->score : null;
+        $riskScore = $risk ? (float) $risk->score : null;
         $riskGeneratedAt = $risk?->generatedTimestamp();
 
         $riskLevel = match (true) {
-            $riskScore === null  => 'NONE',
-            $riskScore < 30      => 'LOW',
-            $riskScore < 70      => 'MEDIUM',
-            default              => 'HIGH',
+            $riskScore === null => 'NONE',
+            $riskScore < 30 => 'LOW',
+            $riskScore < 70 => 'MEDIUM',
+            default => 'HIGH',
         };
 
         $recommendation = match ($riskLevel) {
-            'LOW'    => 'Portfolio stable. Continue monitoring.',
+            'LOW' => 'Portfolio stable. Continue monitoring.',
             'MEDIUM' => 'Review exposure and rebalance selectively.',
-            'HIGH'   => 'Immediate portfolio review recommended.',
-            default  => 'Upload your portfolio to receive your first risk score.',
+            'HIGH' => 'Immediate portfolio review recommended.',
+            default => 'Upload your portfolio to receive your first risk score.',
         };
 
         $nextAction = match ($riskLevel) {
-            'LOW'    => 'Monitor market movement weekly.',
+            'LOW' => 'Monitor market movement weekly.',
             'MEDIUM' => 'Reduce concentration risk.',
-            'HIGH'   => 'Schedule an immediate portfolio review.',
-            default  => 'Upload a CSV, XLSX, or PDF portfolio file to get started.',
+            'HIGH' => 'Schedule an immediate portfolio review.',
+            default => 'Upload a CSV, XLSX, or PDF portfolio file to get started.',
         };
 
         $portfolios = Portfolio::where('user_id', $user->id)
@@ -70,21 +69,21 @@ class DashboardController extends Controller
             ->get();
 
         return view('user.dashboard', [
-            'user'            => $user,
-            'subscription'    => $subscription,
-            'planName'        => $planName,
+            'user' => $user,
+            'subscription' => $subscription,
+            'planName' => $planName,
             'monthlyClientLimit' => $monthlyClientLimit,
             'monthlyClientCount' => $monthlyClientCount,
-            'monthlyResetDate'   => $monthlyResetDate,
-            'expiryDate'      => $expiryDate,
-            'recentFiles'     => $recentFiles,
-            'daysLeft'        => $daysLeft,
-            'riskScore'       => $riskScore,
-            'riskLevel'       => $riskLevel,
+            'monthlyResetDate' => $monthlyResetDate,
+            'expiryDate' => $expiryDate,
+            'recentFiles' => $recentFiles,
+            'daysLeft' => $daysLeft,
+            'riskScore' => $riskScore,
+            'riskLevel' => $riskLevel,
             'riskGeneratedAt' => $riskGeneratedAt,
-            'recommendation'  => $recommendation,
-            'nextAction'      => $nextAction,
-            'portfolios'      => $portfolios,
+            'recommendation' => $recommendation,
+            'nextAction' => $nextAction,
+            'portfolios' => $portfolios,
         ]);
     }
 }

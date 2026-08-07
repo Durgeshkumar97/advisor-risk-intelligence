@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 // ─── file-level helpers ───────────────────────────────────────────────────────
 
@@ -22,24 +22,24 @@ require_once __DIR__ . '/../Support/SharedFixtures.php';
 function fileWithReportsFor(User $user, Portfolio $portfolio): PortfolioFile
 {
     $originalPath = "uploads/{$user->id}/portfolio.csv";
-    $reportPath   = "reports/{$user->id}/report.pdf";
-    $bundlePath   = "reports/{$user->id}/bundle.zip";
+    $reportPath = "reports/{$user->id}/report.pdf";
+    $bundlePath = "reports/{$user->id}/bundle.zip";
 
     Storage::disk('portfolios')->put($originalPath, 'name,asset_type,symbol,current_value');
     Storage::disk('portfolios')->put($reportPath, 'pdf-bytes');
     Storage::disk('portfolios')->put($bundlePath, 'zip-bytes');
 
     return PortfolioFile::create([
-        'user_id'            => $user->id,
-        'portfolio_id'       => $portfolio->id,
-        'original_name'      => 'portfolio.csv',
-        'stored_name'        => 'portfolio.csv',
-        'path'               => $originalPath,
-        'report_path'        => $reportPath,
+        'user_id' => $user->id,
+        'portfolio_id' => $portfolio->id,
+        'original_name' => 'portfolio.csv',
+        'stored_name' => 'portfolio.csv',
+        'path' => $originalPath,
+        'report_path' => $reportPath,
         'bundle_report_path' => $bundlePath,
-        'mime_type'          => 'text/csv',
-        'file_size'          => 100,
-        'status'             => PortfolioFile::STATUS_PROCESSED,
+        'mime_type' => 'text/csv',
+        'file_size' => 100,
+        'status' => PortfolioFile::STATUS_PROCESSED,
     ]);
 }
 
@@ -47,13 +47,13 @@ function fileWithReportsFor(User $user, Portfolio $portfolio): PortfolioFile
 function subscriptionWith(User $user, Plan $plan, string $status, $endsAt): Subscription
 {
     return Subscription::create([
-        'user_id'    => $user->id,
-        'plan_id'    => $plan->id,
-        'status'     => $status,
-        'starts_at'  => now()->subDays(10),
-        'ends_at'    => $endsAt,
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => $status,
+        'starts_at' => now()->subDays(10),
+        'ends_at' => $endsAt,
         'renewal_at' => $endsAt,
-        'provider'   => 'razorpay',
+        'provider' => 'razorpay',
     ]);
 }
 
@@ -65,9 +65,9 @@ beforeEach(function () {
 describe('EnsureActiveSubscription (active.sub) gates report.download and file.bundle.download', function () {
 
     it('allows a genuinely active subscription to download the report and the bundle', function () {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'P1']);
-        $file      = fileWithReportsFor($user, $portfolio);
+        $file = fileWithReportsFor($user, $portfolio);
 
         subscriptionWith($user, $this->plan, 'active', now()->addDays(20));
 
@@ -76,9 +76,9 @@ describe('EnsureActiveSubscription (active.sub) gates report.download and file.b
     });
 
     it('denies a subscription in its grace period on report.download and file.bundle.download', function () {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'P1']);
-        $file      = fileWithReportsFor($user, $portfolio);
+        $file = fileWithReportsFor($user, $portfolio);
 
         // status=active but ends_at already 1 day in the past — squarely inside
         // the 3-day grace window that CheckSubscription (and the old, buggy
@@ -90,9 +90,9 @@ describe('EnsureActiveSubscription (active.sub) gates report.download and file.b
     });
 
     it('still allows that same grace-period subscription to view the dashboard, file, and report', function () {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $portfolio = Portfolio::create(['user_id' => $user->id, 'name' => 'P1']);
-        $file      = fileWithReportsFor($user, $portfolio);
+        $file = fileWithReportsFor($user, $portfolio);
 
         subscriptionWith($user, $this->plan, 'active', now()->subDay());
 

@@ -84,7 +84,7 @@ return [
             'url' => rtrim(
                 env('APP_URL', 'http://localhost'),
                 '/'
-            ) . '/storage',
+            ).'/storage',
 
             'visibility' => 'public',
 

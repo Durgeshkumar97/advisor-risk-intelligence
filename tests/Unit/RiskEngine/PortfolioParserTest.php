@@ -8,7 +8,7 @@ uses(\Tests\TestCase::class);
 
 beforeEach(function () {
     Storage::fake('portfolios');
-    $this->parser = new PortfolioParser();
+    $this->parser = new PortfolioParser;
 });
 
 // ---------------------------------------------------------------------------
@@ -18,7 +18,8 @@ beforeEach(function () {
 function csvFile(string $filename, string $content): PortfolioFile
 {
     Storage::disk('portfolios')->put($filename, $content);
-    return (new PortfolioFile())->forceFill(['path' => $filename]);
+
+    return (new PortfolioFile)->forceFill(['path' => $filename]);
 }
 
 // ---------------------------------------------------------------------------
@@ -294,7 +295,7 @@ it('returns an error for an empty file', function () {
 
 it('returns an error and no rows for an unsupported file extension', function () {
     // File does not need to exist on disk — parser rejects by extension before opening
-    $file = (new PortfolioFile())->forceFill(['path' => 'document.pdf']);
+    $file = (new PortfolioFile)->forceFill(['path' => 'document.pdf']);
 
     $result = $this->parser->parse($file);
 

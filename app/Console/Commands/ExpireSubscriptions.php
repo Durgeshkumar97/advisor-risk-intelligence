@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Subscription;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class ExpireSubscriptions extends Command
@@ -26,7 +26,7 @@ class ExpireSubscriptions extends Command
             ->whereNotNull('ends_at')
             ->where('ends_at', '<=', now())
             ->update([
-                'status'     => 'expired',
+                'status' => 'expired',
                 'updated_at' => now(),
             ]);
 
@@ -40,7 +40,7 @@ class ExpireSubscriptions extends Command
             ->whereNotNull('trial_ends_at')
             ->where('trial_ends_at', '<=', now())
             ->update([
-                'status'     => 'expired',
+                'status' => 'expired',
                 'updated_at' => now(),
             ]);
 

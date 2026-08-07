@@ -7,8 +7,6 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\Notifications\WelcomeSetPasswordNotification;
-use App\Services\UserAccountRecoveryService;
-
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -35,9 +33,9 @@ class SubscriptionService
     {
         $plan = Plan::find($payment->plan_id);
 
-        if (!$plan) {
+        if (! $plan) {
             Log::error('SubscriptionService: plan not found.', [
-                'plan_id'    => $payment->plan_id,
+                'plan_id' => $payment->plan_id,
                 'payment_id' => $payment->id,
             ]);
             throw new \RuntimeException("Plan {$payment->plan_id} not found.");
@@ -46,9 +44,9 @@ class SubscriptionService
         $user = $this->findOrCreateUser($payment);
 
         if ($user->wasRecentlyCreated) {
-            $resetToken     = Password::broker()->createToken($user);
+            $resetToken = Password::broker()->createToken($user);
             $setPasswordUrl = route('password.reset', ['token' => $resetToken])
-                              . '?email=' . urlencode($user->email);
+                              .'?email='.urlencode($user->email);
             $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
         } else {
             // This payment's email matched an EXISTING account. The payer is
@@ -69,27 +67,27 @@ class SubscriptionService
             ->first();
 
         $startsAt = $currentSub ? $currentSub->ends_at->max(now()) : now();
-        $endsAt   = $startsAt->copy()->addDays($durationDays);
+        $endsAt = $startsAt->copy()->addDays($durationDays);
 
         DB::transaction(function () use ($user, $payment, $plan, $startsAt, $endsAt) {
 
             $user->subscriptions()->updateOrCreate(
                 [
-                    'provider'                  => 'razorpay',
-                    'provider_subscription_id'  => $payment->payment_id,
+                    'provider' => 'razorpay',
+                    'provider_subscription_id' => $payment->payment_id,
                 ],
                 [
-                    'plan_id'    => $plan->id,
-                    'starts_at'  => $startsAt,
-                    'ends_at'    => $endsAt,
+                    'plan_id' => $plan->id,
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
                     'renewal_at' => $endsAt,
-                    'status'     => 'active',
+                    'status' => 'active',
                 ]
             );
 
             $payment->update([
-                'user_id'      => $user->id,
-                'status'       => Payment::STATUS_PAID,
+                'user_id' => $user->id,
+                'status' => Payment::STATUS_PAID,
                 'processed_at' => now(),
             ]);
 
@@ -97,8 +95,8 @@ class SubscriptionService
 
         Log::info('SubscriptionService: payment activated.', [
             'payment_id' => $payment->id,
-            'user_id'    => $user->id,
-            'plan_id'    => $plan->id,
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
         ]);
 
         return $user;
@@ -115,7 +113,7 @@ class SubscriptionService
         $result = $this->accounts->findRestoreOrCreateUserByEmail(
             $payment->email,
             [
-                'name'     => $payment->name ?? 'Advisor',
+                'name' => $payment->name ?? 'Advisor',
                 'password' => Hash::make(str()->random(32)),
             ],
             [

@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('leads', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('phone',20);
-        $table->string('email')->nullable();
-        $table->string('selected_plan')->nullable();
-        $table->string('source')->default('landing_page');
-        $table->string('status')->default('new');
-        $table->timestamps();
-    });
+        Schema::create('leads', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('phone', 20);
+            $table->string('email')->nullable();
+            $table->string('selected_plan')->nullable();
+            $table->string('source')->default('landing_page');
+            $table->string('status')->default('new');
+            $table->timestamps();
+        });
     }
 
     /**

@@ -41,7 +41,7 @@ class AdminAuthController extends Controller
     public function login(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
-            'email'    => 'required|email|max:255',
+            'email' => 'required|email|max:255',
             'password' => 'required|string',
         ]);
 
@@ -50,6 +50,7 @@ class AdminAuthController extends Controller
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             event(new Lockout($request));
             $seconds = RateLimiter::availableIn($throttleKey);
+
             return back()
                 ->withErrors(['email' => trans('auth.throttle', [
                     'seconds' => $seconds,
@@ -61,7 +62,7 @@ class AdminAuthController extends Controller
         // Admin sessions never persist beyond the 15-minute session lifetime
         // (config/session.php) — no "remember me" cookie is ever queued here,
         // regardless of what the request sends.
-        if (!Auth::attempt(
+        if (! Auth::attempt(
             ['email' => $validated['email'], 'password' => $validated['password']],
             false
         )) {
@@ -89,7 +90,7 @@ class AdminAuthController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!Auth::user()->is_admin) {
+        if (! Auth::user()->is_admin) {
             $deniedUserId = Auth::id();
 
             Auth::logout();

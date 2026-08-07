@@ -4,10 +4,8 @@ namespace App\Providers;
 
 use App\Events\PaymentConfirmed;
 use App\Events\PortfolioFileUploaded;
-
 use App\Listeners\ActivateSubscriptionListener;
 use App\Listeners\LogPortfolioFileUpload;
-
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider

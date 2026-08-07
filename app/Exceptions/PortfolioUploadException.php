@@ -11,8 +11,11 @@ class PortfolioUploadException extends \Exception
     */
 
     public ?int $userId = null;
+
     public ?string $fileName = null;
+
     public ?string $storedPath = null;
+
     public array $context = [];
 
     /*
@@ -34,8 +37,8 @@ class PortfolioUploadException extends \Exception
         $exception->fileName = $fileName;
         $exception->storedPath = $storedPath;
         $exception->context = array_merge([
-            'user_id'     => $userId,
-            'file_name'   => $fileName,
+            'user_id' => $userId,
+            'file_name' => $fileName,
             'stored_path' => $storedPath,
         ], $additionalContext);
 

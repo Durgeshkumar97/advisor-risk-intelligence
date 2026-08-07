@@ -23,26 +23,26 @@ use App\Models\User;
 function activeSubscriberUser(): User
 {
     $plan = Plan::create([
-        'name'                 => 'Team',
-        'slug'                 => 'team-' . uniqid(),
-        'price'                => 999,
-        'duration_days'        => 30,
-        'portfolio_limit'      => 100,
-        'trial_days'           => 0,
-        'is_active'            => true,
+        'name' => 'Team',
+        'slug' => 'team-'.uniqid(),
+        'price' => 999,
+        'duration_days' => 30,
+        'portfolio_limit' => 100,
+        'trial_days' => 0,
+        'is_active' => true,
         'monthly_client_limit' => 1000,
     ]);
 
     $user = User::factory()->create();
 
     Subscription::create([
-        'user_id'    => $user->id,
-        'plan_id'    => $plan->id,
-        'status'     => 'active',
-        'starts_at'  => now(),
-        'ends_at'    => now()->addDays(30),
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => 'active',
+        'starts_at' => now(),
+        'ends_at' => now()->addDays(30),
         'renewal_at' => now()->addDays(30),
-        'provider'   => 'razorpay',
+        'provider' => 'razorpay',
     ]);
 
     return $user;
@@ -52,11 +52,11 @@ function activeSubscriberUser(): User
 function minimalActivePlan(): Plan
 {
     return Plan::create([
-        'name'          => 'Starter',
-        'slug'          => 'starter',
-        'price'         => '999.00',
+        'name' => 'Starter',
+        'slug' => 'starter',
+        'price' => '999.00',
         'duration_days' => 30,
-        'is_active'     => true,
+        'is_active' => true,
     ]);
 }
 
@@ -68,8 +68,8 @@ function minimalActivePlan(): Plan
  */
 function minimalValidXlsxContent(): string
 {
-    $tmp = tempnam(sys_get_temp_dir(), 'xlsx_') . '.xlsx';
-    $zip = new \ZipArchive();
+    $tmp = tempnam(sys_get_temp_dir(), 'xlsx_').'.xlsx';
+    $zip = new \ZipArchive;
     $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
     $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>');
     $zip->addFromString('_rels/.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');

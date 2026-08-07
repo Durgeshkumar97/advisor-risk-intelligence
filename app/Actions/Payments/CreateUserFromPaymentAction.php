@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Services\Notifications\PaymentSuccessNotification;
 use App\Services\Notifications\WelcomeSetPasswordNotification;
 use App\Services\UserAccountRecoveryService;
-
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -37,9 +36,9 @@ class CreateUserFromPaymentAction
         $result = $this->accounts->findRestoreOrCreateUserByEmail(
             $payment->email,
             [
-                'name'                   => $payment->name ?? 'Advisor',
-                'password'               => Hash::make(Str::random(32)),
-                'login_token'            => $loginToken,
+                'name' => $payment->name ?? 'Advisor',
+                'password' => Hash::make(Str::random(32)),
+                'login_token' => $loginToken,
                 'login_token_expires_at' => now()->addHours(24),
             ],
             [
@@ -50,7 +49,7 @@ class CreateUserFromPaymentAction
         $user = $result['user'];
         $user->wasRecentlyCreated = $result['created'];
 
-        if (!$payment->user_id) {
+        if (! $payment->user_id) {
             $payment->update(['user_id' => $user->id]);
         }
 
@@ -86,8 +85,8 @@ class CreateUserFromPaymentAction
         */
 
         Portfolio::create([
-            'user_id'    => $user->id,
-            'name'       => 'My Portfolio',
+            'user_id' => $user->id,
+            'name' => 'My Portfolio',
             'total_value' => 0,
             'risk_score' => 0,
             'risk_level' => 'LOW',
@@ -119,14 +118,14 @@ class CreateUserFromPaymentAction
 
         $user->notify(new PaymentSuccessNotification($payment));
 
-        $resetToken     = Password::broker()->createToken($user);
+        $resetToken = Password::broker()->createToken($user);
         $setPasswordUrl = route('password.reset', ['token' => $resetToken])
-                          . '?email=' . urlencode($user->email);
+                          .'?email='.urlencode($user->email);
 
         $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
 
         Log::info('CreateUserFromPaymentAction: new user created from payment.', [
-            'user_id'    => $user->id,
+            'user_id' => $user->id,
             'payment_id' => $payment->id,
         ]);
 

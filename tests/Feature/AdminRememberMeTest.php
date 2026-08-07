@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
-require_once __DIR__ . '/../Support/SharedFixtures.php';
+require_once __DIR__.'/../Support/SharedFixtures.php';
 
 describe('admin login never issues a persistent "remember me" cookie', function () {
 
@@ -23,7 +23,7 @@ describe('admin login never issues a persistent "remember me" cookie', function 
         $tokenBeforeLogin = $admin->remember_token;
 
         $response = $this->post(route('admin.login.submit'), [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'password' => 'correct-password',
             'remember' => '1',
         ]);
@@ -45,7 +45,7 @@ describe('admin login never issues a persistent "remember me" cookie', function 
         $tokenBeforeLogin = $admin->remember_token;
 
         $response = $this->post(route('admin.login.submit'), [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'password' => 'correct-password',
         ]);
 

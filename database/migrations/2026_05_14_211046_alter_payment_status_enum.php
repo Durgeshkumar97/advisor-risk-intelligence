@@ -41,9 +41,9 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("
+        DB::statement('
             ALTER TABLE payments
             MODIFY status VARCHAR(50)
-        ");
+        ');
     }
 };

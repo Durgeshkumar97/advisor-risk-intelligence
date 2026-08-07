@@ -29,7 +29,7 @@ class RiskAlertNotification extends Notification implements ShouldQueue
     */
 
     public function __construct(
-        public readonly float  $score,
+        public readonly float $score,
         public readonly string $level,
         public readonly string $action,
     ) {}
@@ -54,9 +54,9 @@ class RiskAlertNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): RiskAlertMail
     {
         return new RiskAlertMail(
-            user:   $notifiable,
-            score:  $this->score,
-            level:  $this->level,
+            user: $notifiable,
+            score: $this->score,
+            level: $this->level,
             action: $this->action,
         );
     }
@@ -70,8 +70,8 @@ class RiskAlertNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'score'  => $this->score,
-            'level'  => $this->level,
+            'score' => $this->score,
+            'level' => $this->level,
             'action' => $this->action,
         ];
     }

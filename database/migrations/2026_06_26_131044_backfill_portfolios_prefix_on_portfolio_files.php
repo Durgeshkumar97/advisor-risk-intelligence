@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    private const PREFIX  = 'portfolios/';
+    private const PREFIX = 'portfolios/';
+
     private const COLUMNS = ['path', 'report_path', 'bundle_report_path'];
 
     public function up(): void
@@ -15,7 +16,7 @@ return new class extends Migration
         foreach (self::COLUMNS as $col) {
             DB::table('portfolio_files')
                 ->whereNotNull($col)
-                ->where($col, 'not like', self::PREFIX . '%')
+                ->where($col, 'not like', self::PREFIX.'%')
                 ->update([
                     $col => DB::raw($this->concatExpr($driver, $col)),
                 ]);
@@ -30,7 +31,7 @@ return new class extends Migration
         foreach (self::COLUMNS as $col) {
             DB::table('portfolio_files')
                 ->whereNotNull($col)
-                ->where($col, 'like', self::PREFIX . '%')
+                ->where($col, 'like', self::PREFIX.'%')
                 ->update([
                     $col => DB::raw("SUBSTR({$col}, {$offset})"),
                 ]);
@@ -39,11 +40,11 @@ return new class extends Migration
 
     private function concatExpr(string $driver, string $col): string
     {
-        $prefix = "'" . self::PREFIX . "'";
+        $prefix = "'".self::PREFIX."'";
 
         return match ($driver) {
             'sqlite' => "{$prefix} || {$col}",
-            default  => "CONCAT({$prefix}, {$col})",
+            default => "CONCAT({$prefix}, {$col})",
         };
     }
 };

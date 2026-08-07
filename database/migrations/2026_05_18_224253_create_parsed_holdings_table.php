@@ -24,7 +24,7 @@ return new class extends Migration
                 'commodity',
                 'foreign_stock',
                 'crypto',
-                'cash'
+                'cash',
             ]);
 
             $table->string('symbol')->nullable();

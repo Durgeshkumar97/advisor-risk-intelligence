@@ -88,7 +88,7 @@ class StorePortfolioUploadRequest extends FormRequest
                 |--------------------------------------------------------------------------
                 */
 
-                new PortfolioFileType(),
+                new PortfolioFileType,
 
                 /*
                 |--------------------------------------------------------------------------
@@ -127,7 +127,7 @@ class StorePortfolioUploadRequest extends FormRequest
             |--------------------------------------------------------------------------
             */
 
-            if (!$portfolioId) {
+            if (! $portfolioId) {
                 return;
             }
 
@@ -148,7 +148,7 @@ class StorePortfolioUploadRequest extends FormRequest
 
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
 
                 $validator->errors()->add(
 
@@ -170,17 +170,13 @@ class StorePortfolioUploadRequest extends FormRequest
     {
         return [
 
-            'file.required' =>
-            'Please select a file to upload.',
+            'file.required' => 'Please select a file to upload.',
 
-            'file.file' =>
-            'The uploaded file must be valid.',
+            'file.file' => 'The uploaded file must be valid.',
 
-            'file.max' =>
-            'File size must not exceed 20MB.',
+            'file.max' => 'File size must not exceed 20MB.',
 
-            'portfolio_id.integer' =>
-            'Invalid portfolio selected.',
+            'portfolio_id.integer' => 'Invalid portfolio selected.',
         ];
     }
 

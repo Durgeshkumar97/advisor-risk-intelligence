@@ -32,7 +32,7 @@ class CreateRazorpayOrderAction
 
         $order = $api->order->create([
 
-            'receipt' => 'rcpt_' . uniqid(),
+            'receipt' => 'rcpt_'.uniqid(),
 
             'amount' => (int) round(
                 $plan->price * 100

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
-
 use Illuminate\Http\Request;
 
 class AdminIntakeController extends Controller
@@ -28,9 +27,9 @@ class AdminIntakeController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name',  'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%");
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('phone', 'LIKE', "%{$search}%");
             });
         }
 
@@ -86,7 +85,7 @@ class AdminIntakeController extends Controller
         ]);
 
         Lead::findOrFail($id)->update([
-            'status'       => $validated['status'],
+            'status' => $validated['status'],
             'contacted_at' => in_array($validated['status'], ['contacted', 'converted'])
                 ? now()
                 : null,

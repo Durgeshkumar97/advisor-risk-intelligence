@@ -22,7 +22,7 @@ class VerifyRazorpayPayment
         $verified = app(RazorpayService::class)
             ->verifySignature($payload);
 
-        if (!$verified) {
+        if (! $verified) {
             throw ValidationException::withMessages([
                 'signature' => 'Invalid payment signature.',
             ]);
@@ -35,7 +35,7 @@ class VerifyRazorpayPayment
                 ->lockForUpdate()
                 ->first();
 
-            if (!$payment) {
+            if (! $payment) {
                 throw ValidationException::withMessages([
                     'payment' => 'Payment not found.',
                 ]);
@@ -55,9 +55,9 @@ class VerifyRazorpayPayment
 
             $payment->update([
                 'payment_id' => $payload['razorpay_payment_id'],
-                'signature'  => $payload['razorpay_signature'],
-                'status'     => Payment::STATUS_PAID,
-                'paid_at'    => now(),
+                'signature' => $payload['razorpay_signature'],
+                'status' => Payment::STATUS_PAID,
+                'paid_at' => now(),
             ]);
 
             return $payment->fresh();

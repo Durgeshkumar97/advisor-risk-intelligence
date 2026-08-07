@@ -8,14 +8,14 @@ use App\Models\RiskScore;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
-
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class GenerateRiskScore extends Command
 {
-    protected $signature   = 'risk:generate';
+    protected $signature = 'risk:generate';
+
     protected $description = 'Generate daily risk scores and send email signals to active subscribers';
 
     public function handle(PortfolioRiskCalculator $calculator): int
@@ -46,6 +46,7 @@ class GenerateRiskScore extends Command
 
         if ($activeUserIds->isEmpty()) {
             $this->info('No active subscribers. Exiting.');
+
             return Command::SUCCESS;
         }
 
@@ -62,7 +63,7 @@ class GenerateRiskScore extends Command
             ->unique('user_id')
             ->keyBy('user_id');
 
-        $sent   = 0;
+        $sent = 0;
         $failed = 0;
 
         foreach ($users as $user) {
@@ -73,9 +74,9 @@ class GenerateRiskScore extends Command
                 $failed++;
                 Log::error('risk:generate — user failed.', [
                     'user_id' => $user->id,
-                    'email'   => $user->email,
+                    'email' => $user->email,
                     'message' => $e->getMessage(),
-                    'trace'   => $e->getTraceAsString(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
                 $this->error("  ✗ {$user->email} — {$e->getMessage()}");
             }
@@ -84,9 +85,9 @@ class GenerateRiskScore extends Command
         $this->info("Done. Sent: {$sent} | Failed: {$failed}.");
 
         Log::info('risk:generate completed.', [
-            'sent'   => $sent,
+            'sent' => $sent,
             'failed' => $failed,
-            'total'  => $users->count(),
+            'total' => $users->count(),
         ]);
 
         return Command::SUCCESS;
@@ -110,11 +111,11 @@ class GenerateRiskScore extends Command
 
         $result = $calculator->calculate($assets);
 
-        $score      = $result['score'];
-        $riskLevel  = $result['meta']['risk_level'];
+        $score = $result['score'];
+        $riskLevel = $result['meta']['risk_level'];
         $nextAction = $result['next_action'];
         $volatility = $result['volatility'];
-        $drawdown   = $result['drawdown'];
+        $drawdown = $result['drawdown'];
 
         /*
         |----------------------------------------------------------------------
@@ -123,17 +124,17 @@ class GenerateRiskScore extends Command
         */
 
         RiskScore::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'portfolio_id' => $portfolio?->id,
-            'score'        => $score,
-            'volatility'   => $volatility,
-            'drawdown'     => $drawdown,
+            'score' => $score,
+            'volatility' => $volatility,
+            'drawdown' => $drawdown,
             'generated_at' => now(),
-            'meta'         => array_merge($result['meta'], [
-                'trigger'     => 'daily-cron',
+            'meta' => array_merge($result['meta'], [
+                'trigger' => 'daily-cron',
                 'next_action' => $nextAction,
-                'risk_flags'  => $result['risk_flags'],
-                'has_holdings'=> $assets->isNotEmpty(),
+                'risk_flags' => $result['risk_flags'],
+                'has_holdings' => $assets->isNotEmpty(),
             ]),
         ]);
 
@@ -153,11 +154,11 @@ class GenerateRiskScore extends Command
                 ->send(new DailyRiskSignalMail($user, round($score), $riskLevel, $nextAction));
 
             Log::info('risk:generate — signal sent.', [
-                'user_id'    => $user->id,
-                'email'      => $user->email,
-                'score'      => $score,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'score' => $score,
                 'risk_level' => $riskLevel,
-                'assets'     => $assets->count(),
+                'assets' => $assets->count(),
             ]);
 
             $this->line(sprintf(
@@ -173,7 +174,7 @@ class GenerateRiskScore extends Command
 
             Log::info('risk:generate — no holdings, email skipped.', [
                 'user_id' => $user->id,
-                'email'   => $user->email,
+                'email' => $user->email,
             ]);
 
             $this->line("  – {$user->email} — no portfolio holdings yet, email skipped.");

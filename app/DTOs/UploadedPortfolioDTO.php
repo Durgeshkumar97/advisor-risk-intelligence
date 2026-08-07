@@ -11,9 +11,9 @@ use Illuminate\Http\UploadedFile;
 final class UploadedPortfolioDTO
 {
     public function __construct(
-        public readonly int          $userId,
+        public readonly int $userId,
         public readonly UploadedFile $file,
-        public readonly ?int         $portfolioId = null,
+        public readonly ?int $portfolioId = null,
     ) {}
 
     /*
@@ -23,13 +23,13 @@ final class UploadedPortfolioDTO
     */
 
     public static function fromRequest(
-        int          $userId,
+        int $userId,
         UploadedFile $file,
-        ?int         $portfolioId = null,
+        ?int $portfolioId = null,
     ): self {
         return new self(
-            userId:      $userId,
-            file:        $file,
+            userId: $userId,
+            file: $file,
             portfolioId: $portfolioId,
         );
     }

@@ -36,10 +36,13 @@ class PortfolioRiskCalculator
     |--------------------------------------------------------------------------
     */
 
-    private const W_COMPOSITION   = 0.30;
+    private const W_COMPOSITION = 0.30;
+
     private const W_CONCENTRATION = 0.25;
-    private const W_EQUITY_RATIO  = 0.25;
-    private const W_DRAWDOWN      = 0.20;
+
+    private const W_EQUITY_RATIO = 0.25;
+
+    private const W_DRAWDOWN = 0.20;
 
     /*
     |--------------------------------------------------------------------------
@@ -65,6 +68,7 @@ class PortfolioRiskCalculator
     private function marketMultiplier(): float
     {
         $m = (float) config('risk.market_multiplier', 1.05);
+
         return max(0.80, min(1.30, $m));
     }
 
@@ -76,9 +80,8 @@ class PortfolioRiskCalculator
 
     /**
      * @param  \Illuminate\Support\Collection  $assets  PortfolioAsset models
-     *                                                   (must have current_value, invested_value,
-     *                                                    asset_type, name, risk_score)
-     * @return array
+     *                                                  (must have current_value, invested_value,
+     *                                                  asset_type, name, risk_score)
      */
     public function calculate(Collection $assets): array
     {
@@ -98,7 +101,7 @@ class PortfolioRiskCalculator
         |----------------------------------------------------------------------
         */
 
-        $totalCurrentValue  = (float) $assets->sum('current_value');
+        $totalCurrentValue = (float) $assets->sum('current_value');
         $totalInvestedValue = (float) $assets->sum('invested_value');
 
         // Avoid division by zero
@@ -114,13 +117,13 @@ class PortfolioRiskCalculator
         */
 
         $compositionScore = 0.0;
-        $assetScores      = [];
+        $assetScores = [];
 
         foreach ($assets as $asset) {
-            $weight         = (float) $asset->current_value / $totalCurrentValue;
-            $score          = (float) $asset->risk_score;   // already scored by AssetRiskScorer
+            $weight = (float) $asset->current_value / $totalCurrentValue;
+            $score = (float) $asset->risk_score;   // already scored by AssetRiskScorer
             $compositionScore += $score * $weight;
-            $assetScores[]  = $score;
+            $assetScores[] = $score;
         }
 
         /*
@@ -134,15 +137,15 @@ class PortfolioRiskCalculator
 
         $hhi = 0.0;
         foreach ($assets as $asset) {
-            $share  = (float) $asset->current_value / $totalCurrentValue;
-            $hhi   += $share * $share;
+            $share = (float) $asset->current_value / $totalCurrentValue;
+            $hhi += $share * $share;
         }
 
         // Normalise: perfect diversification baseline ≈ 1/n
-        $n            = $assets->count();
-        $perfectHhi   = ($n > 0) ? (1.0 / $n) : 0;
-        $hhiNorm      = max(0.0, $hhi - $perfectHhi);          // remove "expected" HHI
-        $hhiRange     = max(0.001, 1.0 - $perfectHhi);         // max possible excess HHI
+        $n = $assets->count();
+        $perfectHhi = ($n > 0) ? (1.0 / $n) : 0;
+        $hhiNorm = max(0.0, $hhi - $perfectHhi);          // remove "expected" HHI
+        $hhiRange = max(0.001, 1.0 - $perfectHhi);         // max possible excess HHI
         $concentrationScore = min(100.0, ($hhiNorm / $hhiRange) * 100.0);
 
         /*
@@ -156,13 +159,12 @@ class PortfolioRiskCalculator
         // This excludes liquid / money-market / overnight funds that are
         // technically of type mutual_fund but behave as defensive instruments.
         $equityValue = (float) $assets
-            ->filter(fn ($a) =>
-                in_array($a->asset_type, self::EQUITY_TYPES, true)
+            ->filter(fn ($a) => in_array($a->asset_type, self::EQUITY_TYPES, true)
                 && (float) $a->risk_score >= 25
             )
             ->sum('current_value');
 
-        $equityRatio      = $equityValue / $totalCurrentValue;      // 0.0–1.0
+        $equityRatio = $equityValue / $totalCurrentValue;      // 0.0–1.0
         $equityRatioScore = $equityRatio * 100.0;
 
         /*
@@ -173,11 +175,11 @@ class PortfolioRiskCalculator
         |----------------------------------------------------------------------
         */
 
-        $drawdownPct  = 0.0;
+        $drawdownPct = 0.0;
         $drawdownScore = 0.0;
 
         if ($totalInvestedValue > 0) {
-            $pnl         = $totalCurrentValue - $totalInvestedValue;
+            $pnl = $totalCurrentValue - $totalInvestedValue;
             $drawdownPct = ($pnl < 0)
                 ? abs($pnl / $totalInvestedValue) * 100.0   // positive percentage loss
                 : 0.0;
@@ -191,10 +193,10 @@ class PortfolioRiskCalculator
         */
 
         $rawScore = (
-            $compositionScore   * self::W_COMPOSITION   +
+            $compositionScore * self::W_COMPOSITION +
             $concentrationScore * self::W_CONCENTRATION +
-            $equityRatioScore   * self::W_EQUITY_RATIO  +
-            $drawdownScore      * self::W_DRAWDOWN
+            $equityRatioScore * self::W_EQUITY_RATIO +
+            $drawdownScore * self::W_DRAWDOWN
         ) * $this->marketMultiplier();
 
         $finalScore = (float) max(0, min(100, round($rawScore, 2)));
@@ -216,10 +218,10 @@ class PortfolioRiskCalculator
 
         $riskFlags = $this->buildRiskFlags(
             concentrationScore: $concentrationScore,
-            equityRatio:        $equityRatio,
-            drawdownPct:        $drawdownPct,
-            assetCount:         $n,
-            finalScore:         $finalScore
+            equityRatio: $equityRatio,
+            drawdownPct: $drawdownPct,
+            assetCount: $n,
+            finalScore: $finalScore
         );
 
         /*
@@ -262,7 +264,7 @@ class PortfolioRiskCalculator
 
         $nextAction = $this->buildNextAction(
             finalScore: $finalScore,
-            riskFlags:  $riskFlags
+            riskFlags: $riskFlags
         );
 
         /*
@@ -272,31 +274,31 @@ class PortfolioRiskCalculator
         */
 
         return [
-            'score'      => $finalScore,
+            'score' => $finalScore,
             'volatility' => round($volatility, 2),
-            'drawdown'   => round($drawdownPct, 2),
-            'next_action'=> $nextAction,
+            'drawdown' => round($drawdownPct, 2),
+            'next_action' => $nextAction,
             'risk_flags' => $riskFlags,
-            'meta'       => [
-                'composition_score'   => round($compositionScore, 2),
+            'meta' => [
+                'composition_score' => round($compositionScore, 2),
                 'concentration_score' => round($concentrationScore, 2),
-                'equity_ratio_score'  => round($equityRatioScore, 2),
-                'drawdown_score'      => round($drawdownScore, 2),
-                'equity_ratio_pct'    => round($equityRatio * 100, 1),
-                'hhi'                 => round($hhi, 4),
-                'asset_count'         => $n,
+                'equity_ratio_score' => round($equityRatioScore, 2),
+                'drawdown_score' => round($drawdownScore, 2),
+                'equity_ratio_pct' => round($equityRatio * 100, 1),
+                'hhi' => round($hhi, 4),
+                'asset_count' => $n,
                 'dominant_asset_type' => $dominantType,
-                'total_invested'      => round($totalInvestedValue, 2),
-                'total_current'       => round($totalCurrentValue, 2),
-                'market_multiplier'   => $this->marketMultiplier(),
-                'risk_flags'          => $riskFlags,
-                'risk_level'          => $this->level($finalScore),
+                'total_invested' => round($totalInvestedValue, 2),
+                'total_current' => round($totalCurrentValue, 2),
+                'market_multiplier' => $this->marketMultiplier(),
+                'risk_flags' => $riskFlags,
+                'risk_level' => $this->level($finalScore),
                 'stock_risk_fallback_count' => $stockRiskFallbackCount,
                 // Renamed from 'source' to avoid colliding with the unrelated
                 // per-asset AssetRiskScorer::SOURCE_* provenance label stored
                 // in PortfolioAsset.meta.stock_risk.source — this key is a
                 // version tag for this calculator, not data provenance.
-                'calculator_version'  => 'portfolio-risk-calculator-v1',
+                'calculator_version' => 'portfolio-risk-calculator-v1',
             ],
         ];
     }
@@ -309,13 +311,13 @@ class PortfolioRiskCalculator
 
     public function level(float $score): string
     {
-        $low  = config('risk.low_threshold', 30);
+        $low = config('risk.low_threshold', 30);
         $high = config('risk.high_threshold', 70);
 
         return match (true) {
-            $score < $low  => 'LOW',
+            $score < $low => 'LOW',
             $score < $high => 'MEDIUM',
-            default        => 'HIGH',
+            default => 'HIGH',
         };
     }
 
@@ -329,7 +331,7 @@ class PortfolioRiskCalculator
         float $concentrationScore,
         float $equityRatio,
         float $drawdownPct,
-        int   $assetCount,
+        int $assetCount,
         float $finalScore
     ): array {
         $flags = [];
@@ -413,21 +415,22 @@ class PortfolioRiskCalculator
 
         $mean = array_sum($scores) / $n;
         $sumSq = array_sum(array_map(fn ($x) => ($x - $mean) ** 2, $scores));
+
         return sqrt($sumSq / ($n - 1));
     }
 
     private function emptyResult(): array
     {
         return [
-            'score'      => 0.0,
+            'score' => 0.0,
             'volatility' => 0.0,
-            'drawdown'   => 0.0,
-            'next_action'=> 'Upload a portfolio file to receive your personalised risk signal.',
+            'drawdown' => 0.0,
+            'next_action' => 'Upload a portfolio file to receive your personalised risk signal.',
             'risk_flags' => ['NO_HOLDINGS'],
-            'meta'       => [
-                'calculator_version'        => 'portfolio-risk-calculator-v1',
-                'risk_level'                => 'NONE',
-                'asset_count'               => 0,
+            'meta' => [
+                'calculator_version' => 'portfolio-risk-calculator-v1',
+                'risk_level' => 'NONE',
+                'asset_count' => 0,
                 'stock_risk_fallback_count' => 0,
             ],
         ];

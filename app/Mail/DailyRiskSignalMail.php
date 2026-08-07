@@ -10,8 +10,11 @@ class DailyRiskSignalMail extends Mailable
     use SerializesModels;
 
     public $user;
+
     public $riskScore;
+
     public $riskLevel;
+
     public $nextAction;
 
     public function __construct($user, $riskScore, $riskLevel, $nextAction)
