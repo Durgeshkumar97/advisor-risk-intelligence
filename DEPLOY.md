@@ -111,11 +111,6 @@ RAZORPAY_KEY=rzp_live_XXXXXXXXXX
 RAZORPAY_SECRET=<live-secret>
 RAZORPAY_WEBHOOK_SECRET=<webhook-secret>
 
-# WhatsApp (see § 6 below)
-WHATSAPP_TOKEN=<system-user-token>
-WHATSAPP_PHONE_NUMBER_ID=<phone-number-id>
-WHATSAPP_TEST_MODE=false             # ← false in production
-
 # Risk engine
 RISK_MARKET_MULTIPLIER=1.05
 ```
