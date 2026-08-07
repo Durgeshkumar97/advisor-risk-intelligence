@@ -1,26 +1,29 @@
 # RiskSignal — Production Deployment Guide
 
-Complete checklist for deploying RiskSignal to a Linux VPS (Ubuntu/Debian).
+Deployment checklist for RiskSignal as actually run in production: **Hostinger shared hosting via hPanel** — not a self-managed VPS. There is no root/sudo access, no user-editable Nginx config, and no process manager (Supervisor) available. Every step below reflects that constraint; where a step would normally be a system-level change on a VPS, the hPanel-managed equivalent is noted instead.
 
 ---
 
-## 1. Server Requirements
+## 1. Hosting Environment
 
-| Requirement | Minimum | Notes |
-|---|---|---|
-| PHP | 8.2+ | `php8.2-cli php8.2-fpm php8.2-mysql php8.2-zip php8.2-xml php8.2-curl php8.2-mbstring` |
-| MySQL | 8.0+ | or MariaDB 10.6+ |
-| Nginx | any | with PHP-FPM |
-| Supervisor | any | for queue workers |
-| Composer | 2.x | |
+| Aspect | What's actually available |
+|---|---|
+| PHP | Version/extensions selected via hPanel, not `apt` — currently PHP 8.3 in production (see hPanel → PHP Configuration) |
+| Database | MySQL, managed via hPanel |
+| Web server / SSL / CDN | Fully managed by Hostinger (their `hcdn` layer + hPanel) — no direct Nginx/Apache config access |
+| Process manager | **None.** No Supervisor, no persistent daemons — see §3 |
+| Composer | Available via hPanel's SSH/terminal access or a compatible local Composer |
+| Shell access | Limited SSH without sudo — confirmed no `sudo` during earlier debugging (couldn't reload PHP-FPM directly; had to trigger `opcache_reset()` via a web-request route instead) |
 
 ---
 
 ## 2. Application Setup
 
 ```bash
-# Clone and install
-cd /var/www
+# Clone and install (path is your hPanel account's domain directory,
+# not /var/www — check hPanel → File Manager / SSH for the exact path,
+# typically something like ~/domains/risksignal.in/public_html or similar)
+cd <your-hPanel-domain-directory>
 git clone <repo> risksignal
 cd risksignal
 
@@ -41,73 +44,25 @@ php artisan event:cache
 
 # Storage
 php artisan storage:link
-chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 ```
 
+Note: `chown -R www-data:www-data` does not apply here — there's no `www-data` system user under your control on shared hosting; PHP runs as your own hosting account user, and file ownership is already correct without a manual `chown` step.
+
 ---
 
-## 3. Queue Worker (Supervisor)
+## 3. Queue Processing — no Supervisor available
 
-Supervisor keeps the queue worker running 24/7. Without it, jobs (portfolio processing, email) won't execute.
-
-### Install Supervisor
-
-```bash
-sudo apt install supervisor -y
-```
-
-### Create config file
-
-Create `/etc/supervisor/conf.d/risksignal.conf`:
-
-```ini
-; ─── Default queue (email, portfolio processing) ─────────────────────────────
-[program:risksignal-default]
-process_name=%(program_name)s_%(process_num)02d
-command=php /var/www/risksignal/artisan queue:work database --queue=default --sleep=3 --tries=3 --max-time=3600
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-user=www-data
-numprocs=2
-redirect_stderr=true
-stdout_logfile=/var/www/risksignal/storage/logs/worker-default.log
-stopwaitsecs=3600
-```
-
-### Activate
-
-```bash
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start risksignal-default:*
-
-# Check status
-sudo supervisorctl status
-```
-
-### After code deploy (restart workers)
-
-```bash
-sudo supervisorctl restart risksignal-default:*
-```
+There is no Supervisor (or any process manager) on this hosting tier, so a persistent `queue:work` daemon is not an option. Queue processing instead runs via the cron-scheduled `queue:work --stop-when-empty` entry — see §4's schedule table. It starts, drains whatever's queued, and exits every minute, which is the actual (and only) queue-processing mechanism in this environment.
 
 ---
 
 ## 4. Cron — Laravel Scheduler
 
-One cron entry runs all scheduled commands — see the schedule overview below.
-
-```bash
-sudo crontab -e -u www-data
-```
-
-Add this single line:
+One cron entry runs all scheduled commands — see the schedule overview below. Add it through **hPanel → Advanced → Cron Jobs** (not `sudo crontab -e -u www-data` — there's no sudo, and no `www-data` user to schedule under; the cron entry runs as your own hosting account).
 
 ```cron
-* * * * * php /var/www/risksignal/artisan schedule:run >> /dev/null 2>&1
+* * * * * php /path/to/risksignal/artisan schedule:run >> /dev/null 2>&1
 ```
 
 ### Schedule overview
@@ -271,90 +226,39 @@ Set `WHATSAPP_TEST_MODE=true` in `.env` — messages will be logged to `storage/
 
 ---
 
-## 7. Nginx Config
+## 7. Web Server / SSL — fully managed, no config access
 
-```nginx
-server {
-    listen 80;
-    server_name risksignal.in www.risksignal.in;
-    return 301 https://$host$request_uri;
-}
+There is no user-editable Nginx (or Apache) config on this hosting tier — the web server, TLS termination, and CDN layer (`hcdn`) are entirely managed by Hostinger through hPanel. The Nginx server-block config previously documented here (including `add_header X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`) was never actually deployable in this environment — confirmed by checking live response headers, which don't carry any of them. There's no `/etc/letsencrypt/`, no `certbot`, and no `php8.2-fpm.sock` to point a config at.
 
-server {
-    listen 443 ssl http2;
-    server_name risksignal.in www.risksignal.in;
+**SSL** is provisioned and auto-renewed by Hostinger automatically (currently a Let's Encrypt certificate, managed through hPanel — not via a locally-run `certbot`).
 
-    root /var/www/risksignal/public;
-    index index.php;
+**Security headers** (`X-Frame-Options`, `X-Content-Type-Options`, etc.) still need to be added somehow, since there's no server-config layer to set them at. The two realistic options on this hosting tier: hPanel may expose a custom-headers setting (check the panel), or set them from within the app itself via Laravel middleware appended to every response. Neither has been implemented yet — this is a known gap, not something this correction pass fixes.
 
-    ssl_certificate     /etc/letsencrypt/live/risksignal.in/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/risksignal.in/privkey.pem;
-
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-    add_header X-XSS-Protection "1; mode=block";
-
-    client_max_body_size 10M;   # portfolio file uploads
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-
-    # Never serve the portfolios storage disk publicly
-    location ~* ^/storage/portfolios {
-        deny all;
-    }
-}
-```
-
-### SSL (Let's Encrypt)
-
-```bash
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d risksignal.in -d www.risksignal.in
-```
+**Storage protection** (`storage/portfolios` must never be served publicly) is currently enforced by `FileController` requiring auth on every download — see the main `CLAUDE.md` Storage section — not by an Nginx `deny` rule, since there's no Nginx config to add one to.
 
 ---
 
 ## 8. Deploy Script (use after every code push)
 
-Save as `deploy.sh` in the project root:
+`deploy.sh` already exists in the project root (added in commit `3ece3af`) — this is its actual current content:
 
 ```bash
 #!/bin/bash
 set -e
-
 echo "── RiskSignal Deploy ────────────────────────────────"
-
 git pull origin main
-
 composer install --no-dev --optimize-autoloader
-
 php artisan migrate --force
-
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
-
-sudo supervisorctl restart risksignal-default:*
-sudo supervisorctl restart risksignal-whatsapp:*
-
 echo "── Deploy complete ──────────────────────────────────"
 ```
 
+No `supervisorctl restart` lines — there's no Supervisor to restart (see §3). Run it with:
+
 ```bash
-chmod +x deploy.sh
 ./deploy.sh
 ```
 
@@ -365,9 +269,6 @@ chmod +x deploy.sh
 ```bash
 # Scheduler working?
 php artisan schedule:list
-
-# Queue workers running?
-sudo supervisorctl status
 
 # Process queued jobs manually (test)
 php artisan queue:work --once
@@ -389,6 +290,8 @@ php artisan risk:generate
 php artisan whatsapp:signal --dry-run
 ```
 
+(No `sudo supervisorctl status` — there's no Supervisor on this hosting tier; queue health is really just "did `queue:failed` stay empty," since processing runs via the cron-scheduled `queue:work --stop-when-empty` from §3/§4.)
+
 ---
 
 ## 10. Post-Launch Checklist
@@ -397,13 +300,12 @@ php artisan whatsapp:signal --dry-run
 - [ ] `WHATSAPP_TEST_MODE=false` after templates approved
 - [ ] Razorpay **live** keys set (not `rzp_test_`)
 - [ ] Razorpay webhook URL set to `https://risksignal.in/webhook/razorpay`
-- [ ] SSL certificate active (certbot auto-renew)
-- [ ] Supervisor running (`sudo supervisorctl status`)
-- [ ] Cron entry verified (`sudo crontab -l -u www-data`)
+- [ ] SSL certificate active (Hostinger-managed auto-renewal — check hPanel, not `certbot`)
+- [ ] Cron entry verified via hPanel → Advanced → Cron Jobs (not `sudo crontab -l -u www-data`)
 - [ ] Both WhatsApp templates approved in Meta Business Manager
 - [ ] `php artisan queue:failed` is empty
 - [ ] Test full flow: payment → subscription → portfolio upload → risk score → email → WhatsApp
 
 ---
 
-*Last updated: 2026-05-23*
+*Last updated: 2026-08-07 — corrected to match confirmed production reality (Hostinger shared hosting via hPanel, not a self-managed VPS).*
