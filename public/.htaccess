@@ -3,6 +3,9 @@
     Header always set X-Content-Type-Options "nosniff"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
     Header always set X-XSS-Protection "1; mode=block"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 </IfModule>
 
 <IfModule mod_rewrite.c>
