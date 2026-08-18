@@ -648,35 +648,35 @@
 
                     <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>50 clients / month</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily risk signals</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily email signal each morning</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Client conversation script</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>14-day free trial</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="font-weight:700;">✗</span>
+                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg></span>
                             <span>Branded PDF reports</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="font-weight:700;">✗</span>
+                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg></span>
                             <span>Priority support</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="font-weight:700;">✗</span>
+                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg></span>
                             <span>Multi-advisor access</span>
                         </li>
                     </ul>
@@ -694,8 +694,6 @@
                 position:relative;
                 padding:2.2rem;
                 border:2px solid var(--gold);
-                transform:scale(1.05);
-                box-shadow:0 20px 50px rgba(0,0,0,.25);
                 display:flex;
                 flex-direction:column;
                 justify-content:space-between;
@@ -705,8 +703,9 @@
                     top:-12px;
                     left:50%;
                     transform:translateX(-50%);
-                    background:var(--gold);
-                    color:#000;
+                    background:var(--paper);
+                    color:var(--gold);
+                    border:1px solid var(--gold);
                     padding:4px 12px;
                     font-size:.7rem;
                     font-weight:600;
@@ -729,35 +728,35 @@
 
                     <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Up to 250 clients / month</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily risk signals</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily email signal each morning</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Client conversation script</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Branded PDF reports</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Priority support (2-hour response)</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>14-day free trial</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="font-weight:700;">✗</span>
+                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg></span>
                             <span>Multi-advisor access</span>
                         </li>
                     </ul>
@@ -783,35 +782,35 @@
 
                     <ul style="list-style:none;padding:0;margin:0;font-size:.875rem;line-height:1;display:flex;flex-direction:column;gap:.75rem;">
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Up to 1,000 clients / month</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily risk signals</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Daily email signal each morning</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Client conversation script</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Branded PDF reports</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Priority support (2-hour response)</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>Multi-advisor access</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:#22c55e;font-weight:700;">✓</span>
+                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></span>
                             <span>14-day free trial</span>
                         </li>
                     </ul>
@@ -828,7 +827,8 @@
 
         {{-- FOOTER TRUST LINE --}}
         <div style="text-align:center;margin-top:2.5rem;font-size:.8rem;color:var(--ink-3);">
-            🔒 Secure payment via Razorpay &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:.8rem;height:.8rem;display:inline-block;vertical-align:-1px;"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" /></svg>
+            Secure payment via Razorpay &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees
         </div>
         <div style="text-align:center;margin-top:.5rem;font-size:.8rem;color:var(--ink-3);">
             Questions? Email <a href="mailto:support@risksignal.in" style="color:var(--gold);text-decoration:none;">support@risksignal.in</a>
