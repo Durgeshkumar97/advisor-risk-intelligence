@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
 Rules:
+
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
@@ -57,23 +58,23 @@ composer setup
 2. `PortfolioUploadService` validates and stores the file on the `portfolios` disk (`storage/app/private/portfolios`), creating a `PortfolioFile` record with `status=pending`.
 3. The `PortfolioFileUploaded` event fires, triggering `LogPortfolioFileUpload` listener, which dispatches the `ProcessPortfolioFile` job to the queue.
 4. **`ProcessPortfolioFile` job** (the core worker):
-   - Parses holdings with `RiskEngine/PortfolioParser`
-   - Scores each asset with `RiskEngine/AssetRiskScorer`
-   - Calculates composite portfolio risk with `RiskEngine/PortfolioRiskCalculator` (see formula below)
-   - Wraps DB writes (assets + `RiskScore` + `PortfolioFile` status update) in a single transaction — PDF generation is also inside the transaction so a render failure rolls back everything
-   - Emails the report after the transaction commits
-   - ZIP uploads are extracted, each contained file becomes a new `PortfolioFile`, and a `Bus::batch()` processes them; `AssembleBundleZip` runs in the batch's `finally` callback
+    - Parses holdings with `RiskEngine/PortfolioParser`
+    - Scores each asset with `RiskEngine/AssetRiskScorer`
+    - Calculates composite portfolio risk with `RiskEngine/PortfolioRiskCalculator` (see formula below)
+    - Wraps DB writes (assets + `RiskScore` + `PortfolioFile` status update) in a single transaction — PDF generation is also inside the transaction so a render failure rolls back everything
+    - Emails the report after the transaction commits
+    - ZIP uploads are extracted, each contained file becomes a new `PortfolioFile`, and a `Bus::batch()` processes them; `AssembleBundleZip` runs in the batch's `finally` callback
 
 ### Risk Engine Formula
 
 `PortfolioRiskCalculator::calculate()` produces a 0–100 composite score:
 
-| Factor | Weight | Description |
-|--------|--------|-------------|
-| Composition | 30% | Allocation-weighted avg of per-asset scores from `AssetRiskScorer` |
-| Concentration | 25% | Herfindahl-Hirschman Index (normalised) |
-| Equity Ratio | 25% | % of portfolio in equity-class assets with score ≥ 25 |
-| Drawdown | 20% | Unrealised loss mapped 0–30% loss → 0–100 score |
+| Factor        | Weight | Description                                                        |
+| ------------- | ------ | ------------------------------------------------------------------ |
+| Composition   | 30%    | Allocation-weighted avg of per-asset scores from `AssetRiskScorer` |
+| Concentration | 25%    | Herfindahl-Hirschman Index (normalised)                            |
+| Equity Ratio  | 25%    | % of portfolio in equity-class assets with score ≥ 25              |
+| Drawdown      | 20%    | Unrealised loss mapped 0–30% loss → 0–100 score                    |
 
 Final score is multiplied by `RISK_MARKET_MULTIPLIER` (env, default 1.05). Thresholds in `config/risk.php` control LOW/MEDIUM/HIGH labels (`RISK_LOW_THRESHOLD`, `RISK_HIGH_THRESHOLD`).
 
@@ -126,8 +127,7 @@ Tests use Pest 3, in-memory SQLite, and synchronous queues. The test env is conf
 ## Model + Effort Routing Policy
 
 Automatically decide the right model tier for EACH subtask before
-starting it. Never default to the highest tier "to be safe." Never use
-Fable, under any circumstance, for this project. State which tier you're
+starting it. Never default to the highest tier "to be safe." Never use Fable, under any circumstance, for this project. State which tier you're
 using and why, in one line, before starting any non-trivial subtask.
 
 **Haiku** — mechanical/high-volume work: reading files, grepping,
@@ -151,6 +151,7 @@ Sonnet tasks with genuine multi-STEP reasoning (not just multi-file).
 Never set high effort by default "just in case."
 
 **Hard rules:**
+
 1. Never use Fable, ever. If a task seems to need Fable-level capability,
    break it into smaller, better-scoped subtasks for Opus instead.
 2. Never start on Opus "to be safe" — start at the tier the task shape
@@ -158,3 +159,37 @@ Never set high effort by default "just in case."
 3. If unsure between two tiers, pick the cheaper one first.
 4. At the end of multi-step work, briefly summarize which tiers were
    used and why.
+
+## New Session Orientation
+
+**Always run these first, before any work:**
+
+```bash
+cat today.md          # current open tasks and session state
+git log --oneline -8  # recent commits
+git status            # uncommitted changes
+```
+
+State what you see before asking what to do next.
+
+---
+
+## Production Infrastructure
+
+- **Server:** Hostinger shared hosting
+- **SSH:** `ssh -p 65002 u458948686@147.93.109.168`
+- **Production path:** `~/domains/risksignal.in/project`
+- **Deploy:** `./deploy.sh` from project root (see DEPLOY.md)
+- **DNS:** Cloudflare — laura/theo.ns.cloudflare.com
+- **Monitoring:** UptimeRobot on https://www.risksignal.in
+- **Error tracking:** Sentry (live on both local and production)
+
+---
+
+## Completed Work — Do Not Re-Do
+
+- Full security audit: complete (Critical/High/Medium all fixed)
+- DNSSEC + Cloudflare migration: complete and stable
+- Security headers (CSP, Referrer-Policy, Permissions-Policy): live in .htaccess
+- Guardr score: A+ 96/100
+- risk_service (Python/FastAPI ML microservice): engineering complete, not yet deployed — gated on business validation
