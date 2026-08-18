@@ -50,11 +50,18 @@
 
                 @php
                     $statusStyles = match($file->status) {
-                        'processed'  => ['bg' => 'rgba(16,185,129,.15)',  'color' => '#34d399',  'label' => '✓ Processed'],
-                        'failed'     => ['bg' => 'rgba(239,68,68,.15)',   'color' => '#fca5a5',  'label' => '✗ Failed'],
-                        'processing' => ['bg' => 'rgba(59,130,246,.15)',  'color' => '#93c5fd',  'label' => '⟳ Processing'],
-                        default      => ['bg' => 'rgba(251,191,36,.15)',  'color' => '#fbbf24',  'label' => '⏳ Pending'],
+                        'processed'  => ['bg' => 'rgba(16,185,129,.15)',  'color' => '#34d399',  'label' => 'Processed',  'icon' => 'check-circle'],
+                        'failed'     => ['bg' => 'rgba(239,68,68,.15)',   'color' => '#fca5a5',  'label' => 'Failed',     'icon' => 'x-circle'],
+                        'processing' => ['bg' => 'rgba(59,130,246,.15)',  'color' => '#93c5fd',  'label' => 'Processing', 'icon' => 'arrow-path'],
+                        default      => ['bg' => 'rgba(251,191,36,.15)',  'color' => '#fbbf24',  'label' => 'Pending',    'icon' => 'clock'],
                     };
+
+                    $statusIcons = [
+                        'check-circle' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:.8rem;height:.8rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg>',
+                        'x-circle'     => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:.8rem;height:.8rem;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg>',
+                        'arrow-path'   => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:.8rem;height:.8rem;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>',
+                        'clock'        => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:.8rem;height:.8rem;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
+                    ];
 
                     // Human-readable file size
                     $bytes = $file->file_size;
@@ -89,7 +96,9 @@
                     {{-- STATUS --}}
                     <td style="padding:.85rem .6rem;">
                         <span style="
-                            display:inline-block;
+                            display:inline-flex;
+                            align-items:center;
+                            gap:.3rem;
                             padding:.3rem .7rem;
                             border-radius:999px;
                             font-size:.75rem;
@@ -98,6 +107,7 @@
                             color:{{ $statusStyles['color'] }};
                             white-space:nowrap;
                         ">
+                            {!! $statusIcons[$statusStyles['icon']] !!}
                             {{ $statusStyles['label'] }}
                         </span>
                         @if($file->isFailed() && isset($file->meta['error_message']))
@@ -141,7 +151,7 @@
                                 "
                                 onmouseover="this.style.background='rgba(59,130,246,.22)'"
                                 onmouseout="this.style.background='rgba(59,130,246,.12)'"
-                            >⬇</a>
+                            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;"><path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3ZM3.25 15a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h11.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 15.75 20H4.25A1.75 1.75 0 0 1 2.5 18.25v-2.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg></a>
 
                             {{-- DELETE (not while processing) --}}
                             @unless($file->isProcessing())
@@ -169,7 +179,7 @@
                                     "
                                     onmouseover="this.style.background='rgba(239,68,68,.25)'"
                                     onmouseout="this.style.background='rgba(239,68,68,.12)'"
-                                >✕</button>
+                                ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg></button>
                             </form>
                             @endunless
 
@@ -183,7 +193,9 @@
 
                 <tr>
                     <td colspan="5" style="padding:2.5rem;text-align:center;color:var(--ink-3);">
-                        <div style="font-size:2rem;margin-bottom:.5rem;">📁</div>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:2rem;height:2rem;margin:0 auto .5rem;display:block;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44l-1.122-1.12a1.5 1.5 0 0 0-1.06-.44H4.5A2.25 2.25 0 0 0 2.25 9v8.25A2.25 2.25 0 0 0 4.5 19.5Z" />
+                        </svg>
                         <div style="font-weight:600;">No files uploaded yet</div>
                         <div style="font-size:.85rem;margin-top:.25rem;">Upload your first portfolio file using the form on the left.</div>
                     </td>

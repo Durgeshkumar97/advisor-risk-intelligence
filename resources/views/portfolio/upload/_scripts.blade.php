@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file) { preview.style.display = 'none'; return; }
         const mb   = file.size / 1048576;
         const size = mb >= 1 ? mb.toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB';
-        preview.textContent = '✓  ' + file.name + '  (' + size + ')';
+        preview.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:.8rem;height:.8rem;display:inline-block;vertical-align:-1px;margin-right:.4rem;"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg>';
+        preview.append(file.name + '  (' + size + ')');
         preview.style.display = 'block';
         dropZone.style.borderColor = '#34d399';
     });
