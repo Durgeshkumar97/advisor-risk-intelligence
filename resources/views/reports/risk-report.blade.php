@@ -84,6 +84,44 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 <div class="action-box">{{ $portfolio->clientRiskProfile->comparisonMessage((float) $riskScore->score, $level) }}</div>
 @endif
 
+@if(!empty($riskScore->meta['market_context']))
+@php $mkt = $riskScore->meta['market_context']; @endphp
+<div class="section-heading">Market Risk Context</div>
+<div class="action-box" style="border-left: 4px solid
+    {{ $mkt['warning_severity'] === 'EXTREME' ? '#8e44ad' :
+       ($mkt['warning_severity'] === 'HIGH'   ? '#dc2626' :
+       ($mkt['warning_severity'] === 'MEDIUM' ? '#d97706' : '#16a34a')) }};
+    background: {{ $mkt['warning_severity'] === 'EXTREME' ? '#f5f0ff' :
+       ($mkt['warning_severity'] === 'HIGH'   ? '#fff1f0' :
+       ($mkt['warning_severity'] === 'MEDIUM' ? '#fffbeb' : '#f0fdf4')) }};">
+    <strong>
+        Market Environment
+        <span style="font-size:9px; font-weight:normal; color:#64748b;">
+            &nbsp;&middot;&nbsp; as of {{ $mkt['date'] }}
+        </span>
+    </strong>
+    &nbsp;
+    <span style="font-size:10px; font-weight:700; color:
+        {{ $mkt['warning_severity'] === 'EXTREME' ? '#8e44ad' :
+           ($mkt['warning_severity'] === 'HIGH'   ? '#dc2626' :
+           ($mkt['warning_severity'] === 'MEDIUM' ? '#d97706' : '#16a34a')) }}">
+        {{ $mkt['label'] }}
+    </span>
+    <br>
+    <span style="font-size:10px;">{{ $mkt['warning_text'] }}</span>
+    <br>
+    <span style="font-size:8px; color:#94a3b8; margin-top:4px; display:block;">
+        Volatility: {{ $mkt['vol_regime'] }}
+        &nbsp;&middot;&nbsp;
+        Drawdown: {{ $mkt['dd_regime'] }}
+        &nbsp;&middot;&nbsp;
+        Trend: {{ $mkt['market_regime'] }}
+        &nbsp;&middot;&nbsp;
+        Market Score: {{ number_format($mkt['score'], 0) }}/100
+    </span>
+</div>
+@endif
+
 @if(!empty($riskScore->meta['risk_flags']))
 <div class="section-heading">Risk Flags</div>
 @foreach($riskScore->meta['risk_flags'] as $flag)

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\RiskReportMail;
+use App\Models\MarketRiskSnapshot;
 use App\Models\Portfolio;
 use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
@@ -57,12 +58,6 @@ class ProcessPortfolioFile implements ShouldQueue
         'data', 'export', 'file', 'document', 'upload',
     ];
 
-    // Even an aggressively over-diversified direct-equity retail/HNI portfolio
-    // realistically holds low hundreds of distinct stocks at most; this sits
-    // ~2-5x above that while staying far below what a crafted CSV could claim
-    // (a symbol column isn't validated against a real ticker list, so nothing
-    // else stops one file from listing hundreds of thousands of fake symbols).
-    // Matches StockRiskService::MAX_BATCH_SYMBOLS, its own defense-in-depth cap.
     private const MAX_DISTINCT_STOCK_SYMBOLS = 500;
 
     public function __construct(
@@ -131,11 +126,6 @@ class ProcessPortfolioFile implements ShouldQueue
             $riskScore = null;
             $reportPath = null;
 
-            // Batch-fetch stock classifications OUTSIDE the transaction — the loop
-            // below runs inside DB::transaction() while PortfolioFile is row-locked
-            // (lockForUpdate() a few lines down), so a network call per holding here
-            // would extend that lock across N HTTP round trips. One batched call for
-            // the whole file instead, matching StockRiskService's batch endpoint.
             $stockSymbols = collect($holdings)
                 ->filter(fn ($row) => ($row['asset_type'] ?? null) === 'stock')
                 ->map(fn ($row) => trim((string) ($row['symbol'] ?? '')))
@@ -162,14 +152,36 @@ class ProcessPortfolioFile implements ShouldQueue
                 return;
             }
 
+            // Batch-fetch stock classifications OUTSIDE the transaction
             $stockRiskMap = $stockRiskService->classifyBatch($stockSymbols);
+
+            // Fetch latest market risk snapshot OUTSIDE the transaction —
+            // read-only DB call, same pattern as StockRiskService above.
+            // If no snapshot exists yet (market-risk:sync not run), falls
+            // back gracefully — multiplier stays at env default, no context
+            // block written to meta.
+            $marketSnapshot = MarketRiskSnapshot::latest();
+
+            if ($marketSnapshot) {
+                config(['risk.market_multiplier' => $marketSnapshot->multiplier()]);
+
+                Log::info('ProcessPortfolioFile: market risk context loaded.', [
+                    'id'               => $file->id,
+                    'market_date'      => $marketSnapshot->market_date->toDateString(),
+                    'market_label'     => $marketSnapshot->label,
+                    'market_score'     => $marketSnapshot->score,
+                    'multiplier_used'  => $marketSnapshot->multiplier(),
+                ]);
+            } else {
+                Log::warning('ProcessPortfolioFile: no market risk snapshot found — using env default multiplier.', [
+                    'id' => $file->id,
+                ]);
+            }
 
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors,
-                $stockRiskMap, &$riskScore, &$reportPath
+                $stockRiskMap, $marketSnapshot, &$riskScore, &$reportPath
             ) {
-                // Lock the row — blocks a concurrent worker until this transaction commits,
-                // then the second worker sees STATUS_PROCESSED and exits cleanly.
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
                 if (! $lockedFile || $lockedFile->status === PortfolioFile::STATUS_PROCESSED) {
                     return;
@@ -192,9 +204,6 @@ class ProcessPortfolioFile implements ShouldQueue
                     $meta = ['source_file_id' => $file->id];
 
                     if ($isStock) {
-                        // Auditable provenance: 'source' distinguishes a real ML
-                        // classification from the static fallback, so a silent
-                        // outage never looks indistinguishable from live data.
                         $meta['stock_risk'] = [
                             'source' => $scored['source'],
                             'risk_level' => $stockRisk['risk_level'] ?? null,
@@ -235,6 +244,23 @@ class ProcessPortfolioFile implements ShouldQueue
                 if ($assetModels->isNotEmpty()) {
                     $result = $calculator->calculate($assetModels);
 
+                    // Build market context block — included directly in create()
+                    // so meta is complete in one write, no create-then-update.
+                    $marketContext = $marketSnapshot ? [
+                        'market_context' => [
+                            'date'            => $marketSnapshot->market_date->toDateString(),
+                            'score'           => $marketSnapshot->score,
+                            'score_smooth'    => $marketSnapshot->score_smooth,
+                            'label'           => $marketSnapshot->label,
+                            'warning_severity'=> $marketSnapshot->warning_severity,
+                            'warning_text'    => $marketSnapshot->warning_text,
+                            'vol_regime'      => $marketSnapshot->vol_regime,
+                            'dd_regime'       => $marketSnapshot->dd_regime,
+                            'market_regime'   => $marketSnapshot->market_regime,
+                            'multiplier_used' => $marketSnapshot->multiplier(),
+                        ],
+                    ] : [];
+
                     $riskScore = RiskScore::create([
                         'user_id' => $file->user_id,
                         'portfolio_id' => $portfolioId,
@@ -246,7 +272,7 @@ class ProcessPortfolioFile implements ShouldQueue
                             'trigger' => 'file_upload',
                             'next_action' => $result['next_action'],
                             'risk_flags' => $result['risk_flags'],
-                        ]),
+                        ], $marketContext),
                     ]);
 
                     Log::info('ProcessPortfolioFile: risk score saved.', [
@@ -254,10 +280,10 @@ class ProcessPortfolioFile implements ShouldQueue
                         'score' => $result['score'],
                         'risk_level' => $result['meta']['risk_level'],
                         'asset_count' => count($assetModels),
+                        'market_label' => $marketSnapshot?->label ?? 'unavailable',
                     ]);
                 }
 
-                // PDF inside transaction — render failure rolls back RiskScore + assets
                 $reportPath = $riskScore
                     ? $this->generatePdfReport($file, $riskScore, $portfolioId)
                     : null;
@@ -280,7 +306,6 @@ class ProcessPortfolioFile implements ShouldQueue
                 'holdings_saved' => count($holdings),
             ]);
 
-            // Email outside transaction — safe to queue after commit
             if ($reportPath && empty($file->fresh()->meta['extracted_from_zip_id'] ?? null)) {
                 try {
                     $this->dispatchReportEmails($file, $riskScore);
@@ -293,7 +318,6 @@ class ProcessPortfolioFile implements ShouldQueue
             }
 
         } catch (\Throwable $e) {
-            // Orphan PDF cleanup — DB rolled back but disk file remains if PDF was written
             if (! empty($reportPath) && Storage::disk(self::DISK)->exists($reportPath)) {
                 Storage::disk(self::DISK)->delete($reportPath);
             }
@@ -346,8 +370,6 @@ class ProcessPortfolioFile implements ShouldQueue
 
     private function handleZipExtraction(PortfolioFile $file, string $absolutePath): void
     {
-        // Idempotency guard: if children were created in a prior attempt, the batch
-        // was already dispatched — exit early to avoid duplicate portfolios.
         if (PortfolioFile::where('meta->extracted_from_zip_id', $file->id)->exists()) {
             Log::info('ZIP extraction: children already exist, skipping re-extraction.', ['id' => $file->id]);
 
@@ -365,10 +387,6 @@ class ProcessPortfolioFile implements ShouldQueue
                 throw new \Exception("Failed to open ZIP archive (ZipArchive error code: {$result}).");
             }
 
-            // Validate entry names BEFORE writing anything to disk — do not
-            // rely on a realpath() check after extractTo() has already
-            // written every entry (that only "works" by accident of how the
-            // underlying libzip build happens to normalise paths).
             $safeEntries = [];
             $rejectedEntries = [];
 
@@ -401,9 +419,6 @@ class ProcessPortfolioFile implements ShouldQueue
 
             $zip->close();
 
-            // Second, defense-in-depth layer — should never trigger now that
-            // unsafe names are excluded before extraction, but kept in case
-            // this ever runs against a code path that bypasses the check above.
             $realTempDir = realpath($tempDir);
             $iterator = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS)
@@ -447,16 +462,6 @@ class ProcessPortfolioFile implements ShouldQueue
                     continue;
                 }
 
-                // Content-based check — the filename extension above is
-                // just a cheap first-pass filter; this is the actual
-                // security-relevant layer, since a ZIP entry's name is
-                // entirely attacker-controlled. Same mechanism and csv
-                // carve-out as the primary (non-ZIP) upload's PortfolioFileType
-                // rule, shared via contentMatchesAllowedType() — see its
-                // docblock. self::ALLOWED_EXTENSIONS (no 'zip') is passed
-                // explicitly so a nested zip-in-zip still isn't accepted,
-                // even though the top-level upload's own allow-list does
-                // include 'zip'.
                 $detectedFile = new \Symfony\Component\HttpFoundation\File\File($realFilePath);
                 $result = \App\Rules\PortfolioFileType::contentMatchesAllowedType($detectedFile, $ext, self::ALLOWED_EXTENSIONS);
 
@@ -552,28 +557,16 @@ class ProcessPortfolioFile implements ShouldQueue
         }
     }
 
-    /**
-     * mkdir()'s mode argument is subject to the runtime umask, which we
-     * don't control on shared hosting — chmod() sets the bits directly,
-     * guaranteeing owner-only access regardless of umask (verified
-     * empirically: a permissive umask can leave broader bits set, and a
-     * pathological one can strip even the owner's own bits).
-     */
     private function createOwnerOnlyTempDir(string $path): void
     {
         mkdir($path, 0700, true);
         chmod($path, 0700);
     }
 
-    /**
-     * True if a ZIP entry name could escape the extraction directory —
-     * checked on the raw name string, before any file exists on disk, so it
-     * doesn't depend on realpath() (which needs the target to already exist).
-     */
     private function isUnsafeZipEntryName(string $name): bool
     {
         if (str_starts_with($name, '/') || preg_match('#^[a-zA-Z]:[\\\\/]#', $name)) {
-            return true; // absolute path (unix or windows-style)
+            return true;
         }
 
         $segments = preg_split('#[\\\\/]+#', $name);
