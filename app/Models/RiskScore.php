@@ -60,11 +60,9 @@ class RiskScore extends Model
 
     public function level(): string
     {
-        return match (true) {
-            $this->score < 30 => 'LOW',
-            $this->score < 70 => 'MEDIUM',
-            default => 'HIGH',
-        };
+        if ($this->score <= config('risk.low_threshold', 30)) return 'LOW';
+        if ($this->score >= config('risk.high_threshold', 70)) return 'HIGH';
+        return 'MEDIUM';
     }
 
     public function generatedTimestamp(): \Carbon\Carbon
