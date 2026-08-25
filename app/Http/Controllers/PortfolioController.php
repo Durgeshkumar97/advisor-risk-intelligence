@@ -33,6 +33,17 @@ class PortfolioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | CREATE — show the new portfolio form
+    |--------------------------------------------------------------------------
+    */
+
+    public function create(): View
+    {
+        return view('portfolio.create');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | STORE — create a new named portfolio
     |--------------------------------------------------------------------------
     |
@@ -50,6 +61,7 @@ class PortfolioController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'client_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         /*
@@ -75,6 +87,7 @@ class PortfolioController extends Controller
         Portfolio::create([
             'user_id' => Auth::id(),
             'name' => $validated['name'],
+            'client_name' => $validated['client_name'] ?? null,
         ]);
 
         return redirect()

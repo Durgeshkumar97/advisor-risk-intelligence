@@ -23,6 +23,8 @@ class Portfolio extends Model
 
         'name',
 
+        'client_name',
+
         'total_value',
 
         'risk_score',

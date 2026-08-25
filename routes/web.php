@@ -255,6 +255,9 @@ Route::middleware(['auth', 'active.sub'])->group(function () {
 
 Route::middleware(['auth', 'paid'])->group(function () {
 
+    Route::get('/portfolios/create', [PortfolioController::class, 'create'])
+        ->name('portfolio.create');
+
     Route::get('/portfolios', [PortfolioController::class, 'index'])
         ->name('portfolio.manage');
 
