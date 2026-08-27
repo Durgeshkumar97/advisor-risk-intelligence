@@ -92,9 +92,11 @@ class AssembleBundleZip implements ShouldQueue
 
             $parent->loadMissing('user');
 
-            Mail::to(env('REPORTS_NOTIFY_EMAIL'))->queue(new BundleReportMail($parent));
+            $notifyEmail = config('services.reports_notify_email');
 
-            if ($parent->user->email_reports && $parent->user->email !== env('REPORTS_NOTIFY_EMAIL')) {
+            Mail::to($notifyEmail)->queue(new BundleReportMail($parent));
+
+            if ($parent->user->email_reports && $parent->user->email !== $notifyEmail) {
                 Mail::to($parent->user->email)->queue(new BundleReportMail($parent));
             }
 

@@ -13,8 +13,7 @@ class SyncMarketRisk extends Command
     public function handle(): int
     {
         $csvPath = $this->option('csv')
-            ?? env('MARKET_RISK_CSV_PATH',
-               '/home/beast/windowsfolder/FinAdvisorAI/Nifty500/dataset/nifty500_enriched.csv');
+            ?? config('risk.market_risk_csv_path');
 
         if (! file_exists($csvPath)) {
             $this->error("CSV not found: {$csvPath}");

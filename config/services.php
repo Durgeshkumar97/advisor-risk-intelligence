@@ -25,6 +25,14 @@ return [
 
     'founder_email' => env('FOUNDER_EMAIL', 'founder@risksignal.in'),
 
+    /*
+    | Recipient for every generated risk report and bundle report. Must be
+    | resolved through config() — never env() at runtime — because deploy.sh
+    | runs `php artisan config:cache`, after which env() returns null for any
+    | key not read from inside a config file.
+    */
+    'reports_notify_email' => env('REPORTS_NOTIFY_EMAIL', env('FOUNDER_EMAIL', 'founder@risksignal.in')),
+
     'razorpay' => [
         'key' => env('RAZORPAY_KEY'),
         'secret' => env('RAZORPAY_SECRET'),
