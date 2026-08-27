@@ -73,7 +73,7 @@ One cron entry runs all scheduled commands — see the schedule overview below. 
 | 00:05 daily | `subscriptions:expire` | Mark expired subscriptions |
 | 02:00 daily | `users:purge` | Permanently delete users soft-deleted past the 30-day retention window |
 | 03:00 daily | `backup:database` | Daily database backup |
-| Every 30 min | Closure | Fail stale pending payments (>30 min old) |
+| Every 30 min | Closure | Fail stale pending payments (>60 min old) |
 | Hourly | `portfolio:cleanup-temp-dirs` | Remove orphaned ZIP-extraction temp directories left behind by a killed job |
 | 08:00 daily | `risk:generate` | Calculate risk scores + send email signals |
 
@@ -131,11 +131,29 @@ RISK_MARKET_MULTIPLIER=1.05
 
 ## 6. Web Server / SSL — fully managed, no config access
 
-There is no user-editable Nginx (or Apache) config on this hosting tier — the web server, TLS termination, and CDN layer (`hcdn`) are entirely managed by Hostinger through hPanel. The Nginx server-block config previously documented here (including `add_header X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`) was never actually deployable in this environment — confirmed by checking live response headers, which don't carry any of them. There's no `/etc/letsencrypt/`, no `certbot`, and no `php8.2-fpm.sock` to point a config at.
+There is no user-editable Nginx (or Apache) *server-block* config on this hosting tier — the web server, TLS termination, and CDN layer (`hcdn`) are entirely managed by Hostinger through hPanel. The Nginx server-block config previously documented here was never deployable in this environment. There's no `/etc/letsencrypt/`, no `certbot`, and no `php8.2-fpm.sock` to point a config at. LiteSpeed does honour `public/.htaccess`, which is where the app's own headers and rewrites live.
 
 **SSL** is provisioned and auto-renewed by Hostinger automatically (currently a Let's Encrypt certificate, managed through hPanel — not via a locally-run `certbot`).
 
-**Security headers** (`X-Frame-Options`, `X-Content-Type-Options`, etc.) still need to be added somehow, since there's no server-config layer to set them at. The two realistic options on this hosting tier: hPanel may expose a custom-headers setting (check the panel), or set them from within the app itself via Laravel middleware appended to every response. Neither has been implemented yet — this is a known gap, not something this correction pass fixes.
+**Security headers** — implemented, and verified live. They are set in `public/.htaccess` (`<IfModule mod_headers.c>`), which LiteSpeed honours on this tier; no hPanel setting or Laravel middleware was needed. Currently served on every response:
+
+| Header | Value |
+| --- | --- |
+| `Content-Security-Policy` | see `.htaccess` — allows `checkout.razorpay.com` scripts and frames `api.razorpay.com` |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `X-XSS-Protection` | `1; mode=block` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), usb=()` |
+
+Verify after any deploy that touches `.htaccess`:
+
+```bash
+curl -sSI https://www.risksignal.in/ | grep -i 'content-security-policy\|x-frame-options\|permissions-policy'
+```
+
+The CSP currently carries `'unsafe-inline'` and `'unsafe-eval'` because the checkout page uses inline `<script>` blocks and Alpine 3 evaluates its directives with `new Function()`. Without them the Razorpay modal cannot open at all. There is a `TODO` above the header in `.htaccess` to migrate to a nonce-based CSP plus Alpine's CSP build; until then, do not "tighten" this header without re-testing a real payment.
 
 **Storage protection** (`storage/portfolios` must never be served publicly) is currently enforced by `FileController` requiring auth on every download — see the main `CLAUDE.md` Storage section — not by an Nginx `deny` rule, since there's no Nginx config to add one to.
 
@@ -143,27 +161,21 @@ There is no user-editable Nginx (or Apache) config on this hosting tier — the 
 
 ## 7. Deploy Script (use after every code push)
 
-`deploy.sh` already exists in the project root (added in commit `3ece3af`) — this is its actual current content:
+`deploy.sh` lives in the project root. Read the file for the exact commands — it is the source of truth and this guide is not, which is how the copy previously inlined here went stale. What it does, in order:
 
-```bash
-#!/bin/bash
-set -e
-echo "── RiskSignal Deploy ────────────────────────────────"
-git pull origin main
-composer install --no-dev --optimize-autoloader
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
-echo "── Deploy complete ──────────────────────────────────"
-```
+1. Records the current commit as a rollback point and prints it.
+2. Arms an `ERR` trap that brings the site back up if any step fails.
+3. Takes a **blocking** pre-migration database backup (`backup:database`). If this fails, the deploy stops before anything has changed.
+4. `php artisan down` → `git pull` → `composer install --no-dev` → `migrate --force` → rebuild the four caches → `php artisan up`.
+5. Prints the rollback command on the way out.
 
 No `supervisorctl restart` lines — there's no Supervisor to restart (see §3). Run it with:
 
 ```bash
 ./deploy.sh
 ```
+
+If it fails partway, it prints the exact rollback command with the previous commit filled in. `backup:database` writes to `storage/app/backups/` and is **never** emailed — retrieve dumps over SSH/SFTP.
 
 ---
 
