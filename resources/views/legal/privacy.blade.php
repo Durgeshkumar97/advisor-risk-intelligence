@@ -121,9 +121,21 @@
                 <h2>7. Data Retention</h2>
 
                 <p>
-                    Data is retained only for operational, reporting,
-                    legal, fraud prevention, compliance,
-                    and service continuity purposes.
+                    Personal data associated with your account is retained while
+                    your account remains active. Upon account deletion, your data
+                    is permanently purged within 30 days.
+                </p>
+
+                <p>
+                    Portfolio and client data uploaded by you is retained for the
+                    duration of your active subscription and deleted within 30
+                    days of account closure.
+                </p>
+
+                <p>
+                    Beyond these periods, data is retained only where required
+                    for legal, tax, fraud prevention, or regulatory compliance
+                    purposes.
                 </p>
 
             </div>
@@ -150,6 +162,14 @@
                     Users may request correction, access,
                     or deletion of personal information,
                     subject to operational and legal obligations.
+                </p>
+
+                <p>
+                    To exercise these rights, email
+                    <a href="mailto:support@risksignal.in">support@risksignal.in</a>.
+                    We will respond within 30 days. You may also delete your
+                    account at any time from your profile settings, which starts
+                    the 30-day purge described in Section 7.
                 </p>
 
             </div>
@@ -184,13 +204,28 @@
             {{-- 12. CONTACT --}}
             <div class="legal-section">
 
-                <h2>12. Contact</h2>
+                <h2>12. Contact &amp; Grievance Officer</h2>
+
+                <p>
+                    In accordance with the Digital Personal Data Protection Act,
+                    2023, the following officer may be contacted regarding any
+                    question or grievance about the processing of your personal
+                    data.
+                </p>
 
                 <div class="legal-card">
                     <p class="legal-contact-title">RiskSignal</p>
+                    <p><strong>Grievance Officer:</strong> Durgesh Kumar</p>
+                    {{-- TODO: Replace with actual postal address --}}
+                    <p>[ADD YOUR POSTAL ADDRESS]</p>
                     <p>India</p>
                     <div class="legal-divider"></div>
-                    <p>support@risksignal.in</p>
+                    <p><a href="mailto:support@risksignal.in">support@risksignal.in</a></p>
+                    <div class="legal-divider"></div>
+                    <p>
+                        Response window: acknowledgement within 48 hours,
+                        resolution within 30 days.
+                    </p>
                 </div>
 
             </div>
