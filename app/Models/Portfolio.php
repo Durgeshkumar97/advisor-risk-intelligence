@@ -86,6 +86,15 @@ class Portfolio extends Model
         return $this->hasOne(ClientRiskProfile::class);
     }
 
+    /**
+     * Composite risk scores produced by PortfolioRiskCalculator — one per
+     * scoring run (file upload or the daily risk:generate cron).
+     */
+    public function riskScores(): HasMany
+    {
+        return $this->hasMany(RiskScore::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers
@@ -118,35 +127,38 @@ class Portfolio extends Model
     }
 
     /**
-     * Recalculate portfolio totals
+     * Recalculate portfolio totals.
+     *
+     * risk_score mirrors the canonical composite produced by
+     * PortfolioRiskCalculator and persisted on RiskScore — it is NOT computed
+     * here. This column previously held an unweighted mean of per-asset
+     * risk_score values, which is a genuinely different number from the
+     * 4-factor composite shown on the dashboard and in the PDF. Both were
+     * labelled "Risk Score", so the portfolio list and the report could
+     * disagree for the same client.
+     *
+     * Pass $riskScore when the caller has just created one (see
+     * ProcessPortfolioFile) — ordering matters, since the latest stored score
+     * would otherwise be the *previous* run's, or none at all on a first
+     * upload. Omit it to fall back to the latest persisted score.
+     *
+     * total_value is always refreshed from the assets; risk_score/risk_level
+     * are left untouched when no composite exists yet, rather than being
+     * zeroed.
      */
-    public function recalculateMetrics()
+    public function recalculateMetrics(?RiskScore $riskScore = null)
     {
-        $assets = $this->assets;
+        $payload = [
+            'total_value' => $this->assets->sum('current_value'),
+        ];
 
-        $totalValue = $assets->sum('current_value');
+        $riskScore ??= $this->riskScores()->latest('generated_at')->first();
 
-        $averageRisk = $assets->avg('risk_score') ?? 0;
-
-        // Canonical thresholds: LOW < 30, MEDIUM 30–69, HIGH >= 70
-        // Must match RiskScore::level(), AssetRiskScorer::level(),
-        // PortfolioRiskCalculator::level(), and DashboardController.
-        $riskLevel = 'LOW';
-
-        if ($averageRisk >= 70) {
-            $riskLevel = 'HIGH';
-        } elseif ($averageRisk >= 30) {
-            $riskLevel = 'MEDIUM';
+        if ($riskScore) {
+            $payload['risk_score'] = $riskScore->score;
+            $payload['risk_level'] = $riskScore->level();
         }
 
-        $this->update([
-
-            'total_value' => $totalValue,
-
-            'risk_score' => round($averageRisk, 2),
-
-            'risk_level' => $riskLevel,
-
-        ]);
+        $this->update($payload);
     }
 }

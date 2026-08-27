@@ -241,13 +241,6 @@ class ProcessPortfolioFile implements ShouldQueue
                     $assetModels->push($asset);
                 }
 
-                if ($portfolioId && $assetModels->isNotEmpty()) {
-                    $portfolio = Portfolio::find($portfolioId);
-                    if ($portfolio) {
-                        $portfolio->recalculateMetrics();
-                    }
-                }
-
                 if ($assetModels->isNotEmpty()) {
                     $result = $calculator->calculate($assetModels);
 
@@ -289,6 +282,18 @@ class ProcessPortfolioFile implements ShouldQueue
                         'asset_count' => count($assetModels),
                         'market_label' => $marketSnapshot?->label ?? 'unavailable',
                     ]);
+
+                    // Must run AFTER the RiskScore exists — the portfolio's
+                    // risk_score column now mirrors that composite rather than
+                    // deriving its own average, so calling this earlier would
+                    // copy the previous run's score (or none, on a first
+                    // upload). Passed explicitly to avoid a re-query.
+                    if ($portfolioId) {
+                        $portfolio = Portfolio::find($portfolioId);
+                        if ($portfolio) {
+                            $portfolio->recalculateMetrics($riskScore);
+                        }
+                    }
                 }
 
                 $reportPath = $riskScore
