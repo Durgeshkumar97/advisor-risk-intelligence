@@ -49,11 +49,29 @@ class SubscriptionService
                               .'?email='.urlencode($user->email);
             $user->notify(new WelcomeSetPasswordNotification($setPasswordUrl));
         } else {
-            // This payment's email matched an EXISTING account. The payer is
-            // never auto-logged in from this unauthenticated flow — send a
-            // login link to the account's own address instead, so its real
-            // owner has a safe way back in regardless of who paid.
-            $this->accounts->sendLoginLinkToExistingUser($user);
+            /*
+            | This payment's email matched an EXISTING account, from a flow
+            | where nobody proved they own it. The payer is never authenticated
+            | here — that is the security property, and it is unchanged.
+            |
+            | We used to also mint a 15-minute login token and email it to the
+            | account owner as a convenience. That handed any anonymous payer a
+            | way to make a real, valid login link land in a stranger's inbox on
+            | demand: not account takeover (the token only ever goes to the
+            | owner's own address), but a phishing-adjacent primitive with no
+            | legitimate use — an existing user who pays while logged out
+            | already knows their password or can use Forgot Password, and
+            | still receives PaymentSuccessNotification either way.
+            |
+            | The subscription IS still extended. Refusing to fulfil an
+            | unauthenticated payment would strand the common legitimate case —
+            | an existing customer renewing from a different browser or device —
+            | with no self-service way out.
+            */
+            Log::warning('SubscriptionService: payment email matched an existing account from an unauthenticated flow — subscription extended, no login link issued.', [
+                'payment_id' => $payment->id,
+                'user_id' => $user->id,
+            ]);
         }
 
         $durationDays = $plan->duration_days ?? 30;

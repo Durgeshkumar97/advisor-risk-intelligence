@@ -92,7 +92,7 @@ class AccountTakeoverPreventionTest extends TestCase
 
     // ─── SubscriptionService::activate() (webhook / fallback fulfilment) ────
 
-    public function test_activating_a_payment_for_an_existing_email_sends_a_login_link_and_never_authenticates_anyone(): void
+    public function test_activating_a_payment_for_an_existing_email_never_authenticates_anyone_and_mints_no_login_link(): void
     {
         Notification::fake();
         $plan = $this->starterPlan();
@@ -115,7 +115,10 @@ class AccountTakeoverPreventionTest extends TestCase
         $this->assertTrue($user->is($victim));
         $this->assertGuest(); // SubscriptionService never authenticates anyone directly
 
-        Notification::assertSentTo($victim, ExistingAccountLoginLinkNotification::class);
+        // The security property above is unchanged. What changed: an anonymous
+        // payer can no longer cause a real 15-minute login token to be minted
+        // and emailed to a stranger just by typing their address at checkout.
+        Notification::assertNotSentTo($victim, ExistingAccountLoginLinkNotification::class);
         Notification::assertNotSentTo($victim, WelcomeSetPasswordNotification::class);
     }
 
@@ -167,7 +170,10 @@ class AccountTakeoverPreventionTest extends TestCase
         app(CompletePaymentAction::class)->execute($payment);
 
         $this->assertGuest();
-        Notification::assertSentTo($victim, ExistingAccountLoginLinkNotification::class);
+
+        // Dormant path kept identical to SubscriptionService::activate(), so
+        // wiring it in later cannot reintroduce the unsolicited token mint.
+        Notification::assertNotSentTo($victim, ExistingAccountLoginLinkNotification::class);
     }
 
     public function test_complete_payment_action_logs_in_a_genuinely_new_user(): void

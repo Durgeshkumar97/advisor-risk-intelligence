@@ -3,7 +3,6 @@
 namespace App\Actions\Payments;
 
 use App\Models\Payment;
-use App\Services\UserAccountRecoveryService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -70,7 +69,7 @@ class CompletePaymentAction
             | into this unauthenticated payment form — never auto-login in that
             | case, since the payer could be anyone who knows that email, not
             | its owner. Only a freshly-created account is safe to log straight
-            | into. The existing-account case gets a login-link email instead.
+            | into. The existing-account case is logged and nothing is sent.
             |--------------------------------------------------------------------------
             */
 
@@ -78,7 +77,14 @@ class CompletePaymentAction
                 Auth::login($user);
                 request()->session()->regenerate();
             } else {
-                app(UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($user);
+                // No login link is minted here either — see the equivalent
+                // branch in SubscriptionService::activate() for why. This
+                // action is dormant; keeping the two payment paths identical
+                // means wiring it in later cannot reintroduce the primitive.
+                Log::warning('CompletePaymentAction: payment email matched an existing account from an unauthenticated flow — no login link issued.', [
+                    'payment_id' => $locked->id,
+                    'user_id' => $user->id,
+                ]);
             }
 
             /*
