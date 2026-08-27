@@ -60,6 +60,13 @@ class ProcessPortfolioFile implements ShouldQueue
 
     private const MAX_DISTINCT_STOCK_SYMBOLS = 500;
 
+    /**
+     * Shown to the advisor when a file parses cleanly but yields no scoreable
+     * holdings — almost always a value column PortfolioParser::ALIASES doesn't
+     * recognise, so name the columns it does look for.
+     */
+    private const NO_HOLDINGS_MESSAGE = 'No valid holdings found. Check that your file has recognisable column headers (e.g. ISIN, Symbol, Quantity, Value).';
+
     public function __construct(
         public readonly PortfolioFile $portfolioFile
     ) {}
@@ -288,8 +295,30 @@ class ProcessPortfolioFile implements ShouldQueue
                     ? $this->generatePdfReport($file, $riskScore, $portfolioId)
                     : null;
 
+                /*
+                |----------------------------------------------------------------------
+                | ZERO VALID HOLDINGS — fail loudly, don't report a silent success
+                |----------------------------------------------------------------------
+                |
+                | No holdings means no RiskScore and no PDF. Marking this PROCESSED
+                | showed the advisor "Processed ✓" next to an empty result with no
+                | explanation. The usual cause is a broker export whose value column
+                | isn't in PortfolioParser::ALIASES, so say that — the parser's own
+                | row-level errors are appended after it when it produced any.
+                |
+                */
+
+                if (! $riskScore) {
+                    $parseErrors = array_merge(
+                        [self::NO_HOLDINGS_MESSAGE],
+                        $parseErrors,
+                    );
+                }
+
                 $file->update([
-                    'status' => PortfolioFile::STATUS_PROCESSED,
+                    'status' => $riskScore
+                        ? PortfolioFile::STATUS_PROCESSED
+                        : PortfolioFile::STATUS_FAILED,
                     'processed_at' => now(),
                     'report_path' => $reportPath,
                     'meta' => array_merge($file->meta ?? [], [
@@ -297,7 +326,10 @@ class ProcessPortfolioFile implements ShouldQueue
                         'extension' => $extension,
                         'holdings_parsed' => count($holdings),
                         'parse_errors' => $parseErrors,
-                    ]),
+                    ] + ($riskScore ? [] : [
+                        'failed_at' => now()->toIso8601String(),
+                        'error_message' => self::NO_HOLDINGS_MESSAGE,
+                    ])),
                 ]);
             });
 

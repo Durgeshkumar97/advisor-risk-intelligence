@@ -111,8 +111,11 @@
                             {{ $statusStyles['label'] }}
                         </span>
                         @if($file->isFailed() && isset($file->meta['error_message']))
-                        <div style="color:#fca5a5;font-size:.75rem;margin-top:.25rem;max-width:160px;">
-                            {{ Str::limit($file->meta['error_message'], 60) }}
+                        {{-- 60 chars cut the actionable half off the longer messages
+                             (the no-holdings and symbol-cap ones both name what to
+                             change); 200 fits them whole at this width. --}}
+                        <div style="color:#fca5a5;font-size:.75rem;margin-top:.25rem;max-width:260px;line-height:1.4;">
+                            {{ Str::limit($file->meta['error_message'], 200) }}
                         </div>
                         @endif
                     </td>
