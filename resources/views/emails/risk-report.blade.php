@@ -12,7 +12,7 @@ Your portfolio risk analysis is complete. The full PDF report is attached to thi
 | Max Drawdown | {{ number_format($riskScore->drawdown, 2) }}% |
 
 @if(!empty($riskScore->meta['next_action']))
-**Recommended Action:** {{ $riskScore->meta['next_action'] }}
+**Observations:** {{ $riskScore->meta['next_action'] }}
 @endif
 
 @component('mail::button', ['url' => config('app.url').'/dashboard'])

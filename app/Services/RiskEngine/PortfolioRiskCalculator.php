@@ -369,41 +369,52 @@ class PortfolioRiskCalculator
         return $flags;
     }
 
+    /**
+     * A neutral, descriptive statement of what the numbers show — deliberately
+     * NOT a recommendation.
+     *
+     * This string is surfaced in the client-facing PDF (under "Observations")
+     * and its covering email. Prescriptive allocation language there would read
+     * as investment advice, which RiskSignal does not provide and is not
+     * registered to provide (see resources/views/legal/terms.blade.php). Keep
+     * every branch observational: state the condition, never prescribe an
+     * action. No "should", "consider", "recommend", "review", or "discuss".
+     */
     private function buildNextAction(
         float $finalScore,
         array $riskFlags
     ): string {
-        // Priority: most urgent condition drives the action
+        // Priority: the most material condition is the one worth stating
 
         if (in_array('SIGNIFICANT_DRAWDOWN', $riskFlags)) {
-            return 'Significant unrealised losses detected — review and discuss rebalancing with clients.';
+            return 'The portfolio carries unrealised losses across a significant share of holdings.';
         }
 
         if (in_array('HIGH_CONCENTRATION', $riskFlags) && $finalScore > 65) {
-            return 'Portfolio is over-concentrated — discuss diversification across sectors and asset classes.';
+            return 'Holdings are concentrated in a small number of positions, and overall risk is elevated.';
         }
 
         if ($finalScore > 75) {
-            return 'Risk is elevated — prioritise client conversations about exposure and risk tolerance.';
+            return 'Overall risk sits in the elevated band relative to the portfolio\'s composition and exposure.';
         }
 
         if (in_array('EQUITY_HEAVY', $riskFlags)) {
-            return 'Equity allocation is very high — consider adding debt or hybrid funds for balance.';
+            return 'Equity allocation is very high, with limited debt or hybrid exposure.';
         }
 
         if (in_array('MODERATE_DRAWDOWN', $riskFlags)) {
-            return 'Some positions are underperforming — review laggards and assess strategic fit.';
+            return 'Some positions are currently valued below their purchase price.';
         }
 
         if (in_array('MODERATE_CONCENTRATION', $riskFlags)) {
-            return 'Moderate concentration detected — gradual diversification recommended.';
+            return 'Holdings show moderate concentration across a limited number of positions.';
         }
 
         if ($finalScore < 30) {
-            return 'Portfolio risk is low — maintain current allocation and stay the course.';
+            return 'Overall risk sits in the low band, and the current allocation appears balanced.';
         }
 
-        return 'Portfolio is within acceptable risk parameters — continue monitoring.';
+        return 'Overall risk sits within acceptable risk parameters.';
     }
 
     private function stdDev(array $scores): float
