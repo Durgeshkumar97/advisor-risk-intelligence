@@ -106,9 +106,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->call(function (): void {
 
+            // Razorpay orders expire after ~15-30 min; 60 min gives margin.
+            // At 30 the sweep could mark a still-live checkout 'failed' before
+            // the user finished paying. Fulfilment recovered either way — both
+            // the browser-verify and webhook paths overwrite 'failed' → 'paid'
+            // — but the payments table carried a misleading status history.
             \App\Models\Payment::query()
                 ->where('status', 'pending')
-                ->where('created_at', '<', now()->subMinutes(30))
+                ->where('created_at', '<', now()->subMinutes(60))
                 ->update(['status' => 'failed']);
 
         })->everyThirtyMinutes();
