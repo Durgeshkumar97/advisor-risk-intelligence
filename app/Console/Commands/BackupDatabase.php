@@ -37,6 +37,27 @@ class BackupDatabase extends Command
 
     public function handle(): int
     {
+        /*
+        | This command emits a MySQL dump — writeGzipDump() uses SHOW CREATE
+        | TABLE and SHOW COLUMNS, which have no SQLite equivalent. Making it
+        | driver-agnostic is not worth it: production is MySQL and that is the
+        | only database anyone needs a dump of.
+        |
+        | Guarding here rather than letting it fail deep inside the dump means
+        | a local run says why, and — since deploy.sh now calls this before
+        | migrating — a non-MySQL environment cannot fail the whole deploy on a
+        | backup it was never able to take.
+        */
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver !== 'mysql') {
+            $this->warn("backup:database supports MySQL only; the current connection uses [{$driver}]. Skipping.");
+
+            Log::info('BackupDatabase: skipped — non-MySQL connection', ['driver' => $driver]);
+
+            return Command::SUCCESS;
+        }
+
         $filename = 'backup_'.now()->format('Y-m-d_His').'.sql.gz';
         $outputDir = storage_path('app/'.self::BACKUPS_DIR);
         $outputPath = $outputDir.DIRECTORY_SEPARATOR.$filename;

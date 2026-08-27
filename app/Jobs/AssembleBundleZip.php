@@ -36,10 +36,12 @@ class AssembleBundleZip implements ShouldQueue
             return;
         }
 
-        $children = PortfolioFile::whereRaw(
-            'CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, "$.extracted_from_zip_id")) AS UNSIGNED) = ?',
-            [$this->parentFileId]
-        )->get();
+        // meta->key rather than raw JSON_UNQUOTE(JSON_EXTRACT(...)): Laravel
+        // compiles the operator per driver, so this runs on MySQL in production
+        // AND on the SQLite used locally and in tests. The raw form silently
+        // made this job untestable — SQLite has json_extract but no
+        // JSON_UNQUOTE — which is why nothing covered ZIP bundling at all.
+        $children = PortfolioFile::where('meta->extracted_from_zip_id', $this->parentFileId)->get();
 
         if ($children->isEmpty()) {
             Log::warning('AssembleBundleZip: no children found.', ['id' => $this->parentFileId]);
