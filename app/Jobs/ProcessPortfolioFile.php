@@ -307,17 +307,24 @@ class ProcessPortfolioFile implements ShouldQueue
                 |
                 | No holdings means no RiskScore and no PDF. Marking this PROCESSED
                 | showed the advisor "Processed ✓" next to an empty result with no
-                | explanation. The usual cause is a broker export whose value column
-                | isn't in PortfolioParser::ALIASES, so say that — the parser's own
-                | row-level errors are appended after it when it produced any.
+                | explanation.
+                |
+                | When the parser returns exactly ONE error it is a file-level
+                | fatal it can describe precisely — an empty file, no recognisable
+                | name column, or the MAX_ROWS rejection — so that message is
+                | shown verbatim. Several errors means per-row skips, where the
+                | useful thing to say is the generic "check your column headers".
                 |
                 */
 
+                $failureMessage = self::NO_HOLDINGS_MESSAGE;
+
                 if (! $riskScore) {
-                    $parseErrors = array_merge(
-                        [self::NO_HOLDINGS_MESSAGE],
-                        $parseErrors,
-                    );
+                    if (count($parseErrors) === 1) {
+                        $failureMessage = $parseErrors[0];
+                    } else {
+                        $parseErrors = array_merge([$failureMessage], $parseErrors);
+                    }
                 }
 
                 $file->update([
@@ -333,7 +340,7 @@ class ProcessPortfolioFile implements ShouldQueue
                         'parse_errors' => $parseErrors,
                     ] + ($riskScore ? [] : [
                         'failed_at' => now()->toIso8601String(),
-                        'error_message' => self::NO_HOLDINGS_MESSAGE,
+                        'error_message' => $failureMessage,
                     ])),
                 ]);
             });

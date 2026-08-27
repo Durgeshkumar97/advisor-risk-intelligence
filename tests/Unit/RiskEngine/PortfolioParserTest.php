@@ -571,3 +571,36 @@ it('computes profit_loss as current_value when invested_value is zero', function
     expect($row['profit_loss'])->toBe(5000.0)
         ->and($row['invested_value'])->toBe(0.0);
 });
+
+// ---------------------------------------------------------------------------
+// MAX_ROWS cap
+// ---------------------------------------------------------------------------
+
+/** CSV with a header plus $n valid holding rows. */
+function csvWithRows(int $n): string
+{
+    $lines = ['name,asset_type,current_value'];
+
+    for ($i = 0; $i < $n; $i++) {
+        $lines[] = "Holding {$i},stock,1000";
+    }
+
+    return implode("\n", $lines);
+}
+
+it('parses a file sitting exactly on the row cap', function () {
+    $result = $this->parser->parse(csvFile('at-cap.csv', csvWithRows(5000)));
+
+    expect($result['count'])->toBe(5000)
+        ->and($result['errors'])->toBeEmpty();
+});
+
+it('rejects a file one row over the cap rather than truncating it', function () {
+    // Rejection, not truncation: scoring the first 5,000 rows of a larger
+    // portfolio would yield a confident composite from partial holdings.
+    $result = $this->parser->parse(csvFile('over-cap.csv', csvWithRows(5001)));
+
+    expect($result['count'])->toBe(0)
+        ->and($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::MAX_ROWS_MESSAGE]);
+});

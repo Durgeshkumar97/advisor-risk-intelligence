@@ -6,8 +6,10 @@ use App\Jobs\ProcessPortfolioFile;
 use App\Models\Portfolio;
 use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
+use App\Models\RiskScore;
 use App\Models\User;
 use App\Services\RiskEngine\AssetRiskScorer;
+use App\Services\RiskEngine\PortfolioParser;
 use App\Services\StockRiskService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -239,5 +241,28 @@ class ProcessPortfolioFileTest extends TestCase
         $first = PortfolioAsset::where('symbol', 'SYM1')->first();
         expect((float) $first->risk_score)->toBe(65.0)
             ->and($first->meta['stock_risk']['source'])->toBe(AssetRiskScorer::SOURCE_LIVE);
+    }
+
+    public function test_a_file_exceeding_the_row_cap_is_rejected_and_fails_with_the_reason_visible(): void
+    {
+        $csv = "name,asset_type,current_value\n";
+        for ($i = 0; $i < 5001; $i++) {
+            $csv .= "Holding {$i},stock,1000\n";
+        }
+
+        $file = $this->makePortfolioFile($csv);
+
+        ProcessPortfolioFile::dispatchSync($file);
+
+        $file->refresh();
+
+        // Rejected outright, not truncated to the first 5,000 — a confident
+        // score built from partial holdings is worse than a clear failure.
+        expect($file->status)->toBe(PortfolioFile::STATUS_FAILED)
+            ->and($file->meta['holdings_parsed'])->toBe(0)
+            ->and($file->meta['error_message'])->toBe(PortfolioParser::MAX_ROWS_MESSAGE);
+
+        expect(PortfolioAsset::count())->toBe(0)
+            ->and(RiskScore::count())->toBe(0);
     }
 }

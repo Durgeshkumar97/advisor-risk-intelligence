@@ -44,6 +44,33 @@ class PortfolioParser
 
     /*
     |--------------------------------------------------------------------------
+    | MAX ROWS
+    |--------------------------------------------------------------------------
+    |
+    | The row loops were previously unbounded. The 20MB upload cap allows a
+    | narrow CSV of roughly a million rows, and ProcessPortfolioFile turns each
+    | parsed row into a PortfolioAsset insert inside a single transaction —
+    | enough to exhaust memory or hit the 300s job timeout on shared hosting.
+    |
+    | 5,000 is far above any real client portfolio (the largest plan allows
+    | 1,000 clients a MONTH, one file each) while bounding worst-case work.
+    | This is separate from ProcessPortfolioFile's cap of 500 DISTINCT STOCK
+    | SYMBOLS, which bounds the outbound classifier batch rather than parse or
+    | insert volume; the two limits do not overlap and neither subsumes the
+    | other.
+    |
+    | Exceeding it REJECTS the file rather than truncating. Scoring the first
+    | 5,000 rows of a larger portfolio would silently produce a confident,
+    | wrong composite from partial holdings — worse than a clear failure.
+    |
+    */
+
+    private const MAX_ROWS = 5000;
+
+    public const MAX_ROWS_MESSAGE = 'File exceeds maximum of 5,000 rows. Please reduce the file size and re-upload.';
+
+    /*
+    |--------------------------------------------------------------------------
     | COLUMN ALIASES
     |--------------------------------------------------------------------------
     |
@@ -185,6 +212,14 @@ class PortfolioParser
                 continue;
             }
 
+            // Reject, don't truncate — see MAX_ROWS. Checked before mapRow so
+            // an oversized file costs no further per-row work.
+            if (count($rows) >= self::MAX_ROWS) {
+                fclose($handle);
+
+                return ['rows' => [], 'errors' => [self::MAX_ROWS_MESSAGE], 'count' => 0];
+            }
+
             $row = $this->mapRow($rawRow, $headerMap);
 
             if ($row === null) {
@@ -290,6 +325,11 @@ class PortfolioParser
             $cleaned = array_filter($rawRow, fn ($v) => trim($v) !== '');
             if (empty($cleaned)) {
                 continue;
+            }
+
+            // Reject, don't truncate — see MAX_ROWS.
+            if (count($rows) >= self::MAX_ROWS) {
+                return ['rows' => [], 'errors' => [self::MAX_ROWS_MESSAGE], 'count' => 0];
             }
 
             $row = $this->mapRow($rawRow, $headerMap);
