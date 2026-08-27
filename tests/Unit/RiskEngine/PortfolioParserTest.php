@@ -604,3 +604,60 @@ it('rejects a file one row over the cap rather than truncating it', function () 
         ->and($result['rows'])->toBeEmpty()
         ->and($result['errors'])->toBe([PortfolioParser::MAX_ROWS_MESSAGE]);
 });
+
+// ---------------------------------------------------------------------------
+// Unrecognised asset types
+// ---------------------------------------------------------------------------
+
+it('warns when an asset type is not recognised, and still scores the holding', function () {
+    $file = csvFile('unknown-type.csv', implode("\n", [
+        'name,asset_type,current_value',
+        'My Flat,real estate,5000000',
+        'TCS,stock,150000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    // The holding is kept and normalised to stock — that part is unchanged.
+    expect($result['count'])->toBe(2)
+        ->and($result['rows'][0]['asset_type'])->toBe('stock')
+        ->and($result['errors'])->toBeEmpty();
+
+    // ...but it is no longer silent about having done so.
+    expect($result['warnings'])->toHaveCount(1)
+        ->and($result['warnings'][0])->toContain('real estate')
+        ->and($result['warnings'][0])->toContain('scored as equity');
+});
+
+it('groups repeats of the same unrecognised type into one warning with a count', function () {
+    $file = csvFile('repeat-unknown.csv', implode("\n", [
+        'name,asset_type,current_value',
+        'Flat A,real estate,5000000',
+        'Flat B,real estate,3000000',
+        'Policy,insurance,200000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['warnings'])->toHaveCount(2)
+        ->and($result['warnings'][0])->toContain('2 holdings');
+});
+
+it('emits no warnings for a file whose asset types are all recognised', function () {
+    $file = csvFile('known-types.csv', implode("\n", [
+        'name,asset_type,current_value',
+        'TCS,stock,150000',
+        'HDFC Fund,mutual fund,90000',
+        'Gold,commodity,50000',
+    ]));
+
+    expect($this->parser->parse($file)['warnings'])->toBeEmpty();
+});
+
+it('resets warnings between parses so one file does not inherit another\'s', function () {
+    $dirty = csvFile('dirty.csv', "name,asset_type,current_value\nFlat,real estate,100");
+    $clean = csvFile('clean.csv', "name,asset_type,current_value\nTCS,stock,100");
+
+    expect($this->parser->parse($dirty)['warnings'])->toHaveCount(1);
+    expect($this->parser->parse($clean)['warnings'])->toBeEmpty();
+});

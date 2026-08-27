@@ -64,6 +64,9 @@ class AssetRiskScorer
 
     public const SOURCE_CATEGORY_DEFAULT = 'category_default';
 
+    /** Asset type not in BASE_SCORES — scored as equity, and said so. */
+    public const SOURCE_UNKNOWN_TYPE = 'unknown_type_default';
+
     /*
     |--------------------------------------------------------------------------
     | BASE RISK SCORES BY ASSET TYPE  (0 = risk-free, 100 = maximum risk)
@@ -167,7 +170,16 @@ class AssetRiskScorer
             ];
         }
 
-        // Default to stock risk if unknown type
+        /*
+        | Unknown types fall back to the stock score. Note this is NOT the path
+        | that catches an advisor's real-estate or insurance holding:
+        | PortfolioParser::normaliseAssetType() already rewrites anything it
+        | doesn't recognise to 'stock' before scoring, and reports it as a parse
+        | warning. This branch only fires for a caller that hands us a type
+        | directly, so it reports its own provenance rather than silently
+        | claiming a category default it never had.
+        */
+        $recognised = isset(self::BASE_SCORES[$assetType]);
         $base = self::BASE_SCORES[$assetType] ?? self::BASE_SCORES['stock'];
 
         // Only apply name-keyword adjustments for fund-type assets
@@ -177,7 +189,7 @@ class AssetRiskScorer
 
         return [
             'score' => (float) max(0, min(100, $base)),
-            'source' => self::SOURCE_CATEGORY_DEFAULT,
+            'source' => $recognised ? self::SOURCE_CATEGORY_DEFAULT : self::SOURCE_UNKNOWN_TYPE,
         ];
     }
 

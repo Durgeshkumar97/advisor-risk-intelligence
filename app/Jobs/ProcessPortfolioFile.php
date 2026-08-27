@@ -122,6 +122,7 @@ class ProcessPortfolioFile implements ShouldQueue
             $parseResult = $parser->parse($file);
             $holdings = $parseResult['rows'];
             $parseErrors = $parseResult['errors'];
+            $parseWarnings = $parseResult['warnings'] ?? [];
 
             Log::info('ProcessPortfolioFile: parsed.', [
                 'id' => $file->id,
@@ -184,7 +185,7 @@ class ProcessPortfolioFile implements ShouldQueue
             }
 
             DB::transaction(function () use (
-                $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors,
+                $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings,
                 $stockRiskMap, $marketSnapshot, &$riskScore, &$reportPath
             ) {
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
@@ -338,6 +339,7 @@ class ProcessPortfolioFile implements ShouldQueue
                         'extension' => $extension,
                         'holdings_parsed' => count($holdings),
                         'parse_errors' => $parseErrors,
+                        'parse_warnings' => $parseWarnings,
                     ] + ($riskScore ? [] : [
                         'failed_at' => now()->toIso8601String(),
                         'error_message' => $failureMessage,

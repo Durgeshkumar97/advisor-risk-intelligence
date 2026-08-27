@@ -67,6 +67,14 @@ class PortfolioParser
 
     private const MAX_ROWS = 5000;
 
+    /**
+     * Raw asset_type values this parse could not recognise, keyed by the raw
+     * value with a holding count. Reset per parse() call — see buildWarnings().
+     *
+     * @var array<string, int>
+     */
+    private array $unknownAssetTypes = [];
+
     public const MAX_ROWS_MESSAGE = 'File exceeds maximum of 5,000 rows. Please reduce the file size and re-upload.';
 
     /*
@@ -147,14 +155,22 @@ class PortfolioParser
     */
 
     /**
-     * @return array{rows: array, errors: array, count: int}
+     * `warnings` are non-fatal notes about how the file was interpreted — the
+     * parse still succeeded. `errors` remain the things that stopped a row (or
+     * the whole file) being used.
+     *
+     * @return array{rows: array, errors: array, warnings: array, count: int}
      */
     public function parse(PortfolioFile $portfolioFile): array
     {
+        // Reset per call — this service can be resolved once and reused for
+        // several files in the same worker process.
+        $this->unknownAssetTypes = [];
+
         $path = Storage::disk(self::DISK)->path($portfolioFile->path);
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        return match ($ext) {
+        $result = match ($ext) {
             'csv' => $this->parseCSV($path),
             'xlsx', 'xls' => $this->parseXLSX($path),
             default => [
@@ -163,6 +179,31 @@ class PortfolioParser
                 'count' => 0,
             ],
         };
+
+        return $result + ['warnings' => $this->buildWarnings()];
+    }
+
+    /**
+     * One human-readable line per unrecognised asset_type, naming the value and
+     * how many holdings it covered.
+     *
+     * @return list<string>
+     */
+    private function buildWarnings(): array
+    {
+        $warnings = [];
+
+        foreach ($this->unknownAssetTypes as $raw => $count) {
+            $warnings[] = sprintf(
+                'Unrecognised asset type "%s" on %d holding%s — scored as equity. Supported types: %s.',
+                $raw,
+                $count,
+                $count === 1 ? '' : 's',
+                implode(', ', array_keys(self::ASSET_TYPE_MAP)),
+            );
+        }
+
+        return $warnings;
     }
 
     /*
@@ -468,6 +509,18 @@ class PortfolioParser
                 }
             }
         }
+
+        /*
+        | Nothing matched, so this falls through to 'stock' below and is scored
+        | at 65. That is a defensible default — but silently calling someone's
+        | real-estate or insurance holding an equity, with no trace, is not.
+        |
+        | Recorded here rather than in AssetRiskScorer: by the time the scorer
+        | runs, the type has already been rewritten to 'stock', so its own
+        | unknown-type branch is unreachable from this path and flagging it
+        | there would change nothing observable.
+        */
+        $this->unknownAssetTypes[$lower] = ($this->unknownAssetTypes[$lower] ?? 0) + 1;
 
         return 'stock'; // safe default
     }

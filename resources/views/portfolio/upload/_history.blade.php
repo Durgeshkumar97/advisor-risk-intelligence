@@ -122,6 +122,17 @@
                         </div>
                         @endif
 
+                        @if(! empty($file->meta['parse_warnings']))
+                        {{-- Non-fatal: the file parsed and scored, but something
+                             in it was interpreted rather than understood (e.g. an
+                             asset type we don't recognise, scored as equity). --}}
+                        <div style="color:#fbbf24;font-size:.72rem;margin-top:.3rem;max-width:260px;line-height:1.4;opacity:.9;">
+                            @foreach(array_slice($file->meta['parse_warnings'], 0, 3) as $warning)
+                            <div>{{ Str::limit($warning, 200) }}</div>
+                            @endforeach
+                        </div>
+                        @endif
+
                         @if($file->isFailed() && isset($file->meta['error_message']))
                         {{-- 60 chars cut the actionable half off the longer messages
                              (the no-holdings and symbol-cap ones both name what to

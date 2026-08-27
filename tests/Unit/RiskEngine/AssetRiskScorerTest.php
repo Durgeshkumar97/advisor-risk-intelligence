@@ -137,10 +137,19 @@ it('ignores a $stockRisk argument for non-stock asset types', function () {
 // source label for every non-stock path is 'category_default'
 // ---------------------------------------------------------------------------
 
-it('labels every non-stock score as category_default', function () {
+it('labels a recognised non-stock score as category_default', function () {
     expect($this->scorer->score('bond', 'Govt Bond')['source'])->toBe(AssetRiskScorer::SOURCE_CATEGORY_DEFAULT)
-        ->and($this->scorer->score('mutual_fund', 'Generic Fund')['source'])->toBe(AssetRiskScorer::SOURCE_CATEGORY_DEFAULT)
-        ->and($this->scorer->score('reit', 'Embassy REIT')['source'])->toBe(AssetRiskScorer::SOURCE_CATEGORY_DEFAULT);
+        ->and($this->scorer->score('mutual_fund', 'Generic Fund')['source'])->toBe(AssetRiskScorer::SOURCE_CATEGORY_DEFAULT);
+});
+
+it('labels an unrecognised type as unknown_type_default rather than claiming a category default', function () {
+    // 'reit' is not in BASE_SCORES. It still scores as equity — a score has to
+    // come from somewhere — but the provenance no longer pretends the category
+    // was recognised.
+    $result = $this->scorer->score('reit', 'Embassy REIT');
+
+    expect($result['source'])->toBe(AssetRiskScorer::SOURCE_UNKNOWN_TYPE)
+        ->and($result['score'])->toBe(65.0);
 });
 
 // ---------------------------------------------------------------------------
