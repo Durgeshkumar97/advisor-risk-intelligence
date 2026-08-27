@@ -32,8 +32,27 @@ return [
     |
     */
 
-    'lifetime' => 15,
+    'lifetime' => (int) env('SESSION_LIFETIME', 120),
     'expire_on_close' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Idle Timeout (minutes)
+    |--------------------------------------------------------------------------
+    |
+    | 'lifetime' above was pinned to 15 to keep admin sessions short, which
+    | applied that timeout to every paying advisor too — logged out mid-workflow
+    | every 15 minutes of reading. The short window belongs to /admin only, so
+    | it lives here and is enforced explicitly by the AdminOnly middleware.
+    |
+    | It cannot be done by assigning to session.lifetime at request time: the
+    | session handler binds its expiry at construction (inside StartSession,
+    | before route middleware runs), and expire_on_close makes the cookie a
+    | browser-session cookie regardless — so a runtime override would be inert.
+    |
+    */
+
+    'admin_lifetime' => (int) env('SESSION_ADMIN_LIFETIME', 15),
 
     /*
     |--------------------------------------------------------------------------
