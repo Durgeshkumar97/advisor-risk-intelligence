@@ -2,6 +2,7 @@
 
 namespace App\Services\RiskEngine;
 
+use App\Models\RiskScore;
 use Illuminate\Support\Collection;
 
 /**
@@ -311,14 +312,7 @@ class PortfolioRiskCalculator
 
     public function level(float $score): string
     {
-        $low = config('risk.low_threshold', 30);
-        $high = config('risk.high_threshold', 70);
-
-        return match (true) {
-            $score < $low => 'LOW',
-            $score < $high => 'MEDIUM',
-            default => 'HIGH',
-        };
+        return RiskScore::levelFromScore($score);
     }
 
     /*
@@ -410,7 +404,7 @@ class PortfolioRiskCalculator
             return 'Holdings show moderate concentration across a limited number of positions.';
         }
 
-        if ($finalScore < 30) {
+        if ($finalScore < (float) config('risk.low_threshold', 30)) {
             return 'Overall risk sits in the low band, and the current allocation appears balanced.';
         }
 

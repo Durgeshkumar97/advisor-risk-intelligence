@@ -2,6 +2,8 @@
 
 namespace App\Services\RiskEngine;
 
+use App\Models\RiskScore;
+
 /**
  * AssetRiskScorer
  *
@@ -187,14 +189,7 @@ class AssetRiskScorer
 
     public function level(float $score): string
     {
-        $low = config('risk.low_threshold', 30);
-        $high = config('risk.high_threshold', 70);
-
-        return match (true) {
-            $score < $low => 'LOW',
-            $score < $high => 'MEDIUM',
-            default => 'HIGH',
-        };
+        return RiskScore::levelFromScore($score);
     }
 
     /*

@@ -43,12 +43,9 @@ class DashboardController extends Controller
         $riskScore = $risk ? (float) $risk->score : null;
         $riskGeneratedAt = $risk?->generatedTimestamp();
 
-        $riskLevel = match (true) {
-            $riskScore === null => 'NONE',
-            $riskScore < 30 => 'LOW',
-            $riskScore < 70 => 'MEDIUM',
-            default => 'HIGH',
-        };
+        $riskLevel = $riskScore === null
+            ? 'NONE'
+            : RiskScore::levelFromScore($riskScore);
 
         $recommendation = match ($riskLevel) {
             'LOW' => 'Portfolio stable. Continue monitoring.',

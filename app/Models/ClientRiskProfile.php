@@ -147,15 +147,7 @@ class ClientRiskProfile extends Model
 
     public function level(): string
     {
-        $score = (float) $this->capacity_score;
-        $low = config('risk.low_threshold', 30);
-        $high = config('risk.high_threshold', 70);
-
-        return match (true) {
-            $score < $low => 'LOW',
-            $score < $high => 'MEDIUM',
-            default => 'HIGH',
-        };
+        return RiskScore::levelFromScore((float) $this->capacity_score);
     }
 
     /*

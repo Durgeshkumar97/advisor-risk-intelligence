@@ -58,11 +58,35 @@ class RiskScore extends Model
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * THE canonical score → level mapping. Every other level() in the codebase
+     * delegates here so the boundaries can never drift apart again.
+     *
+     *   score <  low_threshold   → LOW
+     *   score <  high_threshold  → MEDIUM
+     *   score >= high_threshold  → HIGH
+     *
+     * Matches the convention documented in config/risk.php and the one the
+     * test suite asserts (30.0 → MEDIUM, 70.0 → HIGH). This method previously
+     * used `<= low` and `>= high`, which made a score of exactly 30 read as
+     * LOW here and MEDIUM everywhere else — the PDF could print a different
+     * level than the engine computed for the same score.
+     */
+    public static function levelFromScore(float $score): string
+    {
+        $low = (float) config('risk.low_threshold', 30);
+        $high = (float) config('risk.high_threshold', 70);
+
+        return match (true) {
+            $score < $low => 'LOW',
+            $score < $high => 'MEDIUM',
+            default => 'HIGH',
+        };
+    }
+
     public function level(): string
     {
-        if ($this->score <= config('risk.low_threshold', 30)) return 'LOW';
-        if ($this->score >= config('risk.high_threshold', 70)) return 'HIGH';
-        return 'MEDIUM';
+        return self::levelFromScore((float) $this->score);
     }
 
     public function generatedTimestamp(): \Carbon\Carbon
