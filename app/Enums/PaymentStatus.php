@@ -17,6 +17,9 @@ enum PaymentStatus: string
     case Failed = 'failed';
     case Refunded = 'refunded';
 
+    /** Captured by the gateway, but fulfilment failed and needs manual completion. */
+    case RequiresReview = 'requires_review';
+
     /*
     |--------------------------------------------------------------------------
     | HELPERS
@@ -31,13 +34,17 @@ enum PaymentStatus: string
             self::Paid => 'Paid',
             self::Failed => 'Failed',
             self::Refunded => 'Refunded',
+            self::RequiresReview => 'Requires Review',
         };
     }
 
     public function isTerminal(): bool
     {
+        // RequiresReview is terminal for the queue — the job has exhausted its
+        // retries and will not run again on its own. It is not terminal for the
+        // business: a human still has to complete fulfilment.
         return match ($this) {
-            self::Paid, self::Failed, self::Refunded => true,
+            self::Paid, self::Failed, self::Refunded, self::RequiresReview => true,
             default => false,
         };
     }

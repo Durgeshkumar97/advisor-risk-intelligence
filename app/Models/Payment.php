@@ -95,6 +95,12 @@ class Payment extends Model
 
     public const STATUS_REFUNDED = 'refunded';
 
+    /**
+     * Captured by the gateway, but fulfilment exhausted its retries — needs a
+     * human to finish it. Distinct from STATUS_FAILED, where no money moved.
+     */
+    public const STATUS_REQUIRES_REVIEW = 'requires_review';
+
     /*
     |--------------------------------------------------------------------------
     | RELATIONS
