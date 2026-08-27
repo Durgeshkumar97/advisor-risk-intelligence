@@ -9,7 +9,16 @@ use Symfony\Component\HttpFoundation\File\File;
 
 class PortfolioFileType implements ValidationRule
 {
-    private const ALLOWED_EXTENSIONS = ['pdf', 'csv', 'xlsx', 'xls', 'zip'];
+    /**
+     * The extensions a primary upload may claim. Public because
+     * PortfolioUploadService reuses it to sanitise the extension it writes to
+     * disk — one allow-list, so validation and storage can never disagree.
+     *
+     * Note this is deliberately WIDER than
+     * ProcessPortfolioFile::ALLOWED_EXTENSIONS, which excludes 'zip' because a
+     * nested zip inside a zip must not be extracted (see the docblock below).
+     */
+    public const ALLOWED_EXTENSIONS = ['pdf', 'csv', 'xlsx', 'xls', 'zip'];
 
     /**
      * The actual content is the real check (via Symfony's finfo-backed

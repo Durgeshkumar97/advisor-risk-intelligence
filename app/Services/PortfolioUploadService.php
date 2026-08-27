@@ -6,6 +6,7 @@ use App\Events\PortfolioFileUploaded;
 use App\Exceptions\PortfolioUploadException;
 use App\Models\Portfolio;
 use App\Models\PortfolioFile;
+use App\Rules\PortfolioFileType;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -104,9 +105,9 @@ class PortfolioUploadService
 
                     'uploaded_at' => now()->toIso8601String(),
 
-                    'extension' => strtolower(
-                        $file->getClientOriginalExtension()
-                    ),
+                    // Same sanitised value the file is stored under, so meta
+                    // never claims an extension the file does not have.
+                    'extension' => $this->safeExtension($file),
                 ],
             ]);
 
@@ -221,6 +222,38 @@ class PortfolioUploadService
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | SAFE EXTENSION
+    |--------------------------------------------------------------------------
+    |
+    | getClientOriginalExtension() is derived from the client-supplied filename
+    | and is entirely attacker-controlled. PortfolioFileType validates the file
+    | CONTENT, not the claimed extension, so a genuine PDF named `payload.php`
+    | passes validation — and the stored filename was built straight from that
+    | claimed extension, writing `<uuid>.php` to disk.
+    |
+    | Not exploitable on its own: the portfolios disk roots outside the webroot
+    | (config/filesystems.php) and every download goes through FileController
+    | behind auth. This is defence in depth, so an unrelated future change —
+    | serving the disk, an LFI, a misconfigured vhost — cannot turn stored
+    | uploads into executable content.
+    |
+    | Anything not on the allow-list is stored as .bin rather than rejected:
+    | validation has already accepted the content, so the upload should still
+    | succeed; it just must not keep an attacker-chosen extension.
+    |
+    */
+
+    private function safeExtension(UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        return in_array($extension, PortfolioFileType::ALLOWED_EXTENSIONS, true)
+            ? $extension
+            : 'bin';
+    }
+
     private function storeFile(
         int $userId,
         UploadedFile $file,
@@ -248,9 +281,7 @@ class PortfolioUploadService
 
                 .'.'
 
-                .strtolower(
-                    $file->getClientOriginalExtension()
-                );
+                .$this->safeExtension($file);
 
             /*
             |--------------------------------------------------------------------------
