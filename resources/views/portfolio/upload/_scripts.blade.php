@@ -52,6 +52,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent   = 'Uploading…';
         btn.style.opacity = '.65';
     });
+
+    /*
+     | AUTO-REFRESH WHILE WORK IS IN FLIGHT
+     |
+     | The queue worker is cron-driven (queue:work --stop-when-empty, every
+     | minute), so a freshly uploaded file can sit pending for up to a minute
+     | before it even starts. Previously the flash said "Processing has
+     | started" and then the page never changed, leaving the advisor to guess
+     | when to hit refresh.
+     |
+     | Reloads only while at least one row is still pending or processing —
+     | _history.blade.php renders [data-status] for exactly those rows — so
+     | the polling stops on its own once everything is processed or failed.
+     | A full reload rather than a fetch/poll because the whole row (status,
+     | error text, download buttons) is server-rendered.
+     */
+    if (document.querySelector('[data-status]')) {
+        setTimeout(() => window.location.reload(), 10000);
+    }
 });
 </script>
 @endpush

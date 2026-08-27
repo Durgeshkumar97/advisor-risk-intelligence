@@ -110,6 +110,18 @@
                             {!! $statusIcons[$statusStyles['icon']] !!}
                             {{ $statusStyles['label'] }}
                         </span>
+
+                        @if(in_array($file->status, ['pending', 'processing'], true))
+                        {{-- data-status is what _scripts.blade.php polls on. Pending
+                             counts as in-flight: the queue worker is cron-driven
+                             (every minute), so a just-uploaded file sits pending for
+                             up to a minute before it even starts. --}}
+                        <div data-status="{{ $file->status }}"
+                             style="color:#93c5fd;font-size:.72rem;margin-top:.3rem;max-width:260px;line-height:1.4;opacity:.85;">
+                            Processing — this page refreshes automatically.
+                        </div>
+                        @endif
+
                         @if($file->isFailed() && isset($file->meta['error_message']))
                         {{-- 60 chars cut the actionable half off the longer messages
                              (the no-holdings and symbol-cap ones both name what to
