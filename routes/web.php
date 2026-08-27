@@ -118,7 +118,13 @@ Route::post('/webhook/razorpay', [WebhookController::class, 'handle'])
 
 Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $token) {
 
-    $user = \App\Models\User::where('login_token', $token)->first();
+    // Tokens are stored hashed (see UserAccountRecoveryService and
+    // AdminUserController::sendLoginLink), so the incoming raw token from the
+    // URL is hashed and matched against that. Computed once — the same hash
+    // identifies the mint event in AdminLog further down.
+    $tokenHash = hash('sha256', $token);
+
+    $user = \App\Models\User::where('login_token', $tokenHash)->first();
 
     if (! $user) {
         return redirect()->route('login')
@@ -150,8 +156,6 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
     // would conflate the two. Defaults to the impersonation label if no
     // matching mint row is found (shouldn't happen; erring toward the more
     // security-sensitive label for audit review).
-    $tokenHash = hash('sha256', $token);
-
     $mintEvent = \App\Models\AdminLog::where('token_hash', $tokenHash)
         ->whereIn('event', ['impersonation_link_minted', 'self_service_login_link_minted'])
         ->latest('id')

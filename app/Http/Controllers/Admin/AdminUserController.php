@@ -104,8 +104,10 @@ class AdminUserController extends Controller
 
         $token = Str::random(64);
 
+        // Hash at rest — the raw token lives only in the link shown to the
+        // admin below. See UserAccountRecoveryService for the rationale.
         $user->forceFill([
-            'login_token' => $token,
+            'login_token' => hash('sha256', $token),
             'login_token_expires_at' => now()->addMinutes(15),
         ])->save();
 

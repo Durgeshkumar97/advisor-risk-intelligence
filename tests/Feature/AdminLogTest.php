@@ -12,6 +12,14 @@ uses(\Tests\TestCase::class, RefreshDatabase::class);
 
 require_once __DIR__.'/../Support/SharedFixtures.php';
 
+// Tokens are stored hashed, so the raw value can no longer be read back out of
+// users.login_token. The admin mint flashes the full link to the session —
+// that is where the raw token now lives for assertion purposes.
+function rawTokenFromFlashedLink(): string
+{
+    return \Illuminate\Support\Str::afterLast(session('login_link'), '/');
+}
+
 describe('admin_logs is written to on every admin auth / impersonation event', function () {
 
     it('records admin_login_success when an admin logs in with valid credentials', function () {
@@ -107,17 +115,20 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
             ->assertRedirect(route('admin.users.show', $target->id));
 
         $log = AdminLog::where('event', 'impersonation_link_minted')->first();
-        $rawToken = $target->fresh()->login_token;
 
         expect($log)->not->toBeNull();
         expect($log->user_id)->toBe($admin->id);
         expect($log->target_user_id)->toBe($target->id);
-        expect($log->token_hash)->toBe(hash('sha256', $rawToken));
+        // users.login_token now stores the SHA-256 itself, so the audit hash
+        // and the stored token are the same value.
+        expect($log->token_hash)->toBe($target->fresh()->login_token);
+        expect($log->token_hash)->toBe(hash('sha256', rawTokenFromFlashedLink()));
     });
 
     it('records impersonation_link_used against the target user, with a matching token hash, when the magic link is consumed', function () {
         $target = User::factory()->create([
-            'login_token' => 'a-valid-token-123',
+            // Stored hashed, exactly as the mint sites now write it.
+            'login_token' => hash('sha256', 'a-valid-token-123'),
             'login_token_expires_at' => now()->addMinutes(15),
             'onboarding_completed' => true,
         ]);
@@ -151,7 +162,7 @@ describe('admin_logs is written to on every admin auth / impersonation event', f
             ->assertRedirect(route('admin.users.show', $target->id));
 
         $secondMint = AdminLog::where('event', 'impersonation_link_minted')->latest('id')->first();
-        $secondToken = $target->fresh()->login_token;
+        $secondToken = rawTokenFromFlashedLink();
 
         expect($secondMint->id)->not->toBe($firstMint->id);
         expect($secondMint->target_user_id)->toBe($firstMint->target_user_id);
@@ -191,19 +202,34 @@ describe('self-service login links (no admin involved) get their own, distinctly
         app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($target);
 
         $log = AdminLog::where('event', 'self_service_login_link_minted')->first();
-        $rawToken = $target->fresh()->login_token;
 
         expect($log)->not->toBeNull();
         expect($log->user_id)->toBeNull();
         expect($log->target_user_id)->toBe($target->id);
-        expect($log->token_hash)->toBe(hash('sha256', $rawToken));
+        // The audit hash and the stored token are now the same value.
+        expect($log->token_hash)->toBe($target->fresh()->login_token);
     });
 
     it('records self_service_login_link_used (not impersonation_link_used) when a self-service-minted token is consumed', function () {
+        \Illuminate\Support\Facades\Notification::fake();
+
         $target = User::factory()->create(['onboarding_completed' => true]);
 
         app(\App\Services\UserAccountRecoveryService::class)->sendLoginLinkToExistingUser($target);
-        $token = $target->fresh()->login_token;
+
+        // The service emails the link; with tokens hashed at rest, that
+        // notification is the only place the raw token still exists.
+        $captured = null;
+        \Illuminate\Support\Facades\Notification::assertSentTo(
+            $target,
+            \App\Services\Notifications\ExistingAccountLoginLinkNotification::class,
+            function ($notification) use (&$captured) {
+                $captured = $notification;
+
+                return true;
+            }
+        );
+        $token = \Illuminate\Support\Str::afterLast((fn () => $this->loginUrl)->call($captured), '/');
 
         $this->get(route('auto.login', $token))
             ->assertRedirect(route('dashboard'));

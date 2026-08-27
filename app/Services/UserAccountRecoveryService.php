@@ -101,8 +101,13 @@ class UserAccountRecoveryService
     {
         $token = Str::random(64);
 
+        // Only the SHA-256 of the token is persisted; the raw value exists in
+        // the emailed URL and nowhere else. Read access to the users table no
+        // longer yields a usable credential — matching what AdminLog already
+        // did with token_hash. Verification hashes the incoming token and
+        // compares (see the auto.login route).
         $user->forceFill([
-            'login_token' => $token,
+            'login_token' => hash('sha256', $token),
             'login_token_expires_at' => now()->addMinutes(15),
         ])->save();
 

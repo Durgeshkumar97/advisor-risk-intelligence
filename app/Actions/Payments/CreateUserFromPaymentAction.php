@@ -31,15 +31,19 @@ class CreateUserFromPaymentAction
         |
         */
 
-        $loginToken = Str::random(60);
-
+        /*
+        | No login_token is minted here. This used to write a 24-hour token
+        | whose raw value never left this method — it was not emailed, not
+        | returned, not rendered anywhere — so it could never be redeemed. All
+        | it did was park an unusable long-lived credential in the users table
+        | in plaintext. New accounts reach the app through
+        | WelcomeSetPasswordNotification below.
+        */
         $result = $this->accounts->findRestoreOrCreateUserByEmail(
             $payment->email,
             [
                 'name' => $payment->name ?? 'Advisor',
                 'password' => Hash::make(Str::random(32)),
-                'login_token' => $loginToken,
-                'login_token_expires_at' => now()->addHours(24),
             ],
             [
                 'name' => $payment->name ?? 'Advisor',
