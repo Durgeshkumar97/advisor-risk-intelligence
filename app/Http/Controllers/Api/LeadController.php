@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
 use App\Models\Plan;
-use App\Models\Subscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LeadController extends Controller
 {
@@ -70,23 +70,37 @@ class LeadController extends Controller
 
         /*
         |----------------------------------------------------------------------
-        | CREATE 7-DAY TRIAL SUBSCRIPTION
+        | NO SUBSCRIPTION IS CREATED HERE
         |----------------------------------------------------------------------
+        |
+        | This used to insert a Subscription carrying only lead_id, with no
+        | user_id — but subscriptions.user_id is NOT NULL, so the insert threw
+        | and EVERY first-time caller received a 500. The endpoint has never
+        | successfully started a trial.
+        |
+        | Making the column nullable would not fix it either: CheckSubscription
+        | and EnsureActiveSubscription both resolve by user_id, and nothing
+        | anywhere maps lead_id back to a user, so the row would grant no
+        | access. The response also sends the caller to /login, where there is
+        | no account to sign into — this flow never creates a User, and cannot,
+        | since email is optional here.
+        |
+        | So it captures the lead (which the admin panel does consume) and says
+        | only what is true. Actually provisioning a trial account needs a
+        | product decision about identity — phone-only signup, or requiring an
+        | email — and is deliberately not invented here.
+        |
         */
 
-        Subscription::create([
+        Log::info('LeadController: trial lead captured; no subscription provisioned.', [
             'lead_id' => $lead->id,
-            'plan_id' => $plan->id,
-            'status' => 'trial',
-            'trial_started_at' => now(),
-            'trial_ends_at' => now()->addDays(7),
-            'renewal_at' => now()->addDays(7),
+            'plan' => $plan->slug,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => '7-day trial started successfully',
+            'message' => 'Details received. Our team will contact you shortly to set up your account.',
             'redirect_url' => route('login'),
-        ], 201);
+        ]);
     }
 }
