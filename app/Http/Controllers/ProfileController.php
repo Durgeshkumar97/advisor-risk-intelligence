@@ -48,8 +48,9 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // TODO: scheduled command to permanently delete users
-        // whose deleted_at is older than 30 days.
+        // Soft delete. The 30-day promise in the flash message below is kept by
+        // the users:purge command (PurgeDeletedUsers, RETENTION_DAYS = 30),
+        // scheduled daily at 02:00 in bootstrap/app.php.
         $user->delete();
 
         Auth::logout();
