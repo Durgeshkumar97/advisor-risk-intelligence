@@ -187,7 +187,13 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Defaults to TRUE: with no fallback this returned null (falsy) whenever
+    // the key was absent, so a production .env rebuilt from DEPLOY.md — which
+    // did not list it — would have silently shipped session cookies without the
+    // Secure flag. Failing closed means the worst case is a local dev
+    // annoyance, not an unprotected session cookie over HTTP in production.
+    // Local development sets SESSION_SECURE_COOKIE=false explicitly.
+    'secure' => env('SESSION_SECURE_COOKIE', true),
 
     /*
     |--------------------------------------------------------------------------

@@ -97,6 +97,18 @@ DB_PASSWORD=<strong-password>
 # Queue (must be 'database')
 QUEUE_CONNECTION=database
 
+# Session
+SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true           # HTTPS-only cookie; config defaults to true
+SESSION_LIFETIME=120                 # advisor idle timeout, minutes
+SESSION_ADMIN_LIFETIME=15            # /admin idle timeout, enforced by AdminOnly
+
+# Reports
+REPORTS_NOTIFY_EMAIL=founder@risksignal.in
+
+# Market risk sync (market-risk:sync reads this CSV)
+MARKET_RISK_CSV_PATH=/full/path/to/nifty500_enriched.csv
+
 # Mail (Hostinger SMTP — already configured)
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.hostinger.com
