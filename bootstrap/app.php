@@ -42,9 +42,21 @@ return Application::configure(basePath: dirname(__DIR__))
         |--------------------------------------------------------------------------
         */
 
+        /*
+        | withoutOverlapping() defaults to a 1440-minute (24h) mutex. Combined
+        | with runInBackground(), the mutex is released by schedule:finish —
+        | which never runs if the background process is SIGKILLed (an OOM kill
+        | on shared hosting, or the ZIP-extraction timeout this file already
+        | anticipates below). One killed worker therefore halted ALL queue
+        | processing — portfolio parsing and payment fulfilment alike — for a
+        | full day, silently. 5 minutes bounds that to a single missed cycle.
+        |
+        | Overlap at the boundary is safe: the database queue driver reserves
+        | jobs, so a second worker cannot pick up one already in flight.
+        */
         $schedule->command('queue:work --stop-when-empty --tries=3 --timeout=60')
             ->everyMinute()
-            ->withoutOverlapping()
+            ->withoutOverlapping(5)
             ->runInBackground();
 
         /*
