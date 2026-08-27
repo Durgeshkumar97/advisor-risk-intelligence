@@ -33,6 +33,8 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 .assets-table td { padding: 5px 7px; border-bottom: 1px solid #e2e8f0; }
 .assets-table tr.even td { background: #f8fafc; }
 
+.data-note { font-size: 8px; line-height: 1.5; color: #94a3b8; margin: -8px 0 14px; }
+
 .disclaimer { border: 1px solid #e2e8f0; background: #f8fafc; padding: 9px 12px; margin-top: 18px; font-size: 8px; line-height: 1.5; color: #64748b; }
 .disclaimer-title { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 3px; }
 
@@ -80,6 +82,17 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 @if(!empty($riskScore->meta['next_action']))
 <div class="section-heading">Observations</div>
 <div class="action-box">{{ $riskScore->meta['next_action'] }}</div>
+@endif
+
+@php $fallbackCount = (int) ($riskScore->meta['stock_risk_fallback_count'] ?? 0); @endphp
+@if($fallbackCount > 0)
+{{-- Transparency note, deliberately styled as muted info rather than a
+     warning: these holdings used the standard category default because the
+     enhanced classifier was unreachable when this report was generated. --}}
+<div class="data-note">
+    Note: {{ $fallbackCount }} {{ Str::plural('stock', $fallbackCount) }} scored using standard
+    risk assessment. Enhanced classification was unavailable at the time of processing.
+</div>
 @endif
 
 @if($portfolio?->clientRiskProfile)

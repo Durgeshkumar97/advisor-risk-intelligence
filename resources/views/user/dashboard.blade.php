@@ -225,6 +225,17 @@
                 </div>
                 @endif
 
+                @if($stockRiskFallbackCount > 0)
+                {{-- Transparency note, not a warning: these holdings were
+                     scored with the standard category default because the
+                     enhanced classifier was unreachable at processing time. --}}
+                <div class="dashboard-meta" style="font-size:.72rem;margin-top:.5rem;line-height:1.5;opacity:.75;">
+                    Note: {{ $stockRiskFallbackCount }} {{ Str::plural('stock', $stockRiskFallbackCount) }}
+                    scored using standard risk assessment. Enhanced classification
+                    was unavailable at the time of processing.
+                </div>
+                @endif
+
             @else
 
                 <div style="margin-top:1.5rem;color:var(--ink-3);">

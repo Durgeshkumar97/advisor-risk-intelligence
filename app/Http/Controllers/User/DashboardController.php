@@ -47,6 +47,12 @@ class DashboardController extends Controller
             ? 'NONE'
             : RiskScore::levelFromScore($riskScore);
 
+        // How many equity holdings fell back to AssetRiskScorer's flat
+        // category default because the live classifier was unreachable. Not an
+        // error — a transparency note, so the advisor knows the score used
+        // standard rather than enhanced classification.
+        $stockRiskFallbackCount = (int) ($risk?->meta['stock_risk_fallback_count'] ?? 0);
+
         $recommendation = match ($riskLevel) {
             'LOW' => 'Portfolio stable. Continue monitoring.',
             'MEDIUM' => 'Review exposure and rebalance selectively.',
@@ -78,6 +84,7 @@ class DashboardController extends Controller
             'riskScore' => $riskScore,
             'riskLevel' => $riskLevel,
             'riskGeneratedAt' => $riskGeneratedAt,
+            'stockRiskFallbackCount' => $stockRiskFallbackCount,
             'recommendation' => $recommendation,
             'nextAction' => $nextAction,
             'portfolios' => $portfolios,
