@@ -262,6 +262,43 @@ it('applies the market multiplier from config to the final score', function () {
     expect($score120)->toBeGreaterThan($score100);
 });
 
+it('takes an explicit market multiplier per call, overriding config', function () {
+    $assets = collect(array_fill(0, 5, null))->map(
+        fn () => makeAsset(['asset_type' => 'stock', 'current_value' => 200, 'invested_value' => 200, 'risk_score' => 65])
+    );
+
+    config(['risk.market_multiplier' => 1.0]);
+
+    $withConfig = calc()->calculate($assets)['score'];
+    $withOverride = calc()->calculate($assets, 1.2)['score'];
+
+    expect($withOverride)->toBeGreaterThan($withConfig)
+        ->and($withOverride)->toBe(round($withConfig * 1.2, 2));
+});
+
+it('does not leak a per-call multiplier into a later call — the config() mutation regression', function () {
+    // ProcessPortfolioFile used to assign the snapshot multiplier into
+    // config(), which is process-global. Inside one queue:work process a
+    // later job with no snapshot then inherited the previous job's value,
+    // making the score depend on job ordering.
+    $assets = collect(array_fill(0, 5, null))->map(
+        fn () => makeAsset(['asset_type' => 'stock', 'current_value' => 200, 'invested_value' => 200, 'risk_score' => 65])
+    );
+
+    config(['risk.market_multiplier' => 1.0]);
+
+    $baseline = calc()->calculate($assets)['score'];
+
+    // A call with a high explicit multiplier — as a job WITH a snapshot makes.
+    calc()->calculate($assets, 1.3);
+
+    // The next call without one — a job with NO snapshot — must be unaffected.
+    $after = calc()->calculate($assets)['score'];
+
+    expect($after)->toBe($baseline)
+        ->and(config('risk.market_multiplier'))->toBe(1.0);
+});
+
 it('clamps the market multiplier to the allowed range', function () {
     $assets = collect(array_fill(0, 5, null))->map(
         fn () => makeAsset(['asset_type' => 'stock', 'current_value' => 200, 'invested_value' => 200, 'risk_score' => 65])

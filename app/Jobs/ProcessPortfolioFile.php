@@ -170,8 +170,6 @@ class ProcessPortfolioFile implements ShouldQueue
             $marketSnapshot = MarketRiskSnapshot::latest();
 
             if ($marketSnapshot) {
-                config(['risk.market_multiplier' => $marketSnapshot->multiplier()]);
-
                 Log::info('ProcessPortfolioFile: market risk context loaded.', [
                     'id'               => $file->id,
                     'market_date'      => $marketSnapshot->market_date->toDateString(),
@@ -242,7 +240,9 @@ class ProcessPortfolioFile implements ShouldQueue
                 }
 
                 if ($assetModels->isNotEmpty()) {
-                    $result = $calculator->calculate($assetModels);
+                    // Passed per-call rather than assigned into config(), which
+                    // is process-global and leaked across jobs in one worker.
+                    $result = $calculator->calculate($assetModels, $marketSnapshot?->multiplier());
 
                     // Build market context block — included directly in create()
                     // so meta is complete in one write, no create-then-update.

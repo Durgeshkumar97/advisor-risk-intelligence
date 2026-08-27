@@ -66,9 +66,19 @@ class PortfolioRiskCalculator
     |
     */
 
-    private function marketMultiplier(): float
+    /**
+     * Resolve the multiplier for ONE calculate() call.
+     *
+     * Takes an explicit override when the caller has a market snapshot, and
+     * falls back to config otherwise. ProcessPortfolioFile used to do this by
+     * assigning to config() at runtime, which leaks: config is process-global,
+     * so within a single queue:work process a later job with no snapshot
+     * inherited the previous job's multiplier. Passing it per-call keeps the
+     * value scoped to the calculation it belongs to.
+     */
+    private function resolveMarketMultiplier(?float $override): float
     {
-        $m = (float) config('risk.market_multiplier', 1.05);
+        $m = $override ?? (float) config('risk.market_multiplier', 1.05);
 
         return max(0.80, min(1.30, $m));
     }
@@ -83,9 +93,15 @@ class PortfolioRiskCalculator
      * @param  \Illuminate\Support\Collection  $assets  PortfolioAsset models
      *                                                  (must have current_value, invested_value,
      *                                                  asset_type, name, risk_score)
+     * @param  ?float  $marketMultiplier  Multiplier from the caller's market
+     *                                    snapshot, if it has one. Omit to use
+     *                                    the configured default. Clamped to
+     *                                    0.80–1.30 either way.
      */
-    public function calculate(Collection $assets): array
+    public function calculate(Collection $assets, ?float $marketMultiplier = null): array
     {
+        $multiplier = $this->resolveMarketMultiplier($marketMultiplier);
+
         /*
         |----------------------------------------------------------------------
         | GUARD: empty portfolio
@@ -198,7 +214,7 @@ class PortfolioRiskCalculator
             $concentrationScore * self::W_CONCENTRATION +
             $equityRatioScore * self::W_EQUITY_RATIO +
             $drawdownScore * self::W_DRAWDOWN
-        ) * $this->marketMultiplier();
+        ) * $multiplier;
 
         $finalScore = (float) max(0, min(100, round($rawScore, 2)));
 
@@ -291,7 +307,7 @@ class PortfolioRiskCalculator
                 'dominant_asset_type' => $dominantType,
                 'total_invested' => round($totalInvestedValue, 2),
                 'total_current' => round($totalCurrentValue, 2),
-                'market_multiplier' => $this->marketMultiplier(),
+                'market_multiplier' => $multiplier,
                 'risk_flags' => $riskFlags,
                 'risk_level' => $this->level($finalScore),
                 'stock_risk_fallback_count' => $stockRiskFallbackCount,
