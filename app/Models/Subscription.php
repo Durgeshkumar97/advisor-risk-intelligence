@@ -49,9 +49,19 @@ class Subscription extends Model
         return $this->belongsTo(Lead::class);
     }
 
+    /**
+     * The payment that created or renewed this subscription.
+     *
+     * provider_subscription_id is populated with the Razorpay PAYMENT id
+     * (SubscriptionService::activate() and CreateSubscriptionFromPaymentAction
+     * both write $payment->payment_id into it), so it must be matched against
+     * payments.payment_id. It previously compared against payments.order_id,
+     * which holds a different Razorpay identifier entirely — so the relation
+     * never resolved and always came back null.
+     */
     public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(Payment::class, 'order_id', 'provider_subscription_id');
+        return $this->hasOne(Payment::class, 'payment_id', 'provider_subscription_id');
     }
 
     /*
