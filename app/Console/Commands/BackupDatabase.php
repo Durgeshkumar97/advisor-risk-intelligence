@@ -5,23 +5,35 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class BackupDatabase extends Command
 {
     protected $signature = 'backup:database
-                            {--dry-run : Generate the dump file but skip email delivery and retention cleanup}';
+                            {--dry-run : Generate the dump file but skip retention cleanup}';
 
-    protected $description = 'Export a gzipped pure-PHP SQL dump, email it to the founder, and prune backups older than 7 days.';
+    protected $description = 'Export a gzipped pure-PHP SQL dump to server storage and prune backups older than 7 days.';
+
+    /*
+    |--------------------------------------------------------------------------
+    | NO OFF-SERVER DELIVERY
+    |--------------------------------------------------------------------------
+    |
+    | This dump contains every advisor's clients' names, holdings, ISINs and
+    | valuations. It was previously gzipped (not encrypted) and emailed as an
+    | attachment to a consumer mailbox every night, which put the full client
+    | PII set outside the application's security boundary — and left a copy in
+    | that mailbox indefinitely, beyond the reach of the 7-day retention below.
+    |
+    | The dump now stays on the server. Retrieve it over SSH/SFTP. If off-server
+    | delivery is ever needed, encrypt it first (AES-256 with a key from config)
+    | rather than reinstating a plaintext attachment.
+    |
+    */
 
     private const RETENTION_DAYS = 7;
 
     private const BACKUPS_DIR = 'backups';
-
-    // 15 MB compressed — SMTP base64 adds ~33% overhead, pushing it toward the
-    // common 25 MB attachment limit. Flag but don't abort: dump is still kept locally.
-    private const EMAIL_SIZE_WARN_BYTES = 15_000_000;
 
     public function handle(): int
     {
@@ -55,13 +67,20 @@ class BackupDatabase extends Command
         }
 
         if ($dryRun) {
-            $this->info('[DRY RUN] Skipping email delivery and retention cleanup.');
+            $this->info('[DRY RUN] Skipping retention cleanup.');
 
             return Command::SUCCESS;
         }
 
-        $this->deliverByEmail($outputPath, $filename);
         $this->pruneOldBackups($outputDir);
+
+        Log::info('BackupDatabase: backup retained on server', [
+            'path' => $outputPath,
+            'retention_days' => self::RETENTION_DAYS,
+        ]);
+
+        $this->info("Backup retained on the server at: {$outputPath}");
+        $this->info('Retrieve it over SSH/SFTP — backups are never emailed.');
 
         return Command::SUCCESS;
     }
@@ -164,57 +183,6 @@ class BackupDatabase extends Command
 
         if ($rowCount > 0) {
             gzwrite($gz, "\n");
-        }
-    }
-
-    private function deliverByEmail(string $filePath, string $filename): void
-    {
-        $recipient = config('services.founder_email');
-        $sizeBytes = filesize($filePath);
-
-        if ($sizeBytes > self::EMAIL_SIZE_WARN_BYTES) {
-            $sizeMb = round($sizeBytes / 1_000_000, 1);
-            Log::warning('BackupDatabase: dump exceeds 15 MB — SMTP relay may reject the attachment', [
-                'size_bytes' => $sizeBytes,
-            ]);
-            $this->warn(
-                "Dump is {$sizeMb} MB — email delivery may be rejected by the SMTP relay. "
-                .'Consider adding AWS_* credentials to .env to enable S3 offload.'
-            );
-        }
-
-        try {
-            $sizeKb = round($sizeBytes / 1024, 1);
-            $body = implode("\n", [
-                'RiskSignal automated database backup.',
-                '',
-                'Date:     '.now()->toDateString(),
-                'File:     '.$filename,
-                'Size:     '.$sizeKb.' KB (gzipped SQL)',
-                '',
-                'Restore: gunzip backup.sql.gz && mysql -u user -p dbname < backup.sql',
-            ]);
-
-            Mail::raw($body, function ($message) use ($recipient, $filePath, $filename): void {
-                $message
-                    ->to($recipient)
-                    ->subject('[RiskSignal] DB Backup — '.now()->toDateString())
-                    ->attach($filePath, [
-                        'as' => $filename,
-                        'mime' => 'application/gzip',
-                    ]);
-            });
-
-            Log::info('BackupDatabase: backup emailed', ['to' => $recipient, 'file' => $filename]);
-            $this->info("Backup emailed to {$recipient}.");
-        } catch (Throwable $e) {
-            // Email failure is non-fatal — the dump is still kept locally.
-            Log::error('BackupDatabase: email delivery failed', [
-                'error' => $e->getMessage(),
-                'file' => $filePath,
-            ]);
-            $this->error('Email delivery failed: '.$e->getMessage());
-            $this->warn("Dump retained locally at: {$filePath}");
         }
     }
 
