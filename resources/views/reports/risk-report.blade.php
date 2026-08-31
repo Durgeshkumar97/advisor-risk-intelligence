@@ -95,6 +95,18 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 </div>
 @endif
 
+@php
+    $lowConfCount = $assets->filter(fn ($a) => ($a->meta['stock_risk']['confidence'] ?? 1.0) < 0.70)->count();
+@endphp
+@if($lowConfCount > 0)
+{{-- Transparency note, not a gate: the score and its confidence are both
+     shown to the IFA rather than withheld or adjusted. --}}
+<div class="data-note">
+    Note: {{ $lowConfCount }} {{ Str::plural('holding', $lowConfCount) }} scored with limited
+    underlying data availability. Scores may vary as more data becomes available.
+</div>
+@endif
+
 @if($portfolio?->clientRiskProfile)
 <div class="section-heading">Client Risk Tolerance Comparison</div>
 <div class="action-box">{{ $portfolio->clientRiskProfile->comparisonMessage((float) $riskScore->score, $level) }}</div>
@@ -165,6 +177,9 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
         @php
             $lvlClass = match($asset->risk_level) { 'HIGH' => 'risk-high', 'MEDIUM' => 'risk-medium', default => 'risk-low' };
             $plPositive = ($asset->profit_loss ?? 0) >= 0;
+            $stockRisk = $asset->meta['stock_risk'] ?? null;
+            $lowConfidence = $stockRisk && ($stockRisk['confidence'] ?? 1.0) < 0.70;
+            $isStale = $stockRisk && ($stockRisk['stale'] ?? false);
         @endphp
         <tr class="{{ $i % 2 === 1 ? 'even' : '' }}">
             <td style="font-weight:600;">{{ $asset->name }}</td>
@@ -176,7 +191,15 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
                 {{ $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' }}
             </td>
             <td style="text-align:center;font-weight:700;" class="{{ $lvlClass }}">{{ number_format($asset->risk_score, 0) }}</td>
-            <td style="text-align:center;font-weight:700;font-size:8px;" class="{{ $lvlClass }}">{{ $asset->risk_level }}</td>
+            <td style="text-align:center;font-weight:700;font-size:8px;" class="{{ $lvlClass }}">
+                {{ $asset->risk_level }}
+                @if($lowConfidence)
+                    <br><span style="font-weight:400;color:#d97706;">&#9888; Low confidence</span>
+                @endif
+                @if($isStale)
+                    <br><span style="font-weight:400;color:#94a3b8;">Data may be outdated</span>
+                @endif
+            </td>
         </tr>
         @endforeach
     </tbody>
