@@ -161,7 +161,7 @@ describe('the PDF report renders the comparison — and is unchanged when no pro
         $html = renderReportHtml($portfolio, $riskScore, $file);
 
         expect($html)->toContain('Client Risk Tolerance Comparison');
-        expect($html)->toContain('exceeds client tolerance by 40 points'); // portfolio 78 - capacity 38
+        expect($html)->toContain('sits 40 points above client tolerance'); // portfolio 78 - capacity 38
     });
 
     it('renders identically to before this feature existed when the portfolio has no client risk profile (purely additive regression check)', function () {

@@ -53,19 +53,14 @@ class DashboardController extends Controller
         // standard rather than enhanced classification.
         $stockRiskFallbackCount = (int) ($risk?->meta['stock_risk_fallback_count'] ?? 0);
 
-        $recommendation = match ($riskLevel) {
-            'LOW' => 'Portfolio stable. Continue monitoring.',
-            'MEDIUM' => 'Review exposure and rebalance selectively.',
-            'HIGH' => 'Immediate portfolio review recommended.',
-            default => 'Upload your portfolio to receive your first risk score.',
-        };
-
-        $nextAction = match ($riskLevel) {
-            'LOW' => 'Monitor market movement weekly.',
-            'MEDIUM' => 'Reduce concentration risk.',
-            'HIGH' => 'Schedule an immediate portfolio review.',
-            default => 'Upload a CSV, XLSX, or PDF portfolio file to get started.',
-        };
+        // Observational only — same rule as the PDF/email surfaces:
+        // PortfolioRiskCalculator::buildNextAction() is the single source of
+        // this text, computed and stored in meta.next_action at scoring time.
+        // Do not re-derive from $riskLevel here; a level-keyed match() cannot
+        // reflect which risk flags actually drove the score, and previously
+        // asserted prescriptive advice unlinked to the evidence (F-15).
+        $nextAction = $risk?->meta['next_action']
+            ?? 'Upload your portfolio to receive your first risk score.';
 
         $portfolios = Portfolio::where('user_id', $user->id)
             ->latest()
@@ -85,7 +80,6 @@ class DashboardController extends Controller
             'riskLevel' => $riskLevel,
             'riskGeneratedAt' => $riskGeneratedAt,
             'stockRiskFallbackCount' => $stockRiskFallbackCount,
-            'recommendation' => $recommendation,
             'nextAction' => $nextAction,
             'portfolios' => $portfolios,
         ]);

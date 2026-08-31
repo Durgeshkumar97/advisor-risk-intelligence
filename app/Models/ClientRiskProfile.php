@@ -154,6 +154,12 @@ class ClientRiskProfile extends Model
     |--------------------------------------------------------------------------
     | COMPARISON — one sentence for the report
     |--------------------------------------------------------------------------
+    |
+    | Observational only — same compliance rule as
+    | PortfolioRiskCalculator::buildNextAction(): state the gap, never
+    | prescribe an action. No "should", "consider", "recommend", "review",
+    | or "discuss".
+    |
     */
 
     public function comparisonMessage(float $portfolioScore, string $portfolioLevel): string
@@ -170,9 +176,9 @@ class ClientRiskProfile extends Model
         }
 
         if ($gap > self::ALIGNED_GAP_THRESHOLD) {
-            return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk exceeds client tolerance by ".number_format($gap, 0).' points — consider rebalancing toward lower-volatility holdings.';
+            return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk sits ".number_format($gap, 0).' points above client tolerance.';
         }
 
-        return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk is ".number_format(abs($gap), 0)." points below client tolerance — there may be room for a more growth-oriented allocation if that fits the client's goals.";
+        return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk sits ".number_format(abs($gap), 0).' points below client tolerance.';
     }
 }

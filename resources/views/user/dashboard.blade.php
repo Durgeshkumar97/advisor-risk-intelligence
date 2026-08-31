@@ -250,21 +250,13 @@
 
         </div>
 
-        {{-- RECOMMENDATION CARD --}}
+        {{-- OBSERVATIONS CARD — same source and wording as the PDF's
+             "Observations" box (meta.next_action); do not reintroduce a
+             second, level-keyed card here. See PortfolioRiskCalculator::
+             buildNextAction() for why this text is observational only. --}}
         <div class="dashboard-card">
 
-            <div class="dashboard-label">Recommendation</div>
-
-            <div class="dashboard-message">
-                {{ $recommendation }}
-            </div>
-
-        </div>
-
-        {{-- NEXT ACTION CARD --}}
-        <div class="dashboard-card">
-
-            <div class="dashboard-label">Next Action</div>
+            <div class="dashboard-label">Observations</div>
 
             <div class="dashboard-message">
                 {{ $nextAction }}

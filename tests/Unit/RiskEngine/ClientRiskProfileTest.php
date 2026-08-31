@@ -119,7 +119,7 @@ it('reports portfolio risk exceeding client tolerance when the gap is above +15,
     $message = $profile->comparisonMessage(78.0, 'HIGH'); // gap = +33
 
     expect($message)->toBe(
-        'Client risk tolerance: 45 (MEDIUM). Portfolio risk: 78 (HIGH). Portfolio risk exceeds client tolerance by 33 points — consider rebalancing toward lower-volatility holdings.'
+        'Client risk tolerance: 45 (MEDIUM). Portfolio risk: 78 (HIGH). Portfolio risk sits 33 points above client tolerance.'
     );
 });
 
@@ -129,7 +129,7 @@ it('reports portfolio risk below client tolerance when the gap is below -15', fu
     $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = -30
 
     expect($message)->toBe(
-        'Client risk tolerance: 80 (HIGH). Portfolio risk: 50 (MEDIUM). Portfolio risk is 30 points below client tolerance — there may be room for a more growth-oriented allocation if that fits the client\'s goals.'
+        'Client risk tolerance: 80 (HIGH). Portfolio risk: 50 (MEDIUM). Portfolio risk sits 30 points below client tolerance.'
     );
 });
 
@@ -156,7 +156,7 @@ it('treats a positive gap of 16 (one point past the boundary) as exceeding toler
 
     $message = $profile->comparisonMessage(66.0, 'MEDIUM'); // gap = +16
 
-    expect($message)->toContain('exceeds client tolerance by 16 points');
+    expect($message)->toContain('sits 16 points above client tolerance');
 });
 
 it('treats a negative gap of 16 (one point past the boundary) as below tolerance', function () {
@@ -164,7 +164,7 @@ it('treats a negative gap of 16 (one point past the boundary) as below tolerance
 
     $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = -16
 
-    expect($message)->toContain('is 16 points below client tolerance');
+    expect($message)->toContain('sits 16 points below client tolerance');
 });
 
 // ---------------------------------------------------------------------------
