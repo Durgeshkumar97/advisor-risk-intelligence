@@ -41,7 +41,12 @@ return [
 
     'risk_service' => [
         'url' => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
-        'timeout' => (float) env('RISK_SERVICE_TIMEOUT', 2),
+        // Was 2s: a serial per-symbol loop on the risk_service side meant any
+        // portfolio with more than one cold-cache mid/small-cap stock blew this
+        // budget and fell back to a flat default for every holding. risk_service
+        // now parallelizes the batch, but keep the client-side budget generous
+        // as a stopgap for whatever cold-cache tail remains.
+        'timeout' => (float) env('RISK_SERVICE_TIMEOUT', 10),
     ],
 
 ];
