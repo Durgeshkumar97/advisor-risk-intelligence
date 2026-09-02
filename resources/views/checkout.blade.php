@@ -86,21 +86,11 @@
             {{-- PHONE --}}
             <div class="form-group">
 
-                <label for="phone" class="form-label">
+                <label class="form-label">
                     Phone Number
                 </label>
 
-                <input
-                    id="phone"
-                    type="tel"
-                    name="phone"
-                    value="{{ old('phone') }}"
-                    class="form-input"
-                    placeholder="e.g. 9876543210"
-                    autocomplete="tel"
-                    inputmode="numeric"
-                    maxlength="15"
-                    required>
+                @include('partials.phone-field', ['name' => 'phone', 'required' => true, 'placeholder' => 'Phone number'])
 
             </div>
 
@@ -233,8 +223,9 @@
                 throw new Error("Please enter valid full name.");
             }
 
-            if (!/^[6-9]\d{9}$/.test(phone)) {
-                throw new Error("Please enter valid Indian mobile number.");
+            // Accept 7-15 digits for international phone numbers
+            if (!/^\d{7,15}$/.test(phone)) {
+                throw new Error("Please enter a valid phone number.");
             }
 
             if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -286,10 +277,19 @@
                 */
 
                 const name = document.getElementById("name")?.value?.trim() || "";
-                const phone = document.getElementById("phone")?.value?.trim() || "";
+                const phoneNumber = document.getElementById("phone")?.value?.trim() || "";
+                const phoneCountry = document.getElementById("phone_country")?.value?.trim() || "";
                 const email = document.getElementById("email")?.value?.trim() || "";
 
-                validateInput(name, phone, email);
+                validateInput(name, phoneNumber, email);
+
+                // Build E.164 format phone: get dial code from country option's text
+                const countrySelect = document.getElementById("phone_country");
+                const selectedOption = countrySelect?.options[countrySelect.selectedIndex];
+                const countryText = selectedOption?.textContent || "";
+                const dialCodeMatch = countryText.match(/\((\+\d+)\)/);
+                const dialCode = dialCodeMatch?.[1] || "";
+                const phone = dialCode + phoneNumber;
 
                 /*
                 |--------------------------------------------------------------------------

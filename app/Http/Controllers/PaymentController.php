@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Payments\CreateRazorpayOrderAction;
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +70,8 @@ class PaymentController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email:rfc,dns', 'max:255'],
-                'phone' => ['required', 'string', 'min:7', 'max:20'],
+                'phone' => ['required', 'string', 'max:20'],
+                'phone_country' => ['required', 'string', 'in:'.implode(',', array_column(config('countries.list'), 'iso'))],
                 'plan' => ['required', 'string', 'exists:plans,slug'],
             ]);
         } catch (ValidationException $e) {
@@ -79,6 +81,30 @@ class PaymentController extends Controller
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
+
+        // Normalize to E.164 format (+<dialcode><number) using the country
+        // selection and the local number from the form.
+        $countries = config('countries.list');
+        $selectedCountry = collect($countries)
+            ->firstWhere('iso', $validated['phone_country']);
+
+        if (!$selectedCountry) {
+            return response()->json(
+                ['success' => false, 'message' => 'Invalid request.', 'errors' => ['phone_country' => ['Invalid country selection.']]],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $normalizedPhone = PhoneNumber::normalize($selectedCountry['dial'], $validated['phone']);
+
+        if ($normalizedPhone === null) {
+            return response()->json(
+                ['success' => false, 'message' => 'Invalid request.', 'errors' => ['phone' => ['Enter a valid phone number.']]],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $validated['phone'] = $normalizedPhone;
 
         /*
         |--------------------------------------------------------------------------

@@ -447,6 +447,34 @@ button {
   margin-bottom: 1rem;
 }
 
+/* Every phone field on RiskSignal pairs a country-code <select> (populated
+   from config/countries.php — every country, not just India) with the
+   local-number input. resources/views/partials/phone-field.blade.php is the
+   one place this markup is built; these rules just make the pair read as a
+   single control. */
+.phone-field {
+  display: flex;
+  align-items: stretch;
+}
+
+.phone-field .phone-country {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 9.5rem;
+  padding: 0 8px;
+  background: var(--paper);
+  border: 1px solid var(--paper-3);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.phone-field .form-input {
+  border-radius: 0 12px 12px 0;
+}
+
 input,
 textarea,
 select {

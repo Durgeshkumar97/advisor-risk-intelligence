@@ -905,20 +905,7 @@
                         outline:none;
                     ">
 
-                <input
-                    type="tel"
-                    name="Phone"
-                    placeholder="Phone number"
-                    required
-                    style="
-                        padding:.9rem 1rem;
-                        border:1px solid var(--paper-3);
-                        border-radius:var(--radius-md);
-                        background:transparent;
-                        color:var(--ink);
-                        font-size:.9rem;
-                        outline:none;
-                    ">
+                @include('partials.phone-field', ['name' => 'whatsapp', 'required' => true, 'placeholder' => 'Phone number', 'wrapperClass' => 'phone-field', 'inputClass' => 'form-input'])
 
                 <input
                     type="email"
