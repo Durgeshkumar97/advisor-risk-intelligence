@@ -79,15 +79,10 @@
             </div>
 
             <div class="field-group">
-                <label class="field-label">Phone Number</label>
-                @include('partials.phone-field', [
-                    'name' => 'phone',
-                    'required' => false,
-                    'placeholder' => 'Phone number',
-                    'value' => old('phone', $user->phone),
-                    'wrapperClass' => 'phone-field',
-                    'inputClass' => 'field-input'
-                ])
+                <label class="field-label" for="phone">Phone Number</label>
+                <input class="field-input" id="phone" type="tel" name="phone"
+                       value="{{ old('phone', $user->phone) }}"
+                       placeholder="e.g. 9876543210" autocomplete="tel">
                 <div class="field-hint">Optional. Leave blank to skip.</div>
                 @error('phone')<div class="field-error">{{ $message }}</div>@enderror
             </div>
