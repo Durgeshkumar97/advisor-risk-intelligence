@@ -39,6 +39,13 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
+        <!-- hCaptcha -->
+        <div class="mt-4">
+            <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+            <div class="h-captcha" data-sitekey="{{ config('services.hcaptcha.site_key') }}"></div>
+            <x-input-error :messages="$errors->get('h-captcha-response')" class="mt-2" />
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
                 {{ __('Already registered?') }}

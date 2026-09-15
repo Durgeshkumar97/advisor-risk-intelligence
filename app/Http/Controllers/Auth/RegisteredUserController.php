@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -36,7 +37,10 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'h-captcha-response' => ['required'],
         ]);
+
+        $this->verifyCaptcha($request);
 
         $email = Str::lower($validated['email']);
         $existingUser = User::withTrashed()
@@ -88,5 +92,22 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function verifyCaptcha(Request $request): void
+    {
+        $success = Http::asForm()->post('https://hcaptcha.com/siteverify', [
+            'secret' => config('services.hcaptcha.secret'),
+            'response' => $request->input('h-captcha-response'),
+        ])->json('success');
+
+        if (! $success) {
+            throw ValidationException::withMessages([
+                'h-captcha-response' => 'Captcha verification failed. Please try again.',
+            ]);
+        }
     }
 }

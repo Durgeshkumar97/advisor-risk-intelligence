@@ -39,6 +39,11 @@ return [
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
+    'hcaptcha' => [
+        'site_key' => env('HCAPTCHA_SITE_KEY'),
+        'secret' => env('HCAPTCHA_SECRET'),
+    ],
+
     'risk_service' => [
         'url' => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
         // Was 2s: a serial per-symbol loop on the risk_service side meant any

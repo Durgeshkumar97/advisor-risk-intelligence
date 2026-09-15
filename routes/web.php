@@ -180,7 +180,7 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/onboarding', function () {
         return view('onboarding');
@@ -227,7 +227,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Dashboard and file routes require an active or in-trial subscription.
-Route::middleware(['auth', 'paid'])->group(function () {
+Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -242,7 +242,7 @@ Route::middleware(['auth', 'paid'])->group(function () {
 // Report/bundle downloads require a fully active subscription — no trial,
 // no grace period. Viewing an existing report is fine during grace; minting
 // a fresh download/bundle is not.
-Route::middleware(['auth', 'active.sub'])->group(function () {
+Route::middleware(['auth', 'verified', 'active.sub'])->group(function () {
 
     Route::get('/report/{id}/download', [FileController::class, 'reportDownload'])
         ->name('report.download');
@@ -257,7 +257,7 @@ Route::middleware(['auth', 'active.sub'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'paid'])->group(function () {
+Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 
     Route::get('/portfolios/create', [PortfolioController::class, 'create'])
         ->name('portfolio.create');
@@ -287,7 +287,7 @@ Route::middleware(['auth', 'paid'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'paid'])->group(function () {
+Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 
     Route::get('/portfolio/upload', [PortfolioUploadController::class, 'index'])
         ->name('portfolio.upload');
@@ -305,7 +305,7 @@ Route::middleware(['auth', 'paid'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
