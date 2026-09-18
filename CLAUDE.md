@@ -177,7 +177,7 @@ State what you see before asking what to do next.
 ## Production Infrastructure
 
 - **Server:** Hostinger shared hosting
-- **SSH:** `ssh -p 65002 u458948686@147.93.109.168`
+- **SSH:** See private ops notes (not committed to a public repo)
 - **Production path:** `~/domains/risksignal.in/project`
 - **Deploy:** `./deploy.sh` from project root (see DEPLOY.md)
 - **DNS:** Cloudflare — laura/theo.ns.cloudflare.com
