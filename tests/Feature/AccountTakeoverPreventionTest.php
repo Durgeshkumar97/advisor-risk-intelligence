@@ -215,7 +215,7 @@ class AccountTakeoverPreventionTest extends TestCase
     public function test_registering_over_a_soft_deleted_email_does_not_change_its_password_or_login_the_attacker(): void
     {
         Notification::fake();
-        Http::fake(['hcaptcha.com/*' => Http::response(['success' => true])]);
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
 
         $victim = User::factory()->create([
             'email' => 'trashed-victim@example.test',
@@ -228,7 +228,7 @@ class AccountTakeoverPreventionTest extends TestCase
             'email' => 'trashed-victim@example.test',
             'password' => 'attacker-chosen-password',
             'password_confirmation' => 'attacker-chosen-password',
-            'h-captcha-response' => 'test-token',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         // Never auto-logged in as the restored account.
@@ -267,14 +267,14 @@ class AccountTakeoverPreventionTest extends TestCase
 
     public function test_registering_with_a_genuinely_new_email_still_works_end_to_end(): void
     {
-        Http::fake(['hcaptcha.com/*' => Http::response(['success' => true])]);
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
 
         $response = $this->post(route('register'), [
             'name' => 'Brand New User',
             'email' => 'brand-new-register@example.test',
             'password' => 'a-secure-password-1',
             'password_confirmation' => 'a-secure-password-1',
-            'h-captcha-response' => 'test-token',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         $newUser = User::where('email', 'brand-new-register@example.test')->first();
@@ -287,14 +287,14 @@ class AccountTakeoverPreventionTest extends TestCase
     public function test_registering_with_an_active_existing_email_still_fails_validation(): void
     {
         User::factory()->create(['email' => 'already-active@example.test']);
-        Http::fake(['hcaptcha.com/*' => Http::response(['success' => true])]);
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
 
         $response = $this->post(route('register'), [
             'name' => 'Someone Else',
             'email' => 'already-active@example.test',
             'password' => 'a-secure-password-1',
             'password_confirmation' => 'a-secure-password-1',
-            'h-captcha-response' => 'test-token',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         $response->assertSessionHasErrors('email');

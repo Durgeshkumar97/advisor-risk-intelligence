@@ -39,9 +39,9 @@ return [
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
-    'hcaptcha' => [
-        'site_key' => env('HCAPTCHA_SITE_KEY'),
-        'secret' => env('HCAPTCHA_SECRET'),
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret' => env('TURNSTILE_SECRET_KEY'),
     ],
 
     'risk_service' => [

@@ -39,11 +39,11 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <!-- hCaptcha -->
+        <!-- Cloudflare Turnstile -->
         <div class="mt-4">
-            <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-            <div class="h-captcha" data-sitekey="{{ config('services.hcaptcha.site_key') }}"></div>
-            <x-input-error :messages="$errors->get('h-captcha-response')" class="mt-2" />
+            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"></div>
+            <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-end mt-4">

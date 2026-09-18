@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'h-captcha-response' => ['required'],
+            'cf-turnstile-response' => ['required'],
         ]);
 
         $this->verifyCaptcha($request);
@@ -99,14 +99,15 @@ class RegisteredUserController extends Controller
      */
     private function verifyCaptcha(Request $request): void
     {
-        $success = Http::asForm()->post('https://hcaptcha.com/siteverify', [
-            'secret' => config('services.hcaptcha.secret'),
-            'response' => $request->input('h-captcha-response'),
+        $success = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => config('services.turnstile.secret'),
+            'response' => $request->input('cf-turnstile-response'),
+            'remoteip' => $request->ip(),
         ])->json('success');
 
         if (! $success) {
             throw ValidationException::withMessages([
-                'h-captcha-response' => 'Captcha verification failed. Please try again.',
+                'cf-turnstile-response' => 'Captcha verification failed. Please try again.',
             ]);
         }
     }
