@@ -21,13 +21,17 @@
 
     {{-- STATUS BANNER --}}
     @php
-        $daysLeft = $subscription->daysRemaining();
-        $isExpiringSoon = $subscription->isExpiringSoon(7);
-        $isExpired = $subscription->isExpired();
-        $isInGrace = $subscription->isInGracePeriod();
-        $isCancelled = $subscription->status === 'cancelled';
-        $isTrial = $subscription->isTrial();
-        $isActive = $subscription->isActive();
+        // SubscriptionController::index() allows $subscription to be null — an
+        // advisor who has never subscribed still reaches this page to buy a
+        // plan — so every status flag is derived null-safely. Everything below
+        // already guards with ?-> or ??.
+        $daysLeft = $subscription?->daysRemaining() ?? 0;
+        $isExpiringSoon = $subscription?->isExpiringSoon(7) ?? false;
+        $isExpired = $subscription?->isExpired() ?? false;
+        $isInGrace = $subscription?->isInGracePeriod() ?? false;
+        $isCancelled = $subscription?->status === 'cancelled';
+        $isTrial = $subscription?->isTrial() ?? false;
+        $isActive = $subscription?->isActive() ?? false;
     @endphp
 
     @if($isExpired && !$isInGrace)
@@ -142,14 +146,14 @@
                 <div style="color:var(--ink-3);font-size:.8rem;margin-bottom:.2rem;">
                     Started
                 </div>
-                <div>{{ $subscription->starts_at?->format('d M Y') ?? '—' }}</div>
+                <div>{{ $subscription?->starts_at?->format('d M Y') ?? '—' }}</div>
             </div>
 
             <div>
                 <div style="color:var(--ink-3);font-size:.8rem;margin-bottom:.2rem;">
                     {{ $isCancelled ? 'Access until' : ($isExpired ? 'Expired on' : 'Renews on') }}
                 </div>
-                <div>{{ $subscription->ends_at?->format('d M Y') ?? '—' }}</div>
+                <div>{{ $subscription?->ends_at?->format('d M Y') ?? '—' }}</div>
             </div>
 
             <div>
