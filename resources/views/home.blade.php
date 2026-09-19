@@ -907,7 +907,7 @@
 
                 <input
                     type="tel"
-                    name="Phone"
+                    name="whatsapp"
                     placeholder="Phone number"
                     required
                     style="
