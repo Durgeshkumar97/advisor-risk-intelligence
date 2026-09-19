@@ -34,12 +34,9 @@ class AdminPaymentController extends Controller
 
         $payments = $query->paginate(30)->withQueryString();
 
-        $totals = [
-            'paid' => Payment::where('status', 'paid')->sum('amount'),
-            'pending' => Payment::where('status', 'pending')->count(),
-            'failed' => Payment::where('status', 'failed')->count(),
-        ];
+        $totalRevenue = Payment::where('status', 'paid')->sum('amount');
+        $paidCount = Payment::where('status', 'paid')->count();
 
-        return view('admin.payments.index', compact('payments', 'totals'));
+        return view('admin.payments.index', compact('payments', 'totalRevenue', 'paidCount'));
     }
 }
