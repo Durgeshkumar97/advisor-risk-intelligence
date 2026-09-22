@@ -66,8 +66,12 @@
                     name="password"
                     required
                     autocomplete="new-password"
-                    placeholder="Min. 8 characters"
+                    minlength="{{ config('auth.password_policy.min') }}"
+                    maxlength="{{ config('auth.password_policy.max') }}"
+                    passwordrules="minlength: {{ config('auth.password_policy.min') }}; maxlength: {{ config('auth.password_policy.max') }};"
+                    aria-describedby="password-requirements"
                 >
+                <x-password-requirements id="password-requirements" />
             </div>
 
             <div class="field-group">
@@ -78,8 +82,10 @@
                     name="password_confirmation"
                     required
                     autocomplete="new-password"
-                    placeholder="Repeat password"
+                    maxlength="{{ config('auth.password_policy.max') }}"
+                    aria-describedby="password-confirmation-hint"
                 >
+                <x-input-hint id="password-confirmation-hint">Type the same password again to confirm it.</x-input-hint>
             </div>
 
             <button type="submit" class="btn">Reset Password →</button>

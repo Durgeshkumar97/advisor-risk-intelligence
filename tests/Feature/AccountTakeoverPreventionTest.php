@@ -226,8 +226,8 @@ class AccountTakeoverPreventionTest extends TestCase
         $response = $this->post(route('register'), [
             'name' => 'Attacker',
             'email' => 'trashed-victim@example.test',
-            'password' => 'attacker-chosen-password',
-            'password_confirmation' => 'attacker-chosen-password',
+            'password' => 'Attacker-Chosen-Pass1',
+            'password_confirmation' => 'Attacker-Chosen-Pass1',
             'cf-turnstile-response' => 'test-token',
         ]);
 
@@ -242,7 +242,7 @@ class AccountTakeoverPreventionTest extends TestCase
         // ...but its ORIGINAL password is untouched — gating Auth::login()
         // alone would NOT have caught a leftover password overwrite here.
         $this->assertTrue(Hash::check('original-password-123', $victim->password));
-        $this->assertFalse(Hash::check('attacker-chosen-password', $victim->password));
+        $this->assertFalse(Hash::check('Attacker-Chosen-Pass1', $victim->password));
 
         // The real owner is notified.
         Notification::assertSentTo($victim, ExistingAccountLoginLinkNotification::class);
@@ -253,7 +253,7 @@ class AccountTakeoverPreventionTest extends TestCase
         // /login form. This must fail.
         $this->post(route('login'), [
             'email' => 'trashed-victim@example.test',
-            'password' => 'attacker-chosen-password',
+            'password' => 'Attacker-Chosen-Pass1',
         ]);
         $this->assertGuest();
 
@@ -272,8 +272,8 @@ class AccountTakeoverPreventionTest extends TestCase
         $response = $this->post(route('register'), [
             'name' => 'Brand New User',
             'email' => 'brand-new-register@example.test',
-            'password' => 'a-secure-password-1',
-            'password_confirmation' => 'a-secure-password-1',
+            'password' => 'A-Secure-Password-1',
+            'password_confirmation' => 'A-Secure-Password-1',
             'cf-turnstile-response' => 'test-token',
         ]);
 
@@ -292,8 +292,8 @@ class AccountTakeoverPreventionTest extends TestCase
         $response = $this->post(route('register'), [
             'name' => 'Someone Else',
             'email' => 'already-active@example.test',
-            'password' => 'a-secure-password-1',
-            'password_confirmation' => 'a-secure-password-1',
+            'password' => 'A-Secure-Password-1',
+            'password_confirmation' => 'A-Secure-Password-1',
             'cf-turnstile-response' => 'test-token',
         ]);
 
