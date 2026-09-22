@@ -139,7 +139,7 @@ There is no user-editable Nginx (or Apache) *server-block* config on this hostin
 
 | Header | Value |
 | --- | --- |
-| `Content-Security-Policy` | see `.htaccess` — allows `checkout.razorpay.com` scripts and frames `api.razorpay.com` |
+| `Content-Security-Policy` | see `.htaccess` — allows `checkout.razorpay.com` and `challenges.cloudflare.com` (Turnstile) scripts, and frames `api.razorpay.com` and `challenges.cloudflare.com` |
 | `X-Frame-Options` | `SAMEORIGIN` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
