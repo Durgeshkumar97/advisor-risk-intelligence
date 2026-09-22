@@ -146,7 +146,9 @@
                     required
                     autocomplete="current-password"
                     placeholder="••••••••"
+                    aria-describedby="password-hint"
                 >
+                <x-password-requirements id="password-hint" />
             </div>
 
             {{-- REMEMBER + FORGOT --}}

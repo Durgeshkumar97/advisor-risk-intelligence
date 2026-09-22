@@ -322,7 +322,10 @@
                     placeholder="Enter password"
                     required
                     autocomplete="current-password"
+                    aria-describedby="admin-password-hint"
                 >
+
+                <x-password-requirements id="admin-password-hint" />
 
                 @error('password')
                     <div class="error">{{ $message }}</div>

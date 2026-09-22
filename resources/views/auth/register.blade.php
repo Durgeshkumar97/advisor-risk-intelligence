@@ -23,7 +23,13 @@
             <x-text-input id="password" class="block mt-1 w-full"
                             type="password"
                             name="password"
-                            required autocomplete="new-password" />
+                            required autocomplete="new-password"
+                            minlength="{{ config('auth.password_policy.min') }}"
+                            maxlength="{{ config('auth.password_policy.max') }}"
+                            passwordrules="minlength: {{ config('auth.password_policy.min') }}; maxlength: {{ config('auth.password_policy.max') }};"
+                            aria-describedby="password-requirements" />
+
+            <x-password-requirements id="password-requirements" />
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
@@ -34,7 +40,11 @@
 
             <x-text-input id="password_confirmation" class="block mt-1 w-full"
                             type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+                            name="password_confirmation" required autocomplete="new-password"
+                            maxlength="{{ config('auth.password_policy.max') }}"
+                            aria-describedby="password-confirmation-hint" />
+
+            <x-input-hint id="password-confirmation-hint">Type the same password again to confirm it.</x-input-hint>
 
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>

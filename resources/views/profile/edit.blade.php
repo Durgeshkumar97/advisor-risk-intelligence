@@ -140,7 +140,8 @@
 
             <div class="field-group">
                 <label class="field-label" for="current_password">Current Password</label>
-                <input class="field-input" id="current_password" type="password" name="current_password" autocomplete="current-password" placeholder="••••••••">
+                <input class="field-input" id="current_password" type="password" name="current_password" autocomplete="current-password" placeholder="••••••••" aria-describedby="current-password-hint">
+                <x-input-hint id="current-password-hint">The password you use to sign in today.</x-input-hint>
                 @if($errors->updatePassword->has('current_password'))
                     <div class="field-error">{{ $errors->updatePassword->first('current_password') }}</div>
                 @endif
@@ -148,7 +149,12 @@
 
             <div class="field-group">
                 <label class="field-label" for="new_password">New Password</label>
-                <input class="field-input" id="new_password" type="password" name="password" autocomplete="new-password" placeholder="Min. 8 characters">
+                <input class="field-input" id="new_password" type="password" name="password" autocomplete="new-password"
+                       minlength="{{ config('auth.password_policy.min') }}"
+                       maxlength="{{ config('auth.password_policy.max') }}"
+                       passwordrules="minlength: {{ config('auth.password_policy.min') }}; maxlength: {{ config('auth.password_policy.max') }};"
+                       aria-describedby="new-password-requirements">
+                <x-password-requirements id="new-password-requirements" />
                 @if($errors->updatePassword->has('password'))
                     <div class="field-error">{{ $errors->updatePassword->first('password') }}</div>
                 @endif
@@ -156,7 +162,9 @@
 
             <div class="field-group">
                 <label class="field-label" for="password_confirmation">Confirm New Password</label>
-                <input class="field-input" id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" placeholder="Repeat new password">
+                <input class="field-input" id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password"
+                       maxlength="{{ config('auth.password_policy.max') }}" aria-describedby="new-password-confirmation-hint">
+                <x-input-hint id="new-password-confirmation-hint">Type the new password again to confirm it.</x-input-hint>
                 @if($errors->updatePassword->has('password_confirmation'))
                     <div class="field-error">{{ $errors->updatePassword->first('password_confirmation') }}</div>
                 @endif
@@ -229,7 +237,8 @@
 
             <div class="field-group">
                 <label class="field-label" for="delete_password">Your Password</label>
-                <input class="field-input" id="delete_password" type="password" name="password" placeholder="Confirm your password">
+                <input class="field-input" id="delete_password" type="password" name="password" autocomplete="current-password" aria-describedby="delete-password-hint">
+                <x-input-hint id="delete-password-hint">Enter your current password to confirm it's you.</x-input-hint>
             </div>
 
             <div class="field-group">
