@@ -64,12 +64,16 @@ class GenerateRiskScore extends Command
             ->keyBy('user_id');
 
         $sent = 0;
+        $skipped = 0;
         $failed = 0;
 
         foreach ($users as $user) {
             try {
-                $this->processUser($user, $calculator, $portfolios->get($user->id));
-                $sent++;
+                if ($this->processUser($user, $calculator, $portfolios->get($user->id))) {
+                    $sent++;
+                } else {
+                    $skipped++;
+                }
             } catch (\Throwable $e) {
                 $failed++;
                 Log::error('risk:generate — user failed.', [
@@ -82,10 +86,11 @@ class GenerateRiskScore extends Command
             }
         }
 
-        $this->info("Done. Sent: {$sent} | Failed: {$failed}.");
+        $this->info("Done. Sent: {$sent} | Skipped: {$skipped} | Failed: {$failed}.");
 
         Log::info('risk:generate completed.', [
             'sent' => $sent,
+            'skipped' => $skipped,
             'failed' => $failed,
             'total' => $users->count(),
         ]);
@@ -99,9 +104,39 @@ class GenerateRiskScore extends Command
     |--------------------------------------------------------------------------
     */
 
-    private function processUser(User $user, PortfolioRiskCalculator $calculator, ?Portfolio $portfolio): void
+    /**
+     * @return bool true if the user was scored, false if skipped for no holdings
+     */
+    private function processUser(User $user, PortfolioRiskCalculator $calculator, ?Portfolio $portfolio): bool
     {
         $assets = $portfolio ? $portfolio->assets : collect();
+
+        /*
+        |----------------------------------------------------------------------
+        | NO HOLDINGS, NO ROW
+        |----------------------------------------------------------------------
+        |
+        | A RiskScore for an empty portfolio records nothing about the user —
+        | it is the calculator's zero-asset result, identical for everyone —
+        | but it used to be written every day for every active subscriber. An
+        | account that never uploaded a file therefore accumulated one row per
+        | day indefinitely, which is both meaningless history and, when signups
+        | are being abused, unbounded growth driven by whoever is registering.
+        |
+        | The email was already skipped here for the same reason. The row
+        | should have been too.
+        |
+        */
+        if ($assets->isEmpty()) {
+            Log::info('risk:generate — no holdings, nothing scored.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+
+            $this->line("  – {$user->email} — no portfolio holdings yet, nothing scored.");
+
+            return false;
+        }
 
         /*
         |----------------------------------------------------------------------
@@ -143,41 +178,31 @@ class GenerateRiskScore extends Command
         | SEND DAILY EMAIL
         |----------------------------------------------------------------------
         |
-        | Only send if the user has actual portfolio assets. A score of
-        | "NONE" (no holdings) would produce a meaningless email.
+        | Unconditional here: a user with no holdings returned above, before
+        | anything was calculated, scored or stored.
         |
         */
 
-        if ($assets->isNotEmpty()) {
+        Mail::to($user->email)
+            ->send(new DailyRiskSignalMail($user, round($score), $riskLevel, $nextAction));
 
-            Mail::to($user->email)
-                ->send(new DailyRiskSignalMail($user, round($score), $riskLevel, $nextAction));
+        Log::info('risk:generate — signal sent.', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'score' => $score,
+            'risk_level' => $riskLevel,
+            'assets' => $assets->count(),
+        ]);
 
-            Log::info('risk:generate — signal sent.', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'score' => $score,
-                'risk_level' => $riskLevel,
-                'assets' => $assets->count(),
-            ]);
+        $this->line(sprintf(
+            '  ✓ %s — Score: %d (%s) | Assets: %d | %s',
+            $user->email,
+            round($score),
+            $riskLevel,
+            $assets->count(),
+            $nextAction
+        ));
 
-            $this->line(sprintf(
-                '  ✓ %s — Score: %d (%s) | Assets: %d | %s',
-                $user->email,
-                round($score),
-                $riskLevel,
-                $assets->count(),
-                $nextAction
-            ));
-
-        } else {
-
-            Log::info('risk:generate — no holdings, email skipped.', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-            ]);
-
-            $this->line("  – {$user->email} — no portfolio holdings yet, email skipped.");
-        }
+        return true;
     }
 }
