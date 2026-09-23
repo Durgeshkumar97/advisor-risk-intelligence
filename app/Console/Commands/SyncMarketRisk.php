@@ -17,6 +17,8 @@ class SyncMarketRisk extends Command
 
         if (! file_exists($csvPath)) {
             $this->error("CSV not found: {$csvPath}");
+            $this->line('  Nothing in this command or deploy.sh fetches that file — it has to be put there.');
+            $this->line('  See DEPLOY.md, "Market risk sync", for the columns it must contain.');
             return self::FAILURE;
         }
 
@@ -39,11 +41,18 @@ class SyncMarketRisk extends Command
             'market_regime', 'warning_severity', 'warning_text',
         ];
 
-        foreach ($required as $col) {
-            if (! isset($row[$col])) {
-                $this->error("Missing column in CSV: {$col}");
-                return self::FAILURE;
-            }
+        // Every missing column at once, not just the first. Reporting one at a
+        // time makes fixing the producer an N-deploy discovery process: you fix
+        // warning_severity, ship, and only then learn about warning_text.
+        $missing = array_values(array_filter(
+            $required,
+            fn ($col) => ! isset($row[$col])
+        ));
+
+        if ($missing) {
+            $this->error('Missing column(s) in CSV: '.implode(', ', $missing));
+            $this->line('  Columns present: '.implode(', ', $headers));
+            return self::FAILURE;
         }
 
         MarketRiskSnapshot::updateOrCreate(

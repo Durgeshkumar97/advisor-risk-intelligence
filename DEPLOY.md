@@ -107,6 +107,7 @@ SESSION_ADMIN_LIFETIME=15            # /admin idle timeout, enforced by AdminOnl
 REPORTS_NOTIFY_EMAIL=founder@risksignal.in
 
 # Market risk sync (market-risk:sync reads this CSV)
+# Leave unset to use the default: storage/app/market-risk/nifty500_enriched.csv
 MARKET_RISK_CSV_PATH=/full/path/to/nifty500_enriched.csv
 
 # Mail (Hostinger SMTP — already configured)
@@ -126,6 +127,43 @@ RAZORPAY_WEBHOOK_SECRET=<webhook-secret>
 # Risk engine
 RISK_MARKET_MULTIPLIER=1.05
 ```
+
+---
+
+### Market risk sync — the CSV has no automated transport
+
+`market-risk:sync` runs daily at 10:00 UTC and reads a CSV off local disk. It
+does not download it, and `deploy.sh` does not copy it. **Nothing in this repo
+puts that file on the server.** Until a transport exists, the file has to be
+placed manually.
+
+Drop target (tracked in the repo, so `git pull` creates the directory):
+
+```
+storage/app/market-risk/nifty500_enriched.csv
+```
+
+The CSV's contents are gitignored — only the directory is tracked. Override the
+location with `MARKET_RISK_CSV_PATH` if the file lives elsewhere.
+
+The last row of the file is the row that gets used, and its header must contain
+all nine of these columns:
+
+```
+date, market_risk_score, market_risk_score_smooth, market_risk_label,
+vol_regime, dd_regime, market_regime, warning_severity, warning_text
+```
+
+`market_risk_label` must be one of `LOW`, `MEDIUM`, `HIGH`, `EXTREME` — those are
+the keys `MarketRiskSnapshot::multiplier()` matches on; anything else silently
+falls back to 1.05.
+
+**When the sync has never succeeded**, `market_risk_snapshots` is empty and
+`ProcessPortfolioFile` falls back to the flat `RISK_MARKET_MULTIPLIER` (default
+1.05) instead of the 1.00–1.30 range the snapshot would supply, and no market
+context block is written into the report. It logs
+`no market risk snapshot found — using env default multiplier` per file, so
+`grep -c` on `storage/logs/laravel.log` tells you whether this is happening.
 
 ---
 
