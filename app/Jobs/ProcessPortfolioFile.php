@@ -170,13 +170,29 @@ class ProcessPortfolioFile implements ShouldQueue
             // block written to meta.
             $marketSnapshot = MarketRiskSnapshot::latest();
 
-            if ($marketSnapshot) {
+            // A stale snapshot is worse than no snapshot. It would apply a
+            // regime multiplier derived from a market that has since moved,
+            // while the report prints its date as if it were current — a wrong
+            // number wearing a timestamp that makes it look checked. Flag it,
+            // fall back to config, and let the PDF say the context is missing.
+            $marketSnapshotIsStale = $marketSnapshot?->isStale() ?? false;
+
+            if ($marketSnapshot && ! $marketSnapshotIsStale) {
                 Log::info('ProcessPortfolioFile: market risk context loaded.', [
                     'id'               => $file->id,
                     'market_date'      => $marketSnapshot->market_date->toDateString(),
                     'market_label'     => $marketSnapshot->label,
                     'market_score'     => $marketSnapshot->score,
                     'multiplier_used'  => $marketSnapshot->multiplier(),
+                ]);
+            } elseif ($marketSnapshot) {
+                Log::warning('ProcessPortfolioFile: market risk snapshot is stale — using config default multiplier.', [
+                    'id'               => $file->id,
+                    'market_date'      => $marketSnapshot->market_date->toDateString(),
+                    'age_days'         => $marketSnapshot->ageInDays(),
+                    'max_age_days'     => (int) config('risk.market_snapshot_max_age_days', 7),
+                    'market_label'     => $marketSnapshot->label,
+                    'multiplier_used'  => (float) config('risk.market_multiplier', 1.05),
                 ]);
             } else {
                 Log::warning('ProcessPortfolioFile: no market risk snapshot found — using env default multiplier.', [
@@ -186,7 +202,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings,
-                $stockRiskMap, $marketSnapshot, &$riskScore, &$reportPath
+                $stockRiskMap, $marketSnapshot, $marketSnapshotIsStale, &$riskScore, &$reportPath
             ) {
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
                 if (! $lockedFile || $lockedFile->status === PortfolioFile::STATUS_PROCESSED) {
@@ -243,13 +259,18 @@ class ProcessPortfolioFile implements ShouldQueue
                 if ($assetModels->isNotEmpty()) {
                     // Passed per-call rather than assigned into config(), which
                     // is process-global and leaked across jobs in one worker.
-                    $result = $calculator->calculate($assetModels, $marketSnapshot?->multiplier());
+                    $result = $calculator->calculate(
+                        $assetModels,
+                        $marketSnapshotIsStale ? null : $marketSnapshot?->multiplier(),
+                    );
 
                     // Build market context block — included directly in create()
                     // so meta is complete in one write, no create-then-update.
                     $marketContext = $marketSnapshot ? [
                         'market_context' => [
                             'date'            => $marketSnapshot->market_date->toDateString(),
+                            'stale'           => $marketSnapshotIsStale,
+                            'age_days'        => $marketSnapshot->ageInDays(),
                             'score'           => $marketSnapshot->score,
                             'score_smooth'    => $marketSnapshot->score_smooth,
                             'label'           => $marketSnapshot->label,
@@ -258,7 +279,12 @@ class ProcessPortfolioFile implements ShouldQueue
                             'vol_regime'      => $marketSnapshot->vol_regime,
                             'dd_regime'       => $marketSnapshot->dd_regime,
                             'market_regime'   => $marketSnapshot->market_regime,
-                            'multiplier_used' => $marketSnapshot->multiplier(),
+                            // Read back off the calculator rather than
+                            // recomputed: on a stale snapshot the multiplier
+                            // actually applied is the config fallback, not this
+                            // snapshot's own value, and the audit trail must
+                            // record what was used.
+                            'multiplier_used' => $result['meta']['market_multiplier'],
                         ],
                     ] : [];
 

@@ -134,6 +134,14 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
     };
 @endphp
 <div class="section-heading">Market Risk Context</div>
+@if(!empty($mkt['stale']))
+{{-- Past the configured max age the multiplier was not applied, so printing
+     the regime labels and a coloured severity would assert a market read that
+     nothing stands behind. State the date and stop. --}}
+<div class="action-box" style="border-left: 4px solid #6b7280; background: #f3f4f6;">
+    <span style="font-size:10px; color:#6b7280;">Market context unavailable — last data {{ $mkt['date'] }}</span>
+</div>
+@else
 <div class="action-box" style="border-left: 4px solid {{ $sevColor }};
     background: {{ $sevBg }};">
     <strong>
@@ -161,6 +169,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
         Market Score: {{ number_format($mkt['score'], 0) }}/100
     </span>
 </div>
+@endif
 @endif
 
 @if(!empty($riskScore->meta['risk_flags']))

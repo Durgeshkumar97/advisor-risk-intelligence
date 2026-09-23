@@ -181,6 +181,66 @@ it('prefers an explicit severity over the label', function () {
 });
 
 // ---------------------------------------------------------------------------
+// Stale snapshot — one dated sentence, and nothing else
+// ---------------------------------------------------------------------------
+
+it('replaces the coloured box with a dated unavailable line when stale', function () {
+    $html = renderMarketContext(marketContext([
+        'stale' => true,
+        'age_days' => 35,
+    ]));
+
+    expect($html)->toContain('Market Risk Context')
+        ->toContain('Market context unavailable — last data 2026-08-17');
+});
+
+it('states nothing else in the stale state', function () {
+    $html = renderMarketContext(marketContext([
+        'stale' => true,
+        'age_days' => 35,
+    ]));
+
+    // None of the regime reads survive: they describe a market from five weeks
+    // ago and no multiplier was applied on their basis.
+    expect($html)->not->toContain('Market Environment')
+        ->not->toContain('as of 2026-08-17')
+        ->not->toContain('Volatility: LOW')
+        ->not->toContain('Drawdown: MILD')
+        ->not->toContain('Trend: BULL')
+        ->not->toContain('Market Score:')
+        ->not->toContain('Volatility is within its usual range.');
+});
+
+it('never colours a stale box by severity', function (string $severity) {
+    $html = renderMarketContext(marketContext([
+        'stale' => true,
+        'warning_severity' => $severity,
+        'label' => $severity,
+    ]));
+
+    expect(borderColour($html))->toBe(SEV_GREY)
+        ->and(backgroundColour($html))->toBe(SEV_GREY_BG);
+})->with(['LOW', 'MEDIUM', 'HIGH', 'EXTREME']);
+
+it('treats an absent stale key as fresh, so old reports keep rendering', function () {
+    $context = marketContext();
+    expect($context)->not->toHaveKey('stale');
+
+    $html = renderMarketContext($context);
+
+    expect($html)->toContain('Market Environment')
+        ->not->toContain('Market context unavailable');
+});
+
+it('treats stale false as fresh', function () {
+    $html = renderMarketContext(marketContext(['stale' => false, 'age_days' => 2]));
+
+    expect($html)->toContain('Market Environment')
+        ->and(borderColour($html))->toBe(SEV_AMBER)
+        ->and($html)->not->toContain('Market context unavailable');
+});
+
+// ---------------------------------------------------------------------------
 // No snapshot at all — the block stays away entirely
 // ---------------------------------------------------------------------------
 

@@ -126,7 +126,67 @@ RAZORPAY_WEBHOOK_SECRET=<webhook-secret>
 
 # Risk engine
 RISK_MARKET_MULTIPLIER=1.05
+MARKET_SNAPSHOT_MAX_AGE_DAYS=7
+
+# Logging — see "Logging: two separate failures, and only one is a LOG_LEVEL problem"
+LOG_CHANNEL=stack
+LOG_STACK=daily
+LOG_LEVEL=warning
+LOG_DAILY_DAYS=14
 ```
+
+---
+
+### Logging: two separate failures, and only one is a LOG_LEVEL problem
+
+Production runs `LOG_LEVEL=error`. That causes two different blind spots, and
+raising the level fixes only the first.
+
+**1. Warnings are discarded.** Monolog drops everything below the configured
+level, so every `Log::warning` in this application is never written and there is
+nothing to grep for later. These are conditions that are deliberately not
+errors — the app still returns a report, just a less trustworthy one:
+
+| Message | Level | At LOG_LEVEL=error | What is silently happening |
+| --- | --- | --- | --- |
+| `no market risk snapshot found — using env default multiplier` | `warning` | **dropped** | every score used the flat fallback |
+| `market risk snapshot is stale — using config default multiplier` | `warning` | **dropped** | snapshot exists but is too old to apply |
+| Portfolio parse warnings | `warning` | **dropped** | files processing with degraded input |
+| `market-risk:sync failed` (scheduler `onFailure`) | **`error`** | **written** | the daily sync is not completing |
+
+**2. Errors are written and nobody reads them.** The scheduler's failure hook
+(`routes/console.php:21`) logs at `error`, so it was never affected by
+`LOG_LEVEL`. As of 2026-09-23 production's `laravel.log` holds **27**
+`market-risk:sync failed` lines. They were recorded correctly, every day, and
+went unnoticed for weeks.
+
+**Raising LOG_LEVEL does not fix that second failure.** Nothing reads the log
+file, and Sentry does not pick these up either: `config/sentry.php` has
+`enable_logs` defaulting to `false`, and `breadcrumbs.logs` only attaches log
+records to an *exception* event — a bare `Log::error()` with no throwable raises
+no Sentry event. So the line lands in a file on a shared host and stops there.
+
+Closing that gap needs alerting, not configuration: either set
+`SENTRY_ENABLE_LOGS=true` with an appropriate `SENTRY_LOG_LEVEL`, throw from the
+`onFailure` hook so Sentry captures a real event, or add an external check on
+the log file. That is a separate decision and is deliberately not made here.
+
+Required settings for failure 1:
+
+```
+LOG_CHANNEL=stack
+LOG_STACK=daily      # one file per day, not one unbounded laravel.log
+LOG_LEVEL=warning    # warning and above; debug/info still excluded
+LOG_DAILY_DAYS=14    # bounded retention, important on shared hosting
+```
+
+`LOG_LEVEL=warning` rather than `info` keeps the volume down: `info` would
+include a line per processed file per user. `LOG_STACK=daily` with a 14-day
+window stops `storage/logs` growing without limit on a disk-quota plan, which is
+the usual reason `error` gets set in the first place.
+
+After changing this, run `php artisan config:cache` — the logging config is
+cached in production, so an `.env` edit alone has no effect.
 
 ---
 
