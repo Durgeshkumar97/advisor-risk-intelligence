@@ -35,15 +35,20 @@ class SyncMarketRisk extends Command
         $headers = array_map('trim', $headers);
         $row     = array_combine($headers, str_getcsv($lastLine));
 
+        // warning_severity and warning_text are deliberately NOT required.
+        // The producer has never emitted them, and refusing the whole file over
+        // two optional annotations meant none of the seven columns that
+        // actually drive scoring ever reached the database. Written when
+        // present, null when not.
         $required = [
             'date', 'market_risk_score', 'market_risk_score_smooth',
             'market_risk_label', 'vol_regime', 'dd_regime',
-            'market_regime', 'warning_severity', 'warning_text',
+            'market_regime',
         ];
 
         // Every missing column at once, not just the first. Reporting one at a
-        // time makes fixing the producer an N-deploy discovery process: you fix
-        // warning_severity, ship, and only then learn about warning_text.
+        // time makes fixing the producer an N-deploy discovery process: you add
+        // vol_regime, ship, and only then learn dd_regime was missing too.
         $missing = array_values(array_filter(
             $required,
             fn ($col) => ! isset($row[$col])
@@ -64,14 +69,16 @@ class SyncMarketRisk extends Command
                 'vol_regime'       => $row['vol_regime'],
                 'dd_regime'        => $row['dd_regime'],
                 'market_regime'    => $row['market_regime'],
-                'warning_severity' => $row['warning_severity'],
-                'warning_text'     => $row['warning_text'],
+                'warning_severity' => $row['warning_severity'] ?? null,
+                'warning_text'     => $row['warning_text'] ?? null,
             ]
         );
 
         $this->info("✓ Synced market risk snapshot for {$row['date']}");
         $this->info("  Score : {$row['market_risk_score']} | Label: {$row['market_risk_label']}");
-        $this->info("  Warning: {$row['warning_text']}");
+        if (! empty($row['warning_text'])) {
+            $this->info("  Warning: {$row['warning_text']}");
+        }
 
         return self::SUCCESS;
     }

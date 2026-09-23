@@ -129,7 +129,34 @@ it('fails with the expected path when the CSV is absent', function () {
 // ---------------------------------------------------------------------------
 
 it('names every missing column at once, not just the first', function () {
-    $row = array_fill_keys(producerHeader(), '');
+    // vol_regime and dd_regime are both genuinely required.
+    $row = completeRow();
+    unset($row['vol_regime'], $row['dd_regime']);
+
+    $path = writeCsv(array_keys($row), array_values($row));
+
+    [$code, $output] = runSync($path);
+
+    expect($code)->toBe(1)
+        ->and($output)->toContain('vol_regime')
+        ->and($output)->toContain('dd_regime')
+        ->and(MarketRiskSnapshot::count())->toBe(0);
+
+    unlink($path);
+});
+
+// ---------------------------------------------------------------------------
+// Seam-2 resolved consumer-side — the warning pair is optional
+// ---------------------------------------------------------------------------
+
+it('syncs the real producer header, which carries no warning columns', function () {
+    // Seam-2 as actually observed: neither nifty500_enriched.csv (30 cols) nor
+    // _v2 (44 cols) emits the warning pair. The seven scoring columns are all
+    // there, so the sync has to succeed on them.
+    expect(producerHeader())->not->toContain('warning_severity')
+        ->and(producerHeader())->not->toContain('warning_text');
+
+    $row = array_fill_keys(producerHeader(), 'x');
     $row['date'] = '2026-08-17';
     $row['market_risk_score'] = '42.5';
     $row['market_risk_score_smooth'] = '40.1';
@@ -140,25 +167,61 @@ it('names every missing column at once, not just the first', function () {
 
     $path = writeCsv(producerHeader(), array_values($row));
 
-    [$code, $output] = runSync($path);
+    expect(runSync($path)[0])->toBe(0);
 
-    expect($code)->toBe(1)
-        ->and($output)->toContain('warning_severity')
-        ->and($output)->toContain('warning_text')
-        ->and(MarketRiskSnapshot::count())->toBe(0);
+    $snapshot = MarketRiskSnapshot::latest();
+
+    expect($snapshot)->not->toBeNull()
+        ->and($snapshot->label)->toBe('MEDIUM')
+        ->and($snapshot->multiplier())->toBe(1.08)
+        ->and($snapshot->warning_severity)->toBeNull()
+        ->and($snapshot->warning_text)->toBeNull();
 
     unlink($path);
 });
 
-it('rejects the real producer header, which is missing both warning columns', function () {
-    // Regression guard for Seam-2 as actually observed: neither
-    // nifty500_enriched.csv (30 cols) nor _v2 (44 cols) emits the warning pair.
-    expect(producerHeader())->not->toContain('warning_severity')
-        ->and(producerHeader())->not->toContain('warning_text');
+it('syncs a minimal seven-column CSV', function () {
+    $row = completeRow();
+    unset($row['warning_severity'], $row['warning_text']);
 
-    $path = writeCsv(producerHeader(), array_fill(0, count(producerHeader()), 'x'));
+    expect($row)->toHaveCount(7);
 
-    expect(runSync($path)[0])->toBe(1);
+    $path = writeCsv(array_keys($row), array_values($row));
+
+    expect(runSync($path)[0])->toBe(0)
+        ->and(MarketRiskSnapshot::latest()->warning_severity)->toBeNull()
+        ->and(MarketRiskSnapshot::latest()->warning_text)->toBeNull();
+
+    unlink($path);
+});
+
+it('prints no warning line when the CSV carries no warning text', function () {
+    $row = completeRow();
+    unset($row['warning_severity'], $row['warning_text']);
+
+    $path = writeCsv(array_keys($row), array_values($row));
+
+    [$code, $output] = runSync($path);
+
+    expect($code)->toBe(0)
+        ->and($output)->toContain('Synced market risk snapshot')
+        ->and($output)->not->toContain('Warning:');
+
+    unlink($path);
+});
+
+it('still writes both warnings when the CSV carries them', function () {
+    $row = completeRow();
+    $path = writeCsv(array_keys($row), array_values($row));
+
+    // One run only: syncing the same date twice hits a separate, pre-existing
+    // date-cast issue in updateOrCreate() (reported, not fixed on this branch).
+    [$code, $output] = runSync($path);
+
+    expect($code)->toBe(0)
+        ->and(MarketRiskSnapshot::latest()->warning_severity)->toBe('LOW')
+        ->and(MarketRiskSnapshot::latest()->warning_text)->toBe('Volatility is within its usual range.')
+        ->and($output)->toContain('Warning: Volatility is within its usual range.');
 
     unlink($path);
 });

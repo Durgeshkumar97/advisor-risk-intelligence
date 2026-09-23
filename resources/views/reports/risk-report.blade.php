@@ -113,15 +113,29 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 @endif
 
 @if(!empty($riskScore->meta['market_context']))
-@php $mkt = $riskScore->meta['market_context']; @endphp
+@php
+    $mkt = $riskScore->meta['market_context'];
+
+    // warning_severity is optional — the producer has never emitted it. When it
+    // is absent, fall back to the snapshot's own label, which uses the same
+    // LOW|MEDIUM|HIGH|EXTREME vocabulary, so a HIGH market keeps its red border
+    // rather than being repainted calm by a missing annotation.
+    $sev = $mkt['warning_severity'] ?? $mkt['label'] ?? null;
+
+    // Green is never a fallback. It requires an explicit LOW. Anything
+    // unrecognised — including null — renders neutral grey, because "no market
+    // warning data" must not read to an advisor as "no market warning".
+    [$sevColor, $sevBg] = match ($sev) {
+        'EXTREME' => ['#8e44ad', '#f5f0ff'],
+        'HIGH'    => ['#dc2626', '#fff1f0'],
+        'MEDIUM'  => ['#d97706', '#fffbeb'],
+        'LOW'     => ['#16a34a', '#f0fdf4'],
+        default   => ['#6b7280', '#f3f4f6'],
+    };
+@endphp
 <div class="section-heading">Market Risk Context</div>
-<div class="action-box" style="border-left: 4px solid
-    {{ $mkt['warning_severity'] === 'EXTREME' ? '#8e44ad' :
-       ($mkt['warning_severity'] === 'HIGH'   ? '#dc2626' :
-       ($mkt['warning_severity'] === 'MEDIUM' ? '#d97706' : '#16a34a')) }};
-    background: {{ $mkt['warning_severity'] === 'EXTREME' ? '#f5f0ff' :
-       ($mkt['warning_severity'] === 'HIGH'   ? '#fff1f0' :
-       ($mkt['warning_severity'] === 'MEDIUM' ? '#fffbeb' : '#f0fdf4')) }};">
+<div class="action-box" style="border-left: 4px solid {{ $sevColor }};
+    background: {{ $sevBg }};">
     <strong>
         Market Environment
         <span style="font-size:9px; font-weight:normal; color:#64748b;">
@@ -129,15 +143,14 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
         </span>
     </strong>
     &nbsp;
-    <span style="font-size:10px; font-weight:700; color:
-        {{ $mkt['warning_severity'] === 'EXTREME' ? '#8e44ad' :
-           ($mkt['warning_severity'] === 'HIGH'   ? '#dc2626' :
-           ($mkt['warning_severity'] === 'MEDIUM' ? '#d97706' : '#16a34a')) }}">
-        {{ $mkt['label'] }}
+    <span style="font-size:10px; font-weight:700; color: {{ $sevColor }}">
+        {{ $mkt['label'] ?? '' }}
     </span>
     <br>
+    @if(!empty($mkt['warning_text']))
     <span style="font-size:10px;">{{ $mkt['warning_text'] }}</span>
     <br>
+    @endif
     <span style="font-size:8px; color:#94a3b8; margin-top:4px; display:block;">
         Volatility: {{ $mkt['vol_regime'] }}
         &nbsp;&middot;&nbsp;
