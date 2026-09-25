@@ -1000,6 +1000,12 @@
                         outline:none;
                     ">
 
+                {{-- Cloudflare Turnstile. Same widget as /register; the token is
+                     verified server-side by TurnstileVerifier. A failure shows in
+                     the error list above the form. --}}
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" style="margin:0 auto;"></div>
+
                 <button
                     type="submit"
                     class="btn-primary"

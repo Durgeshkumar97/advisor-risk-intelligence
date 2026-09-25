@@ -33,6 +33,9 @@ class StoreIfaTrialRequest extends FormRequest
                 'mimes:pdf,png,jpg,jpeg,zip',
                 'max:10240',
             ],
+            // Presence only; the token itself is verified server-side by
+            // TurnstileVerifier in IntakeController::ifaSubmit().
+            'cf-turnstile-response' => ['required'],
         ];
     }
 

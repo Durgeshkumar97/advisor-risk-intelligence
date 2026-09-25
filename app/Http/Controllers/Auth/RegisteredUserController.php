@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\TurnstileVerifier;
 use App\Services\UserAccountRecoveryService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -31,7 +31,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request, UserAccountRecoveryService $accounts): RedirectResponse
+    public function store(Request $request, UserAccountRecoveryService $accounts, TurnstileVerifier $turnstile): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
             'cf-turnstile-response' => ['required'],
         ]);
 
-        $this->verifyCaptcha($request);
+        $turnstile->verify($request);
 
         $email = Str::lower($validated['email']);
         $existingUser = User::withTrashed()
@@ -92,23 +92,5 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));
-    }
-
-    /**
-     * @throws ValidationException
-     */
-    private function verifyCaptcha(Request $request): void
-    {
-        $success = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-            'secret' => config('services.turnstile.secret'),
-            'response' => $request->input('cf-turnstile-response'),
-            'remoteip' => $request->ip(),
-        ])->json('success');
-
-        if (! $success) {
-            throw ValidationException::withMessages([
-                'cf-turnstile-response' => 'Captcha verification failed. Please try again.',
-            ]);
-        }
     }
 }

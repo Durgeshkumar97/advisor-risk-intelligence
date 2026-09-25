@@ -49,11 +49,14 @@ class AccountTakeoverPreventionTest extends TestCase
 
         $victim = User::factory()->create(['email' => 'victim@example.test']);
 
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Attacker',
             'whatsapp' => '+91 99999 00000',
             'email' => 'victim@example.test',
             'firm_name' => 'Fake Firm',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         $this->assertGuest();
@@ -75,11 +78,14 @@ class AccountTakeoverPreventionTest extends TestCase
         Notification::fake();
         $this->starterPlan();
 
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Brand New Advisor',
             'whatsapp' => '+91 98765 43210',
             'email' => 'new-advisor@example.test',
             'firm_name' => 'New Advisor Firm',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         $newUser = User::where('email', 'new-advisor@example.test')->first();
@@ -320,11 +326,14 @@ class AccountTakeoverPreventionTest extends TestCase
             'status' => 'trial',
         ]);
 
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+
         $response = $this->post(route('ifa.submit'), [
             'advisor_name' => 'Attacker',
             'whatsapp' => '+91 99999 99999',
             'email' => 'trashed-trial@example.test',
             'firm_name' => 'Fake Firm',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         $this->assertGuest();

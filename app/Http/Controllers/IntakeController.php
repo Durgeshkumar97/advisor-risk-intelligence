@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Intakes\QueueAdminFreeTrialLeadNotificationAction;
 use App\Actions\Intakes\StoreIfaTrialLeadAction;
 use App\Http\Requests\StoreIfaTrialRequest;
+use App\Services\TurnstileVerifier;
 use App\Services\UserAccountRecoveryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,8 +18,15 @@ class IntakeController extends Controller
         private readonly UserAccountRecoveryService $accounts,
     ) {}
 
-    public function ifaSubmit(StoreIfaTrialRequest $request): RedirectResponse
+    public function ifaSubmit(StoreIfaTrialRequest $request, TurnstileVerifier $turnstile): RedirectResponse
     {
+        // Before anything is written. This form creates a User and grants a
+        // trial subscription, and it had no captcha: every one of the 72 bot
+        // accounts in September 2026 came through here. Verifying first means a
+        // rejected token creates no user, subscription, intake or portfolio,
+        // and queues no admin notification.
+        $turnstile->verify($request);
+
         $result = $this->storeIfaTrialLead->execute(
             validated: $request->validated(),
             document: $request->file('document'),

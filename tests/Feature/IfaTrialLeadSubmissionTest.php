@@ -6,6 +6,7 @@ use App\Mail\AdminFreeTrialLeadSubmittedMail;
 use App\Models\ClientIntake;
 use App\Models\Plan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -22,6 +23,8 @@ class IfaTrialLeadSubmissionTest extends TestCase
         config()->set('risksignal.lead_notifications.admin_email', 'owner@risksignal.test');
         config()->set('risksignal.lead_notifications.queue', 'mail');
 
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+
         $response = $this->withServerVariables([
             'REMOTE_ADDR' => '203.0.113.10',
         ])->from(route('home'))->post(route('ifa.submit'), [
@@ -29,6 +32,7 @@ class IfaTrialLeadSubmissionTest extends TestCase
             'whatsapp' => '+91 98765 43210',
             'email' => 'durgesh@example.test',
             'firm_name' => 'RiskSignal Advisors',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         // The current flow auto-logs a genuinely new lead straight in and
@@ -74,11 +78,14 @@ class IfaTrialLeadSubmissionTest extends TestCase
             'status' => 'trial',
         ]);
 
+        Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+
         $response = $this->from(route('home'))->post(route('ifa.submit'), [
             'advisor_name' => 'Existing Advisor',
             'whatsapp' => '+91 91111 11111',
             'email' => 'existing@example.test',
             'firm_name' => 'Existing Firm',
+            'cf-turnstile-response' => 'test-token',
         ]);
 
         // This scenario (a pre-existing ClientIntake row for the same
