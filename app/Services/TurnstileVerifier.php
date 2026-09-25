@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -17,8 +18,9 @@ use Illuminate\Validation\ValidationException;
  * a new form either calls this or visibly doesn't.
  *
  * Fails closed: the request is rejected unless Cloudflare explicitly answers
- * success === true. A missing token, an invalid one, a missing secret, and an
- * error response from Cloudflare all end in the same ValidationException.
+ * success === true. A missing token, an invalid one, a missing secret, an error
+ * response, a timeout and an unreachable Cloudflare all end in the same
+ * ValidationException — the user sees "try again", never a 500.
  */
 class TurnstileVerifier
 {
@@ -27,15 +29,33 @@ class TurnstileVerifier
     private const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
     /**
+     * Seconds, total. Guzzle's default is 30: on shared hosting with a small
+     * PHP worker pool, a hanging Cloudflare would pin one worker per signup
+     * attempt for half a minute. Siteverify normally answers in well under a
+     * second.
+     */
+    private const TIMEOUT_SECONDS = 5;
+
+    /**
      * @throws ValidationException
      */
     public function verify(Request $request, string $field = self::FIELD): void
     {
-        $success = Http::asForm()->post(self::SITEVERIFY_URL, [
-            'secret' => config('services.turnstile.secret'),
-            'response' => $request->input($field),
-            'remoteip' => $request->ip(),
-        ])->json('success');
+        try {
+            $success = Http::asForm()
+                ->timeout(self::TIMEOUT_SECONDS)
+                ->post(self::SITEVERIFY_URL, [
+                    'secret' => config('services.turnstile.secret'),
+                    'response' => $request->input($field),
+                    'remoteip' => $request->ip(),
+                ])
+                ->json('success');
+        } catch (ConnectionException) {
+            // Timed out or unreachable. Still closed — no account without a
+            // yes — but as the same validation error rather than an uncaught
+            // exception and a 500.
+            $success = null;
+        }
 
         // Strictly true. A 4xx/5xx body has no `success` key (null), and
         // anything short of an explicit yes is a no.

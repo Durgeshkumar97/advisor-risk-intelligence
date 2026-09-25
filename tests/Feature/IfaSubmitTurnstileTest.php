@@ -177,3 +177,64 @@ it('throws a validation error keyed on the token field when verification fails',
 
     $this->fail('Expected ValidationException.');
 });
+
+// ---------------------------------------------------------------------------
+// Cloudflare slow, down or erroring — still closed, never a 500
+// ---------------------------------------------------------------------------
+
+it('rejects cleanly, not with a 500, when Cloudflare cannot be reached on /ifa-submit', function () {
+    Http::fake(['challenges.cloudflare.com/*' => Http::failedConnection()]);
+
+    $this->from(route('home'))
+        ->post(route('ifa.submit'), trialForm(['cf-turnstile-response' => 'tok']))
+        ->assertRedirect(route('home'))
+        ->assertSessionHasErrors([TurnstileVerifier::FIELD => 'Captcha verification failed. Please try again.']);
+
+    assertTrialPathWroteNothing();
+});
+
+it('rejects cleanly, not with a 500, when Cloudflare cannot be reached on /register', function () {
+    Http::fake(['challenges.cloudflare.com/*' => Http::failedConnection()]);
+
+    $this->from(route('register'))
+        ->post(route('register'), [
+            'name' => 'New User',
+            'email' => 'new-user@example.test',
+            'password' => 'Quiet2Orbit!',
+            'password_confirmation' => 'Quiet2Orbit!',
+            TurnstileVerifier::FIELD => 'tok',
+        ])
+        ->assertRedirect(route('register'))
+        ->assertSessionHasErrors(TurnstileVerifier::FIELD);
+
+    expect(User::where('email', 'new-user@example.test')->exists())->toBeFalse();
+    $this->assertGuest();
+});
+
+it('rejects when Cloudflare answers with a server error', function () {
+    // A 5xx body has no `success` key; the strict !== true check treats that
+    // as a no. This path existed before; it is pinned here.
+    Http::fake(['challenges.cloudflare.com/*' => Http::response('Bad Gateway', 502)]);
+
+    $this->from(route('home'))
+        ->post(route('ifa.submit'), trialForm(['cf-turnstile-response' => 'tok']))
+        ->assertSessionHasErrors(TurnstileVerifier::FIELD);
+
+    assertTrialPathWroteNothing();
+});
+
+it('bounds the siteverify call to a 5 second timeout', function () {
+    $seenTimeout = null;
+
+    Http::fake(function (ClientRequest $request, array $options) use (&$seenTimeout) {
+        $seenTimeout = $options['timeout'] ?? null;
+
+        return Http::response(['success' => true]);
+    });
+
+    (new TurnstileVerifier)->verify(Request::create('/any', 'POST', [TurnstileVerifier::FIELD => 'tok']));
+
+    // Guzzle's default is 30s — one pinned PHP worker per attempt while
+    // Cloudflare hangs, on a shared host with a small worker pool.
+    expect($seenTimeout)->toBe(5);
+});
