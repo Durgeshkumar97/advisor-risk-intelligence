@@ -242,7 +242,7 @@
                     <div style="font-size:2.5rem;margin-bottom:.5rem;">📊</div>
                     <div style="font-weight:600;font-size:.9rem;">No score yet</div>
                     <div style="font-size:.82rem;margin-top:.35rem;line-height:1.5;">
-                        Your first risk signal will be generated at <strong>8:00 AM</strong> tomorrow.
+                        Upload a portfolio to receive your first risk score.
                     </div>
                 </div>
 
