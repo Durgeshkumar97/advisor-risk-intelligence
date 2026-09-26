@@ -176,11 +176,32 @@ Route::get('/auto-login/{token}', function (\Illuminate\Http\Request $request, $
 
 /*
 |--------------------------------------------------------------------------
+| EMAIL VERIFICATION — deliberately NOT enforced on app routes (yet)
+|--------------------------------------------------------------------------
+|
+| 02b2fa5 put the `verified` middleware on the six route groups below. It
+| was never deployed, and it would have locked out every existing account:
+| production had no verification until then, so all 78 users are unverified
+| (2026-09-26), and nothing but the /register flow sends a verification email —
+| a paying customer arriving from checkout would land on /verify-email with an
+| empty inbox. So the middleware is removed from these groups for now.
+|
+| User still implements MustVerifyEmail, so /register keeps sending the
+| verification mail and /verify-email keeps working.
+|
+| Re-adding it is "control 6", a separate rollout: mark users verified when
+| they follow an emailed checkout / set-password link, backfill existing
+| legitimate accounts, and notify users first.
+|
+*/
+
+/*
+|--------------------------------------------------------------------------
 | ONBOARDING
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     Route::get('/onboarding', function () {
         return view('onboarding');
@@ -227,7 +248,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Dashboard and file routes require an active or in-trial subscription.
-Route::middleware(['auth', 'verified', 'paid'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -242,7 +263,7 @@ Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 // Report/bundle downloads require a fully active subscription — no trial,
 // no grace period. Viewing an existing report is fine during grace; minting
 // a fresh download/bundle is not.
-Route::middleware(['auth', 'verified', 'active.sub'])->group(function () {
+Route::middleware(['auth', 'active.sub'])->group(function () {
 
     Route::get('/report/{id}/download', [FileController::class, 'reportDownload'])
         ->name('report.download');
@@ -257,7 +278,7 @@ Route::middleware(['auth', 'verified', 'active.sub'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'paid'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/portfolios/create', [PortfolioController::class, 'create'])
         ->name('portfolio.create');
@@ -287,7 +308,7 @@ Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'paid'])->group(function () {
+Route::middleware(['auth', 'paid'])->group(function () {
 
     Route::get('/portfolio/upload', [PortfolioUploadController::class, 'index'])
         ->name('portfolio.upload');
@@ -305,7 +326,7 @@ Route::middleware(['auth', 'verified', 'paid'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
