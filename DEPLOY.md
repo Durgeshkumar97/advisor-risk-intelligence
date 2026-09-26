@@ -125,7 +125,35 @@ RAZORPAY_WEBHOOK_SECRET=<webhook-secret>
 
 # Risk engine
 RISK_MARKET_MULTIPLIER=1.05
+
+# Cloudflare Turnstile (REAL keys in production — see note below)
+TURNSTILE_SITE_KEY=<production-site-key>
+TURNSTILE_SECRET_KEY=<production-secret-key>
 ```
+
+### Turnstile keys: production vs local and CI
+
+Two forms depend on these keys, `/register` and the home-page trial form
+(`/ifa-submit`), and both fail closed: without a valid token no account is
+created.
+
+- **Production** uses the real widget keys. The production widget (Managed mode)
+  allows only `risksignal.in` and `www.risksignal.in` — `localhost` and
+  `127.0.0.1` were removed on 2026-09-26, so the real keys **do not work
+  locally**.
+- **Local development and CI / the Playwright QA suite** must use Cloudflare's
+  always-pass test keys:
+
+  ```ini
+  TURNSTILE_SITE_KEY=1x00000000000000000000AA
+  TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+  ```
+
+  Mind every env file the local server reads: `run-dev.sh` exports
+  `.env.local` into the process environment, and exported values override
+  `.env`. Real keys in `.env.local` will therefore break signup locally even if
+  `.env` has the test keys.
+- PHPUnit needs neither: the tests fake the siteverify call.
 
 ---
 

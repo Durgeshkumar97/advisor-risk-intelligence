@@ -49,10 +49,12 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <!-- Cloudflare Turnstile -->
+        <!-- Cloudflare Turnstile. min-height reserves the Managed widget's 65px
+             before its script renders it, so the Register button does not jump
+             on load (CLS). -->
         <div class="mt-4">
             <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"></div>
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" style="min-height:65px;"></div>
             <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2" />
         </div>
 
