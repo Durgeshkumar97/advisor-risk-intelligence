@@ -36,7 +36,21 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Skip rows risk:generate wrote for an account with no holdings. Until
+        // 700716c it wrote one every day — the calculator's zero-asset result,
+        // shown here as "0 / LOW RISK" to someone who had uploaded nothing. The
+        // cron no longer writes them, but the old rows remain (nothing is
+        // deleted), so they are excluded by their own marker instead.
+        //
+        // Only an explicit has_holdings=false is excluded. Upload-time scores
+        // from ProcessPortfolioFile never set the key, so "absent" must still
+        // count as a real score. Filtering in the query rather than after
+        // first() matters: the latest ELIGIBLE row has to win, not the latest
+        // row followed by a null.
         $risk = RiskScore::where('user_id', $user->id)
+            ->where(fn ($q) => $q
+                ->whereNull('meta->has_holdings')
+                ->orWhere('meta->has_holdings', true))
             ->latest()
             ->first();
 

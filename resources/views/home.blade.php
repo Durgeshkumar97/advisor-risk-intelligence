@@ -1000,6 +1000,15 @@
                         outline:none;
                     ">
 
+                {{-- Cloudflare Turnstile. Same widget as /register; the token is
+                     verified server-side by TurnstileVerifier. A failure shows in
+                     the error list above the form. min-height reserves the
+                     Managed widget's 65px before its script renders it, so the
+                     button below does not jump (CLS) — visitors arriving via
+                     /#free-trial see this form at load. --}}
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" style="margin:0 auto;min-height:65px;"></div>
+
                 <button
                     type="submit"
                     class="btn-primary"
