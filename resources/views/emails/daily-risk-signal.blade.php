@@ -55,7 +55,7 @@
 
     {{-- PREHEADER TEXT (hidden, shows in inbox preview) --}}
     <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
-        {{ $levelEmoji }} Risk Score: {{ $riskScore }} ({{ $riskLevel }}) — {{ $nextAction }}
+        {{ $levelEmoji }} Risk Score: {{ $riskScore }} ({{ $riskLevel }})
     </span>
 
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#020817;min-height:100vh;">
@@ -155,56 +155,6 @@
                                 </tr>
                             </table>
 
-                            {{-- RECOMMENDED ACTION --}}
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td style="padding:28px 36px;border-bottom:1px solid rgba(255,255,255,.06);">
-                                        <p style="margin:0 0 10px;color:#64748b;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">
-                                            Today's Recommended Action
-                                        </p>
-                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                            <tr>
-                                                <td style="background:rgba(250,204,21,.06);border:1px solid rgba(250,204,21,.15);border-radius:12px;padding:16px 18px;">
-                                                    <span style="font-size:24px;">⚡</span>
-                                                    <p style="margin:8px 0 0;color:#ffffff;font-size:15px;font-weight:700;line-height:1.5;">
-                                                        {{ $nextAction }}
-                                                    </p>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            {{-- CLIENT SCRIPT --}}
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td style="padding:28px 36px;border-bottom:1px solid rgba(255,255,255,.06);">
-                                        <p style="margin:0 0 10px;color:#64748b;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">
-                                            Ready-to-Use Client Script
-                                        </p>
-                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                            <tr>
-                                                <td style="background:#111c34;border:1px solid rgba(255,255,255,.06);border-left:3px solid #2563eb;border-radius:0 10px 10px 0;padding:16px 18px;">
-                                                    <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.7;font-style:italic;">
-                                                        @if($riskLevel === 'HIGH')
-                                                            "Markets are showing elevated volatility this week. I've reviewed your portfolio and wanted to flag a few areas that need attention. Let's connect briefly to discuss your allocation — it's important we act strategically rather than emotionally."
-                                                        @elseif($riskLevel === 'MEDIUM')
-                                                            "Markets are slightly volatile this week. Your portfolio is holding steady but I'm keeping a close eye on a couple of positions. Stay invested and avoid making changes based on short-term noise — your plan is designed for this."
-                                                        @else
-                                                            "Markets are calm this week and your portfolio is well-positioned. No action needed — just wanted you to know everything is on track. Consistency is the key to long-term wealth."
-                                                        @endif
-                                                    </p>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        <p style="margin:10px 0 0;color:#64748b;font-size:11px;">
-                                            Copy and send directly to clients by email or message.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-
                             {{-- CTA --}}
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
@@ -230,6 +180,12 @@
                     {{-- FOOTER --}}
                     <tr>
                         <td style="padding:28px 0 0;text-align:center;">
+                            <p style="margin:0 0 16px;color:#475569;font-size:11px;line-height:1.6;">
+                                This email is generated by RiskSignal for informational purposes only, for the financial advisor who holds this account.
+                                It describes the holdings and values in your most recent portfolio upload; prices are not refreshed daily.
+                                It is not investment advice and makes no forecast of future performance.
+                                RiskSignal is not registered as an Investment Adviser under SEBI regulations.
+                            </p>
                             <p style="margin:0 0 6px;color:#334155;font-size:12px;">
                                 RiskSignal · Daily Portfolio Intelligence for IFAs
                             </p>
