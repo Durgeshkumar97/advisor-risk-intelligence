@@ -178,21 +178,30 @@ class GenerateRiskScore extends Command
         | SEND DAILY EMAIL
         |----------------------------------------------------------------------
         |
-        | Unconditional here: a user with no holdings returned above, before
-        | anything was calculated, scored or stored.
+        | A user with no holdings returned above, before anything was
+        | calculated, scored or stored. email_reports ("Report & daily emails"
+        | on the profile page) is an email preference: it gates only this send.
+        | The score above is still computed and persisted for opted-out users,
+        | so their score history has no gaps.
         |
         */
 
-        Mail::to($user->email)
-            ->send(new DailyRiskSignalMail($user, round($score), $riskLevel, $nextAction));
+        if ($user->email_reports) {
+            Mail::to($user->email)
+                ->send(new DailyRiskSignalMail($user, round($score), $riskLevel, $nextAction));
 
-        Log::info('risk:generate — signal sent.', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'score' => $score,
-            'risk_level' => $riskLevel,
-            'assets' => $assets->count(),
-        ]);
+            Log::info('risk:generate — signal sent.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'score' => $score,
+                'risk_level' => $riskLevel,
+                'assets' => $assets->count(),
+            ]);
+        } else {
+            Log::info('risk:generate — scored; email skipped (email_reports off).', [
+                'user_id' => $user->id,
+            ]);
+        }
 
         $this->line(sprintf(
             '  ✓ %s — Score: %d (%s) | Assets: %d | %s',

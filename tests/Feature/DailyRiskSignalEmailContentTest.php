@@ -69,6 +69,18 @@ class DailyRiskSignalEmailContentTest extends TestCase
         $this->assertStringContainsString('prices are not refreshed daily', $html);
     }
 
+    #[DataProvider('bands')]
+    public function test_the_rendered_email_links_to_the_setting_that_stops_it(int $score, string $level): void
+    {
+        $html = $this->render($score, $level);
+
+        $this->assertMatchesRegularExpression(
+            '#<a\s[^>]*href="'.preg_quote(route('profile.edit'), '#').'"[^>]*>\s*Unsubscribe\s*</a>#i',
+            $html,
+            "Rendered {$level} email has no unsubscribe link to the profile settings page.",
+        );
+    }
+
     public function test_the_template_source_contains_no_banned_terms(): void
     {
         $source = mb_strtolower(file_get_contents(resource_path('views/emails/daily-risk-signal.blade.php')));

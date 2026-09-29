@@ -176,6 +176,27 @@ it('scores only the subscribers that have holdings', function () {
 // Unchanged: subscription scope still gates who is considered at all
 // ---------------------------------------------------------------------------
 
+it('still scores a subscriber who has turned off report and daily emails, but does not email them', function () {
+    Mail::fake();
+
+    $optedOut = subscriber();
+    $optedOut->forceFill(['email_reports' => false])->save();
+    giveHoldings($optedOut);
+
+    $optedIn = subscriber();
+    giveHoldings($optedIn);
+
+    $this->artisan('risk:generate')->assertExitCode(0);
+
+    // The preference gates the email only — never the score history.
+    expect(RiskScore::where('user_id', $optedOut->id)->where('meta->trigger', 'daily-cron')->count())->toBe(1)
+        ->and(RiskScore::where('user_id', $optedIn->id)->where('meta->trigger', 'daily-cron')->count())->toBe(1);
+
+    Mail::assertNotSent(DailyRiskSignalMail::class, fn ($mail) => $mail->hasTo($optedOut->email));
+    Mail::assertSent(DailyRiskSignalMail::class, fn ($mail) => $mail->hasTo($optedIn->email));
+    Mail::assertSentCount(1);
+});
+
 it('ignores a subscriber whose subscription has expired', function () {
     Mail::fake();
 

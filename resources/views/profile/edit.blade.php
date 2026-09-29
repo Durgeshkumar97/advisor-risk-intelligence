@@ -96,8 +96,8 @@
 
             <div class="field-group" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 1rem;background:var(--paper-2,rgba(255,255,255,.03));border:1px solid var(--paper-3,rgba(255,255,255,.08));border-radius:12px;">
                 <div>
-                    <div style="font-size:.875rem;font-weight:600;">Report emails</div>
-                    <div class="field-hint" style="margin-top:.2rem;">Receive your risk report PDF by email after each portfolio upload.</div>
+                    <div style="font-size:.875rem;font-weight:600;">Report &amp; daily emails</div>
+                    <div class="field-hint" style="margin-top:.2rem;">Receive your risk report PDF after each portfolio upload, and the daily risk score email. Turning this off stops both.</div>
                 </div>
                 <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;flex-shrink:0;">
                     <input type="hidden" name="email_reports" value="0">
