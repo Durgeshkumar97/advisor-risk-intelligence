@@ -103,9 +103,6 @@ SESSION_SECURE_COOKIE=true           # HTTPS-only cookie; config defaults to tru
 SESSION_LIFETIME=120                 # advisor idle timeout, minutes
 SESSION_ADMIN_LIFETIME=15            # /admin idle timeout, enforced by AdminOnly
 
-# Reports
-REPORTS_NOTIFY_EMAIL=founder@risksignal.in
-
 # Market risk sync (market-risk:sync reads this CSV)
 MARKET_RISK_CSV_PATH=/full/path/to/nifty500_enriched.csv
 

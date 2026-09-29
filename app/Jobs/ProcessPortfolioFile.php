@@ -407,11 +407,7 @@ class ProcessPortfolioFile implements ShouldQueue
     {
         $file->loadMissing(['user', 'portfolio']);
 
-        $notifyEmail = config('services.reports_notify_email');
-
-        Mail::to($notifyEmail)->queue(new RiskReportMail($file, $riskScore));
-
-        if ($file->user->email_reports && $file->user->email !== $notifyEmail) {
+        if ($file->user->email_reports) {
             Mail::to($file->user->email)->queue(new RiskReportMail($file, $riskScore));
         }
     }
