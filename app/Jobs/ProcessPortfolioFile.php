@@ -207,7 +207,11 @@ class ProcessPortfolioFile implements ShouldQueue
                     $scored = $assetScorer->score($row['asset_type'], $row['name'], $stockRisk);
                     $assetScore = $scored['score'];
 
-                    $meta = ['source_file_id' => $file->id];
+                    $meta = [
+                        'source_file_id' => $file->id,
+                        // file | derived (quantity × cost price) | unknown (stored as null, not 0)
+                        'invested_value_source' => $row['invested_value_source'] ?? null,
+                    ];
 
                     if ($isStock) {
                         $meta['stock_risk'] = [
