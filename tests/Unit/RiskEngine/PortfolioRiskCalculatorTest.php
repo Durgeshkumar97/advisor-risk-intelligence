@@ -457,3 +457,25 @@ it('reports a zero fallback count and does not error for a fixed-income-only por
 
     expect(calc()->calculate($assets)['meta']['stock_risk_fallback_count'])->toBe(0);
 });
+
+// ---------------------------------------------------------------------------
+// Unknown cost basis (invested_value = null)
+// ---------------------------------------------------------------------------
+
+it('measures unrealised loss only over holdings whose cost is known', function () {
+    // A: cost 80,000 → now 50,000 (−37.5%). B: cost unknown, now 50,000.
+    // Before this change B's null cost summed as 0, so B's 50,000 offset A's
+    // loss (+20,000 overall), drawdown read 0 and the score was 44.50.
+    // Measured over A alone: 37.5% loss → drawdown factor 100 → score 64.50.
+    $assets = collect([
+        makeAsset(['current_value' => 50000, 'invested_value' => 80000, 'risk_score' => 65]),
+        makeAsset(['current_value' => 50000, 'invested_value' => null, 'risk_score' => 65]),
+    ]);
+
+    $result = calc()->calculate($assets, 1.0);
+
+    expect($result['drawdown'])->toBe(37.5)
+        ->and($result['meta']['drawdown_score'])->toBe(100.0)
+        ->and($result['score'])->toBe(64.5)
+        ->and($result['risk_flags'])->toContain('SIGNIFICANT_DRAWDOWN');
+});

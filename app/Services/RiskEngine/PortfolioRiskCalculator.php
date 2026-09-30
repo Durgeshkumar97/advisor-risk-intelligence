@@ -119,7 +119,14 @@ class PortfolioRiskCalculator
         */
 
         $totalCurrentValue = (float) $assets->sum('current_value');
-        $totalInvestedValue = (float) $assets->sum('invested_value');
+
+        // Unrealised loss is measured only over holdings whose cost is known
+        // (invested_value is null when the file gave none). Comparing total
+        // current value against a partial cost total would count the
+        // unknown-cost holdings as pure profit and hide real losses.
+        $knownCostAssets = $assets->filter(fn ($a) => $a->invested_value !== null);
+        $totalInvestedValue = (float) $knownCostAssets->sum('invested_value');
+        $currentValueWithKnownCost = (float) $knownCostAssets->sum('current_value');
 
         // Avoid division by zero
         if ($totalCurrentValue <= 0) {
@@ -196,7 +203,7 @@ class PortfolioRiskCalculator
         $drawdownScore = 0.0;
 
         if ($totalInvestedValue > 0) {
-            $pnl = $totalCurrentValue - $totalInvestedValue;
+            $pnl = $currentValueWithKnownCost - $totalInvestedValue;
             $drawdownPct = ($pnl < 0)
                 ? abs($pnl / $totalInvestedValue) * 100.0   // positive percentage loss
                 : 0.0;
