@@ -504,7 +504,9 @@ it('matches headers case-insensitively', function () {
 
     expect($result['rows'])->toHaveCount(1)
         ->and($result['rows'][0]['name'])->toBe('Reliance')
-        ->and($result['rows'][0]['current_value'])->toBe(25000.0);
+        ->and($result['rows'][0]['current_value'])->toBe(25000.0)
+        ->and($result['rows'][0]['invested_value'])->toBe(20000.0)
+        ->and($result['rows'][0]['profit_loss'])->toBe(5000.0);
 });
 
 it('trims whitespace from header names', function () {
@@ -541,35 +543,56 @@ it('returns the correct count of parsed rows', function () {
 // Multiple row errors in a single file
 // ---------------------------------------------------------------------------
 
-it('accumulates errors for multiple bad rows while keeping good rows', function () {
+it('rejects a file with no market-value column with one file-level error, not per-row errors', function () {
     $file = csvFile('portfolio.csv', implode("\n", [
-        'name,buy_price',           // no current_value derivable
-        'Good Asset,100',           // bad — no current_value
-        ',200',                     // bad — empty name
+        'name,buy_price',           // no current_value column and no market price to derive one
+        'Good Asset,100',
+        ',200',
+        '',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    // One specific reason is what reaches the advisor; per-row errors would
+    // bury it behind the job's generic "No valid holdings found" message.
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::NO_MARKET_VALUE_MESSAGE]);
+});
+
+it('accumulates per-row errors for multiple bad rows while keeping good rows', function () {
+    $file = csvFile('portfolio.csv', implode("\n", [
+        'name,current_value',
+        'Good Asset,25000',         // good
+        ',200',                     // bad — values but no name
+        'Zero Value Asset,0',       // bad — value cannot be resolved
         '',                         // blank row — silently skipped, no error
     ]));
 
     $result = $this->parser->parse($file);
 
-    expect($result['rows'])->toBeEmpty()
-        ->and($result['errors'])->toHaveCount(2);  // one per bad data row; blank row is silent
+    expect(array_column($result['rows'], 'name'))->toBe(['Good Asset'])
+        ->and($result['errors'])->toBe([
+            'Row 3: skipped (missing required data).',
+            'Row 4: skipped (missing required data).',
+        ]);
 });
 
 // ---------------------------------------------------------------------------
 // profit_loss when invested_value is zero
 // ---------------------------------------------------------------------------
 
-it('computes profit_loss as current_value when invested_value is zero', function () {
+it('keeps cost and P&L unknown when the file has no cost basis', function () {
     $file = csvFile('portfolio.csv', implode("\n", [
         'name,current_value',
-        'Free Stock,5000',   // no invested_value anywhere — defaults to 0
+        'Free Stock,5000',   // no invested_value anywhere, and no cost price to derive it
     ]));
 
     $row = $this->parser->parse($file)['rows'][0];
 
-    // profit_loss = current_value (5000) - invested_value (0) = 5000
-    expect($row['profit_loss'])->toBe(5000.0)
-        ->and($row['invested_value'])->toBe(0.0);
+    // Unknown is not zero: a 0 cost would read as +100% profit and hide losses.
+    expect($row['invested_value'])->toBeNull()
+        ->and($row['profit_loss'])->toBeNull()
+        ->and($row['invested_value_source'])->toBe('unknown');
 });
 
 // ---------------------------------------------------------------------------
@@ -660,4 +683,218 @@ it('resets warnings between parses so one file does not inherit another\'s', fun
 
     expect($this->parser->parse($dirty)['warnings'])->toHaveCount(1);
     expect($this->parser->parse($clean)['warnings'])->toBeEmpty();
+});
+
+// ---------------------------------------------------------------------------
+// Real broker export shapes (synthetic fixtures — see tests/Support/BrokerExportFixtures.php)
+// ---------------------------------------------------------------------------
+
+/** Build a fixture on the fake disk and return a PortfolioFile stub for it. */
+function fixtureFile(string $filename, callable $build): PortfolioFile
+{
+    $path = Storage::disk('portfolios')->path($filename);
+    @mkdir(dirname($path), 0777, true);
+    $build($path);
+
+    return (new PortfolioFile)->forceFill(['path' => $filename]);
+}
+
+it('reads a Groww mutual-fund export whose header is on row 10', function () {
+    $file = fixtureFile('groww.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'growwMutualFundHoldings']);
+
+    $result = $this->parser->parse($file);
+
+    expect($result['errors'])->toBeEmpty()
+        ->and($result['rows'])->toHaveCount(3)
+        ->and(array_column($result['rows'], 'name'))->toBe([
+            'Example Bluechip Fund Direct Growth',
+            'Example Midcap Opportunities Fund Direct Growth',
+            'Example Liquid Fund Direct Growth',
+        ])
+        ->and(array_column($result['rows'], 'quantity'))->toBe([1234.567, 812.345, 12.5])
+        ->and(array_column($result['rows'], 'current_value'))->toBe([55000.0, 64000.0, 43500.0])
+        ->and(array_column($result['rows'], 'invested_value'))->toBe([50000.0, 60000.0, 40000.0])
+        ->and(array_column($result['rows'], 'invested_value_source'))->toBe(['file', 'file', 'file'])
+        ->and($result['rows'][0]['isin'])->toBe('INF000TEST01');
+});
+
+it('rejects an INDmoney US-dollar export, naming the 16 holdings it found', function () {
+    $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    $result = $this->parser->parse($file);
+
+    // 16 = every holding on rows 9–24; the blank rows and the 7-line
+    // disclaimer block contributed none.
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([sprintf(PortfolioParser::USD_MESSAGE, 16)]);
+});
+
+it('identifies the format from content, not the extension', function () {
+    $ooxmlNamedXls = fixtureFile('groww-really-xlsx.xls', [\Tests\Support\BrokerExportFixtures::class, 'growwMutualFundHoldings']);
+    $biffNamedXlsx = fixtureFile('indmoney-really-xls.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    expect($this->parser->parse($ooxmlNamedXls)['rows'])->toHaveCount(3)
+        ->and($this->parser->parse($biffNamedXlsx)['errors'])->toBe([sprintf(PortfolioParser::USD_MESSAGE, 16)]);
+});
+
+it('keeps each value in its own column when a cell in the row is blank (D2-02)', function () {
+    $file = fixtureFile('sparse.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'sparseCells']);
+
+    $rows = $this->parser->parse($file)['rows'];
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows[1]['name'])->toBe('Example Liquid Fund')
+        ->and($rows[1]['isin'])->toBeNull()
+        ->and($rows[1]['asset_type'])->toBe('mutual_fund')
+        ->and($rows[1]['invested_value'])->toBe(50000.0)
+        ->and($rows[1]['current_value'])->toBe(50500.0)
+        ->and($rows[1]['quantity'])->toBe(16.2)
+        ->and($rows[1]['profit_loss'])->toBe(500.0);
+});
+
+it('reads a formula cell with no cached result as blank and never evaluates it', function () {
+    $file = fixtureFile('formula.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'formulaWithoutCachedValue']);
+
+    $result = $this->parser->parse($file);
+
+    // Evaluating =B2*100 would have produced a 1000 holding; blank means the
+    // row has no value and is reported, not silently computed.
+    expect(array_column($result['rows'], 'name'))->toBe(['Plain Holding'])
+        ->and($result['errors'])->toBe(['Row 2: skipped (missing required data).']);
+});
+
+it('finds a header below a title block in a CSV (row 8)', function () {
+    $file = csvFile('titled.csv', implode("\n", [
+        'Portfolio statement',
+        'Client: Test Investor',
+        'Generated: 29-09-2026',
+        '', '', '', '',
+        'Scheme Name,Units,Current Value',
+        'Example Flexi Cap Fund,100,25000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['errors'])->toBeEmpty()
+        ->and($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['name'])->toBe('Example Flexi Cap Fund')
+        ->and($result['rows'][0]['current_value'])->toBe(25000.0);
+});
+
+it('lets the earliest header win when a later row scores the same', function () {
+    $file = csvFile('repeated-header.csv', implode("\n", [
+        'name,current_value',
+        'Reliance,25000',
+        'name,current_value',   // a repeated header row inside the data
+        'TCS,30000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect(array_column($result['rows'], 'name'))->toBe(['Reliance', 'TCS'])
+        ->and($result['errors'])->toBe(['Row 3: skipped (missing required data).']);
+});
+
+it('fails with a message naming the required columns when no header is found', function () {
+    $file = csvFile('no-header.csv', implode("\n", [
+        'Reliance,25000',
+        'TCS,30000',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::NO_HEADER_MESSAGE]);
+});
+
+it('skips total, disclaimer, footnote, blank and text-only rows but keeps a holding named Total', function () {
+    $file = csvFile('junk.csv', implode("\n", [
+        'name,current_value',
+        'Reliance,25000',
+        '',
+        'Total Market Index Fund,15000',
+        ',',
+        'TCS,30000',
+        'Total,70000',
+        'Grand Total:,70000',
+        'Sub Total,70000',
+        'Disclaimer: values are indicative,',
+        '* Prices as of close,',
+        'Holdings are held in demat form,',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect(array_column($result['rows'], 'name'))->toBe(['Reliance', 'Total Market Index Fund', 'TCS'])
+        ->and($result['errors'])->toBeEmpty();
+});
+
+it('strips a UTF-8 byte-order mark from a CSV header (D2-06)', function () {
+    $file = csvFile('bom.csv', "\xEF\xBB\xBFName,Current Value\nReliance,25000\n");
+
+    $result = $this->parser->parse($file);
+
+    expect($result['errors'])->toBeEmpty()
+        ->and($result['rows'][0]['name'])->toBe('Reliance');
+});
+
+it('derives cost only from a cost price, never from a market price', function () {
+    $file = csvFile('prices.csv', implode("\n", [
+        'name,quantity,avg. price,nav,current_value',
+        'With Cost Price,10,90,110,1100',
+        'Market Price Only,10,,110,1100',
+    ]));
+
+    $rows = $this->parser->parse($file)['rows'];
+
+    expect($rows[0]['invested_value'])->toBe(900.0)
+        ->and($rows[0]['invested_value_source'])->toBe('derived')
+        ->and($rows[0]['profit_loss'])->toBe(200.0)
+        ->and($rows[1]['invested_value'])->toBeNull()
+        ->and($rows[1]['invested_value_source'])->toBe('unknown')
+        ->and($rows[1]['profit_loss'])->toBeNull();
+});
+
+it('rejects a file with no source of current market value', function () {
+    $file = csvFile('cost-only.csv', implode("\n", [
+        'name,quantity,avg. price',
+        'Example Holding,10,90',
+    ]));
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::NO_MARKET_VALUE_MESSAGE]);
+});
+
+it('names exactly the advertised formats when a file type is not supported', function () {
+    $file = (new PortfolioFile)->forceFill(['path' => 'statement.pdf']);
+
+    expect($this->parser->parse($file)['errors'])
+        ->toBe(['File type .pdf is not supported. Supported: CSV, XLSX, XLS, or a ZIP of these.']);
+});
+
+it('rejects a spreadsheet taller than the read cap instead of silently truncating it', function () {
+    // 4,900 holdings, 400 blank rows, then 50 more holdings. Under 5,000
+    // holdings in total, but the last 50 sit beyond the rows a reader
+    // materialises — reading only the first rows would drop them silently.
+    $file = fixtureFile('tall.xlsx', function (string $path) {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $rows = [['Name', 'Current Value']];
+        foreach (range(1, 4900) as $i) {
+            $rows[] = ["Holding {$i}", 1000];
+        }
+        $spreadsheet->getActiveSheet()->fromArray($rows);
+        $spreadsheet->getActiveSheet()->fromArray(
+            array_map(fn ($i) => ["Late Holding {$i}", 1000], range(1, 50)),
+            null,
+            'A5302',
+        );
+        \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx')->save($path);
+    });
+
+    $result = $this->parser->parse($file);
+
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::MAX_ROWS_MESSAGE]);
 });

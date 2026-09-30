@@ -8,34 +8,63 @@ use Illuminate\Support\Facades\Storage;
 /**
  * PortfolioParser
  *
- * Parses an uploaded portfolio file (CSV or XLSX) into a normalised
+ * Parses an uploaded portfolio file (CSV, XLSX or XLS) into a normalised
  * array of holding rows ready to be stored as PortfolioAsset records.
  *
  * SUPPORTED FORMATS
  * ─────────────────
- *   CSV  — any delimiter (comma, semicolon, tab auto-detected)
- *   XLSX — parsed via ZipArchive + SimpleXML (no package needed)
- *   PDF  — not supported in V1; returns empty + error flag
+ *   CSV  — comma, semicolon, tab or pipe delimited (auto-detected); a UTF-8
+ *          byte-order mark is stripped
+ *   XLSX / XLS — read with PhpSpreadsheet (SpreadsheetRowReader), first
+ *          worksheet only. The format is identified from the file's content,
+ *          so an .xls that is really OOXML (or the reverse) still reads.
+ *   PDF  — not supported; returns an error naming the supported formats
  *
- * COLUMN DETECTION
+ * HEADER DETECTION
  * ────────────────
- *   Headers are matched case-insensitively using synonym aliases.
- *   Required:   name   +   (current_value  OR  (quantity + current_price))
- *   Optional:   asset_type, symbol, isin, buy_price, invested_value
+ *   Broker exports put title blocks above the table (Groww: header on row 10,
+ *   INDmoney: row 8). The first 25 rows are scored by how many distinct
+ *   fields their cells match (see ALIASES); the highest-scoring row with at
+ *   least 2 matches is the header, and on a tie the EARLIEST row wins — so a
+ *   CSV whose row 1 is a valid header can never lose to a later row. Header
+ *   cells are matched case-insensitively after trimming, collapsing
+ *   whitespace and stripping a trailing currency marker such as "($)".
+ *
+ * ROWS AFTER THE HEADER
+ * ─────────────────────
+ *   Skipped silently: blank rows (they never end parsing), total rows (first
+ *   cell exactly "total" / "grand total" / "sub total", optional colon),
+ *   rows starting "disclaimer" or "*", and text-only rows (a name but no
+ *   numbers — e.g. a disclaimer paragraph). A row WITH numbers but no name,
+ *   or whose values cannot be resolved, is skipped and reported as an error.
+ *
+ * FILE-LEVEL REJECTIONS
+ * ─────────────────────
+ *   No header, values in US dollars (never converted, never read as rupees),
+ *   no source of current market value, or more than MAX_ROWS holdings.
+ *
+ * UNKNOWN IS NOT ZERO
+ * ───────────────────
+ *   invested_value is taken from the file, else derived as quantity × a COST
+ *   price (e.g. "Avg. Price"), else left null. A market price (NAV, LTP) is
+ *   never used to derive cost — that would make P&L structurally zero.
+ *   profit_loss is null whenever invested_value is. invested_value_source
+ *   records which of file / derived / unknown applied.
  *
  * OUTPUT ROW FORMAT
  * ─────────────────
  *   [
- *     'name'           => string,
- *     'asset_type'     => string,   // default 'stock'
- *     'symbol'         => string|null,
- *     'isin'           => string|null,
- *     'quantity'       => float,
- *     'buy_price'      => float,
- *     'current_price'  => float,
- *     'invested_value' => float,
- *     'current_value'  => float,
- *     'profit_loss'    => float,
+ *     'name'                  => string,
+ *     'asset_type'            => string,   // default 'stock'
+ *     'symbol'                => string|null,
+ *     'isin'                  => string|null,
+ *     'quantity'              => float,
+ *     'buy_price'             => float,
+ *     'current_price'         => float,
+ *     'invested_value'        => float|null,
+ *     'current_value'         => float,
+ *     'profit_loss'           => float|null,
+ *     'invested_value_source' => 'file'|'derived'|'unknown',
  *   ]
  */
 class PortfolioParser
@@ -47,25 +76,48 @@ class PortfolioParser
     | MAX ROWS
     |--------------------------------------------------------------------------
     |
-    | The row loops were previously unbounded. The 20MB upload cap allows a
-    | narrow CSV of roughly a million rows, and ProcessPortfolioFile turns each
-    | parsed row into a PortfolioAsset insert inside a single transaction —
-    | enough to exhaust memory or hit the 300s job timeout on shared hosting.
+    | 5,000 holdings is far above any real client portfolio while bounding
+    | worst-case work (ProcessPortfolioFile inserts one PortfolioAsset per row
+    | inside a single transaction). Exceeding it REJECTS the file rather than
+    | truncating: scoring the first 5,000 rows of a larger portfolio would
+    | silently produce a confident, wrong composite from partial holdings.
     |
-    | 5,000 is far above any real client portfolio (the largest plan allows
-    | 1,000 clients a MONTH, one file each) while bounding worst-case work.
-    | This is separate from ProcessPortfolioFile's cap of 500 DISTINCT STOCK
-    | SYMBOLS, which bounds the outbound classifier batch rather than parse or
-    | insert volume; the two limits do not overlap and neither subsumes the
-    | other.
-    |
-    | Exceeding it REJECTS the file rather than truncating. Scoring the first
-    | 5,000 rows of a larger portfolio would silently produce a confident,
-    | wrong composite from partial holdings — worse than a clear failure.
+    | Readers materialise at most HEADER_SCAN_ROWS + MAX_ROWS + JUNK_ROW_ALLOWANCE
+    | rows; a sheet taller than that is rejected before any row is mapped.
     |
     */
 
     private const MAX_ROWS = 5000;
+
+    private const HEADER_SCAN_ROWS = 25;
+
+    private const MIN_HEADER_MATCHES = 2;
+
+    /** Room for blank, total and disclaimer rows around a full-size table. */
+    private const JUNK_ROW_ALLOWANCE = 200;
+
+    private const READ_ROW_CAP = self::HEADER_SCAN_ROWS + self::MAX_ROWS + self::JUNK_ROW_ALLOWANCE;
+
+    public const MAX_ROWS_MESSAGE = 'File exceeds maximum of 5,000 rows. Please reduce the file size and re-upload.';
+
+    public const NO_HEADER_MESSAGE = 'Could not find the column headers in the first 25 rows. RiskSignal needs a holding-name column (e.g. Name, Fund Name, Scheme Name, Stock Symbol) and a value column (e.g. Current Value, Market Value, or Quantity with a current price or NAV).';
+
+    public const NO_MARKET_VALUE_MESSAGE = 'This file has no current market value for its holdings. RiskSignal needs a Current Value or Market Value column, or Quantity with a current price or NAV.';
+
+    public const USD_MESSAGE = 'This export\'s values are in US dollars (%d holdings found). RiskSignal scores portfolios in Indian rupees; please upload an INR export.';
+
+    public const UNSUPPORTED_MESSAGE = 'File type .%s is not supported. Supported: CSV, XLSX, XLS, or a ZIP of these.';
+
+    private const SUPPORTED_EXTENSIONS = ['csv', 'xlsx', 'xls'];
+
+    private const OOXML_MAGIC = "PK\x03\x04";
+
+    private const BIFF_MAGIC = "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1";
+
+    private const UTF8_BOM = "\xEF\xBB\xBF";
+
+    /** Fields whose presence marks a row as carrying data (not just text). */
+    private const NUMERIC_FIELDS = ['quantity', 'buy_price', 'current_price', 'invested_value', 'current_value'];
 
     /**
      * Raw asset_type values this parse could not recognise, keyed by the raw
@@ -75,15 +127,21 @@ class PortfolioParser
      */
     private array $unknownAssetTypes = [];
 
-    public const MAX_ROWS_MESSAGE = 'File exceeds maximum of 5,000 rows. Please reduce the file size and re-upload.';
+    public function __construct(
+        private readonly SpreadsheetRowReader $spreadsheetReader = new SpreadsheetRowReader,
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
     | COLUMN ALIASES
     |--------------------------------------------------------------------------
     |
-    | Each internal field maps to a list of header strings we accept.
-    | First match in the CSV header row wins.
+    | Each internal field maps to the header strings we accept, compared after
+    | normaliseHeader(). The first alias found in the header row wins.
+    |
+    | buy_price is a COST price (what was paid per unit) and is the only price
+    | used to derive invested_value. current_price is a MARKET price and is
+    | used only to derive current_value.
     |
     */
 
@@ -92,6 +150,7 @@ class PortfolioParser
             'name', 'asset name', 'scheme name', 'fund name', 'stock name',
             'security name', 'security', 'company', 'instrument',
             'scrip name', 'description', 'scheme',
+            'stock symbol',                                    // INDmoney US stocks
         ],
         'asset_type' => [
             'asset_type', 'asset type', 'type', 'asset class',
@@ -107,11 +166,13 @@ class PortfolioParser
         'quantity' => [
             'quantity', 'qty', 'units', 'shares', 'no. of units',
             'no of units', 'holding units', 'balance units',
+            'total units',                                     // Groww mutual funds
         ],
         'buy_price' => [
             'buy_price', 'buy price', 'avg price', 'average price',
             'purchase price', 'cost price', 'avg cost', 'average cost',
             'nav at purchase', 'purchase nav',
+            'avg. price',                                      // INDmoney US stocks
         ],
         'current_price' => [
             'current_price', 'current price', 'ltp', 'last price',
@@ -121,6 +182,7 @@ class PortfolioParser
             'invested_value', 'invested amount', 'purchase value',
             'cost value', 'amount invested', 'invested', 'cost',
             'purchase amount', 'book value',
+            'invested value',                                  // Groww mutual funds
         ],
         'current_value' => [
             'current_value', 'current amount', 'market value',
@@ -170,15 +232,15 @@ class PortfolioParser
         $path = Storage::disk(self::DISK)->path($portfolioFile->path);
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        $result = match ($ext) {
-            'csv' => $this->parseCSV($path),
-            'xlsx', 'xls' => $this->parseXLSX($path),
-            default => [
-                'rows' => [],
-                'errors' => ["File type .{$ext} is not supported. Please upload a CSV or XLSX file."],
-                'count' => 0,
-            ],
-        };
+        if (! in_array($ext, self::SUPPORTED_EXTENSIONS, true)) {
+            return $this->failure(sprintf(self::UNSUPPORTED_MESSAGE, $ext)) + ['warnings' => []];
+        }
+
+        $read = $this->readRows($path);
+
+        $result = $read['error'] !== null
+            ? $this->failure($read['error'])
+            : $this->parseRows($read['rows']);
 
         return $result + ['warnings' => $this->buildWarnings()];
     }
@@ -208,270 +270,215 @@ class PortfolioParser
 
     /*
     |--------------------------------------------------------------------------
-    | CSV PARSER
+    | READING — raw rows of strings, routed by content
     |--------------------------------------------------------------------------
     */
 
-    private function parseCSV(string $path): array
+    /**
+     * @return array{rows: list<list<string>>, error: ?string}
+     */
+    private function readRows(string $path): array
     {
+        $head = @file_get_contents($path, false, null, 0, 8);
+
+        if ($head === false) {
+            return ['rows' => [], 'error' => 'Could not open file for reading.'];
+        }
+
+        if (str_starts_with($head, self::OOXML_MAGIC) || str_starts_with($head, self::BIFF_MAGIC)) {
+            $read = $this->spreadsheetReader->read($path, self::READ_ROW_CAP);
+
+            if ($read['error'] === null && $read['total_rows'] > self::READ_ROW_CAP) {
+                return ['rows' => [], 'error' => self::MAX_ROWS_MESSAGE];
+            }
+
+            return ['rows' => $read['rows'], 'error' => $read['error']];
+        }
+
+        return $this->readCsvRows($path);
+    }
+
+    /**
+     * @return array{rows: list<list<string>>, error: ?string}
+     */
+    private function readCsvRows(string $path): array
+    {
+        $handle = @fopen($path, 'r');
+
+        if (! $handle) {
+            return ['rows' => [], 'error' => 'Could not open file for reading.'];
+        }
+
+        // Delimiter from the first lines together: a title line above the
+        // header usually has no delimiters at all.
+        $sample = '';
+        for ($i = 0; $i < self::HEADER_SCAN_ROWS && ($line = fgets($handle)) !== false; $i++) {
+            $sample .= $line;
+        }
+        $delimiter = $this->detectDelimiter($sample);
+
+        // Skip a UTF-8 byte-order mark (Excel's "CSV UTF-8" export).
+        rewind($handle);
+        if (fread($handle, 3) !== self::UTF8_BOM) {
+            rewind($handle);
+        }
+
+        $rows = [];
+
+        while (($record = fgetcsv($handle, 0, $delimiter)) !== false) {
+            if (count($rows) >= self::READ_ROW_CAP) {
+                fclose($handle);
+
+                return ['rows' => [], 'error' => self::MAX_ROWS_MESSAGE];
+            }
+
+            $rows[] = array_map(fn ($value) => (string) ($value ?? ''), $record);
+        }
+
+        fclose($handle);
+
+        return ['rows' => $rows, 'error' => null];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PARSING — one pipeline for every format
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * @param  list<list<string>>  $rawRows
+     * @return array{rows: array, errors: array, count: int}
+     */
+    private function parseRows(array $rawRows): array
+    {
+        $isBlankRow = fn (array $row) => implode('', array_map('trim', $row)) === '';
+
+        if (collect($rawRows)->reject($isBlankRow)->isEmpty()) {
+            return $this->failure('File appears to be empty.');
+        }
+
+        $header = $this->detectHeader($rawRows);
+
+        if ($header === null || ! isset($header['map']['name'])) {
+            return $this->failure(self::NO_HEADER_MESSAGE);
+        }
+
+        $headerMap = $header['map'];
+
+        $hasMarketValue = isset($headerMap['current_value'])
+            || (isset($headerMap['quantity']) && isset($headerMap['current_price']));
+
         $rows = [];
         $errors = [];
+        $candidateCount = 0;
 
-        $handle = @fopen($path, 'r');
-        if (! $handle) {
-            return ['rows' => [], 'errors' => ['Could not open file for reading.'], 'count' => 0];
-        }
+        foreach (array_slice($rawRows, $header['index'] + 1, null, true) as $index => $rawRow) {
+            $lineNum = $index + 1;
 
-        // Auto-detect delimiter from first line
-        $firstLine = fgets($handle);
-        rewind($handle);
-        $delimiter = $this->detectDelimiter($firstLine);
-
-        // Read header
-        $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (! $rawHeaders) {
-            fclose($handle);
-
-            return ['rows' => [], 'errors' => ['File appears to be empty.'], 'count' => 0];
-        }
-
-        $headerMap = $this->buildHeaderMap($rawHeaders);
-
-        if (! isset($headerMap['name'])) {
-            fclose($handle);
-
-            return ['rows' => [], 'errors' => ['Could not find a "name" column. Please include a column with the holding name.'], 'count' => 0];
-        }
-
-        $lineNum = 1;
-        while (($rawRow = fgetcsv($handle, 0, $delimiter)) !== false) {
-            $lineNum++;
-
-            // Skip blank rows
-            $cleaned = array_filter($rawRow, fn ($v) => trim($v) !== '');
-            if (empty($cleaned)) {
+            if ($isBlankRow($rawRow) || $this->isJunkRow($rawRow)) {
                 continue;
             }
 
-            // Reject, don't truncate — see MAX_ROWS. Checked before mapRow so
-            // an oversized file costs no further per-row work.
-            if (count($rows) >= self::MAX_ROWS) {
-                fclose($handle);
+            $name = $this->cell($rawRow, $headerMap, 'name');
+            $hasNumbers = collect(self::NUMERIC_FIELDS)
+                ->contains(fn ($field) => $this->cell($rawRow, $headerMap, $field) !== '');
 
-                return ['rows' => [], 'errors' => [self::MAX_ROWS_MESSAGE], 'count' => 0];
+            if (! $hasNumbers) {
+                // Text-only (disclaimer paragraph, section label): not a holding.
+                continue;
             }
 
-            $row = $this->mapRow($rawRow, $headerMap);
-
-            if ($row === null) {
+            if ($name === '') {
                 $errors[] = "Row {$lineNum}: skipped (missing required data).";
 
                 continue;
             }
 
-            $rows[] = $row;
-        }
+            $candidateCount++;
 
-        fclose($handle);
-
-        return ['rows' => $rows, 'errors' => $errors, 'count' => count($rows)];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | XLSX PARSER  (ZipArchive + SimpleXML — no package needed)
-    |--------------------------------------------------------------------------
-    */
-
-    private function parseXLSX(string $path): array
-    {
-        if (! class_exists('ZipArchive')) {
-            return [
-                'rows' => [],
-                'errors' => ['ZipArchive extension is not available on this server. Please upload a CSV instead.'],
-                'count' => 0,
-            ];
-        }
-
-        $zip = new \ZipArchive;
-        if ($zip->open($path) !== true) {
-            return ['rows' => [], 'errors' => ['Could not read XLSX file — it may be corrupted.'], 'count' => 0];
-        }
-
-        // Load shared strings (text values in XLSX are stored here)
-        $sharedStrings = [];
-        $ssXml = $zip->getFromName('xl/sharedStrings.xml');
-        if ($ssXml !== false) {
-            $ss = simplexml_load_string($ssXml);
-            foreach ($ss->si as $si) {
-                // Concatenate all <t> elements (handles rich text)
-                $text = '';
-                foreach ($si->r as $r) {
-                    $text .= (string) $r->t;
-                }
-                if ($text === '') {
-                    $text = (string) $si->t;
-                }
-                $sharedStrings[] = $text;
-            }
-        }
-
-        // Load the first worksheet
-        $worksheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
-        $zip->close();
-
-        if ($worksheetXml === false) {
-            return ['rows' => [], 'errors' => ['Could not read worksheet from XLSX file.'], 'count' => 0];
-        }
-
-        $ws = simplexml_load_string($worksheetXml);
-        $data = [];
-
-        foreach ($ws->sheetData->row as $row) {
-            $rowData = [];
-            foreach ($row->c as $cell) {
-                $type = (string) $cell['t'];
-                $value = (string) $cell->v;
-
-                if ($type === 's') {
-                    // Shared string reference
-                    $value = $sharedStrings[(int) $value] ?? '';
-                } elseif ($type === 'inlineStr') {
-                    $value = (string) $cell->is->t;
-                }
-
-                $rowData[] = $value;
-            }
-            $data[] = $rowData;
-        }
-
-        if (empty($data)) {
-            return ['rows' => [], 'errors' => ['Worksheet is empty.'], 'count' => 0];
-        }
-
-        // First row = headers
-        $rawHeaders = array_shift($data);
-        $headerMap = $this->buildHeaderMap($rawHeaders);
-
-        if (! isset($headerMap['name'])) {
-            return ['rows' => [], 'errors' => ['Could not find a "name" column. Please check the file format.'], 'count' => 0];
-        }
-
-        $rows = [];
-        $errors = [];
-        $lineNum = 1;
-
-        foreach ($data as $rawRow) {
-            $lineNum++;
-            $cleaned = array_filter($rawRow, fn ($v) => trim($v) !== '');
-            if (empty($cleaned)) {
+            if ($header['usd'] || ! $hasMarketValue) {
+                // File-level rejection follows; only count what was found.
                 continue;
             }
 
             // Reject, don't truncate — see MAX_ROWS.
             if (count($rows) >= self::MAX_ROWS) {
-                return ['rows' => [], 'errors' => [self::MAX_ROWS_MESSAGE], 'count' => 0];
+                return $this->failure(self::MAX_ROWS_MESSAGE);
             }
 
             $row = $this->mapRow($rawRow, $headerMap);
+
             if ($row === null) {
                 $errors[] = "Row {$lineNum}: skipped (missing required data).";
 
                 continue;
             }
+
             $rows[] = $row;
+        }
+
+        if ($header['usd']) {
+            return $this->failure(sprintf(self::USD_MESSAGE, $candidateCount));
+        }
+
+        if (! $hasMarketValue) {
+            return $this->failure(self::NO_MARKET_VALUE_MESSAGE);
         }
 
         return ['rows' => $rows, 'errors' => $errors, 'count' => count($rows)];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MAP ONE ROW
-    |--------------------------------------------------------------------------
-    */
-
     /**
-     * Map a raw CSV/XLSX row to a normalised holding array.
-     * Returns null if the row cannot produce a valid holding.
+     * @return array{rows: array, errors: array, count: int}
      */
-    private function mapRow(array $rawRow, array $headerMap): ?array
+    private function failure(string $message): array
     {
-        $get = function (string $field) use ($rawRow, $headerMap): string {
-            $idx = $headerMap[$field] ?? null;
-
-            return ($idx !== null && isset($rawRow[$idx])) ? trim((string) $rawRow[$idx]) : '';
-        };
-
-        // Required: name
-        $name = $get('name');
-        if ($name === '') {
-            return null;
-        }
-
-        // Asset type (normalised)
-        $assetType = $this->normaliseAssetType($get('asset_type'), $name);
-
-        // Values — derive what we can
-        $quantity = $this->toFloat($get('quantity'));
-        $buyPrice = $this->toFloat($get('buy_price'));
-        $currentPrice = $this->toFloat($get('current_price'));
-        $investedValue = $this->toFloat($get('invested_value'));
-        $currentValue = $this->toFloat($get('current_value'));
-
-        // Derive current_value from quantity × current_price if not given
-        if ($currentValue <= 0 && $quantity > 0 && $currentPrice > 0) {
-            $currentValue = round($quantity * $currentPrice, 2);
-        }
-
-        // Derive invested_value from quantity × buy_price if not given
-        if ($investedValue <= 0 && $quantity > 0 && $buyPrice > 0) {
-            $investedValue = round($quantity * $buyPrice, 2);
-        }
-
-        // Must have a current value to be meaningful
-        if ($currentValue <= 0) {
-            return null;
-        }
-
-        // Derive buy price from invested / quantity if still zero
-        if ($buyPrice <= 0 && $quantity > 0 && $investedValue > 0) {
-            $buyPrice = round($investedValue / $quantity, 2);
-        }
-
-        // Derive current price if still zero
-        if ($currentPrice <= 0 && $quantity > 0 && $currentValue > 0) {
-            $currentPrice = round($currentValue / $quantity, 2);
-        }
-
-        $profitLoss = round($currentValue - $investedValue, 2);
-
-        return [
-            'name' => $name,
-            'asset_type' => $assetType,
-            'symbol' => $get('symbol') ?: null,
-            'isin' => $get('isin') ?: null,
-            'quantity' => $quantity,
-            'buy_price' => $buyPrice,
-            'current_price' => $currentPrice,
-            'invested_value' => $investedValue,
-            'current_value' => $currentValue,
-            'profit_loss' => $profitLoss,
-        ];
+        return ['rows' => [], 'errors' => [$message], 'count' => 0];
     }
 
     /*
     |--------------------------------------------------------------------------
-    | HEADER MAP BUILDER
+    | HEADER DETECTION
     |--------------------------------------------------------------------------
     */
 
     /**
+     * Highest-scoring row among the first HEADER_SCAN_ROWS with at least
+     * MIN_HEADER_MATCHES distinct fields; ties go to the EARLIEST row.
+     *
+     * @param  list<list<string>>  $rawRows
+     * @return array{index: int, map: array<string, int>, usd: bool}|null
+     */
+    private function detectHeader(array $rawRows): ?array
+    {
+        $best = null;
+
+        foreach (array_slice($rawRows, 0, self::HEADER_SCAN_ROWS) as $index => $cells) {
+            $map = $this->buildHeaderMap($cells);
+
+            if (count($map) < self::MIN_HEADER_MATCHES) {
+                continue;
+            }
+
+            // Strictly greater: an equal score never displaces an earlier row.
+            if ($best === null || count($map) > count($best['map'])) {
+                $best = ['index' => $index, 'map' => $map, 'usd' => $this->declaresUsd($cells)];
+            }
+        }
+
+        return $best;
+    }
+
+    /**
      * Returns ['field_name' => column_index] for all found aliases.
+     *
+     * @param  list<string>  $rawHeaders
+     * @return array<string, int>
      */
     private function buildHeaderMap(array $rawHeaders): array
     {
-        $normalised = array_map(fn ($h) => strtolower(trim($h)), $rawHeaders);
+        $normalised = array_map(fn ($h) => $this->normaliseHeader((string) $h), $rawHeaders);
         $map = [];
 
         foreach (self::ALIASES as $field => $aliases) {
@@ -485,6 +492,142 @@ class PortfolioParser
         }
 
         return $map;
+    }
+
+    private function normaliseHeader(string $header): string
+    {
+        $header = str_starts_with($header, self::UTF8_BOM) ? substr($header, 3) : $header;
+        $header = mb_strtolower(trim($header));
+        $header = preg_replace('/\s+/u', ' ', $header);
+        $header = preg_replace('/\s*\((\$|₹|inr|rs\.?|usd)\)$/u', '', $header);
+
+        return trim($header);
+    }
+
+    /** A header cell carrying a "($)" / "(USD)" marker or the word USD. */
+    private function declaresUsd(array $cells): bool
+    {
+        foreach ($cells as $cell) {
+            $cell = mb_strtolower((string) $cell);
+
+            if (str_contains($cell, '($)') || preg_match('/\busd\b/u', $cell)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | JUNK ROWS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Total rows match the first non-empty cell EXACTLY (so a holding named
+     * "Total Market Fund" is kept); disclaimer and footnote rows match by prefix.
+     */
+    private function isJunkRow(array $rawRow): bool
+    {
+        $first = '';
+        foreach ($rawRow as $cell) {
+            if (trim((string) $cell) !== '') {
+                $first = mb_strtolower(trim((string) $cell));
+                break;
+            }
+        }
+
+        $label = rtrim($first, ': ');
+
+        return in_array($label, ['total', 'grand total', 'sub total'], true)
+            || str_starts_with($first, 'disclaimer')
+            || str_starts_with($first, '*');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MAP ONE ROW
+    |--------------------------------------------------------------------------
+    */
+
+    private function cell(array $rawRow, array $headerMap, string $field): string
+    {
+        $idx = $headerMap[$field] ?? null;
+
+        return ($idx !== null && isset($rawRow[$idx])) ? trim((string) $rawRow[$idx]) : '';
+    }
+
+    /**
+     * Map a raw row to a normalised holding array.
+     * Returns null if the row cannot produce a valid holding.
+     */
+    private function mapRow(array $rawRow, array $headerMap): ?array
+    {
+        $get = fn (string $field): string => $this->cell($rawRow, $headerMap, $field);
+
+        $name = $get('name');
+        if ($name === '') {
+            return null;
+        }
+
+        $assetType = $this->normaliseAssetType($get('asset_type'), $name);
+
+        $quantity = $this->toFloat($get('quantity'));
+        $buyPrice = $this->toFloat($get('buy_price'));
+        $currentPrice = $this->toFloat($get('current_price'));
+        $currentValue = $this->toFloat($get('current_value'));
+
+        // Derive current_value from quantity × MARKET price if not given
+        if ($currentValue <= 0 && $quantity > 0 && $currentPrice > 0) {
+            $currentValue = round($quantity * $currentPrice, 2);
+        }
+
+        // Must have a current value to be meaningful
+        if ($currentValue <= 0) {
+            return null;
+        }
+
+        // Cost basis: from the file, else quantity × COST price, else unknown.
+        // Never zero-by-default: 0 would read as +100% profit and hide losses.
+        $investedCell = $get('invested_value');
+        $investedFromFile = is_numeric(preg_replace('/[₹$£€,\s]/', '', $investedCell))
+            ? $this->toFloat($investedCell)
+            : null;
+
+        if ($investedFromFile !== null && $investedFromFile > 0) {
+            [$investedValue, $investedSource] = [$investedFromFile, 'file'];
+        } elseif ($quantity > 0 && $buyPrice > 0) {
+            [$investedValue, $investedSource] = [round($quantity * $buyPrice, 2), 'derived'];
+        } elseif ($investedFromFile !== null) {
+            [$investedValue, $investedSource] = [$investedFromFile, 'file'];
+        } else {
+            [$investedValue, $investedSource] = [null, 'unknown'];
+        }
+
+        // Derive buy price from invested / quantity if still zero
+        if ($buyPrice <= 0 && $quantity > 0 && $investedValue !== null && $investedValue > 0) {
+            $buyPrice = round($investedValue / $quantity, 2);
+        }
+
+        // Derive current price if still zero
+        if ($currentPrice <= 0 && $quantity > 0 && $currentValue > 0) {
+            $currentPrice = round($currentValue / $quantity, 2);
+        }
+
+        return [
+            'name' => $name,
+            'asset_type' => $assetType,
+            'symbol' => $get('symbol') ?: null,
+            'isin' => $get('isin') ?: null,
+            'quantity' => $quantity,
+            'buy_price' => $buyPrice,
+            'current_price' => $currentPrice,
+            'invested_value' => $investedValue,
+            'current_value' => $currentValue,
+            'profit_loss' => $investedValue === null ? null : round($currentValue - $investedValue, 2),
+            'invested_value_source' => $investedSource,
+        ];
     }
 
     /*
