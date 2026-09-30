@@ -2,7 +2,7 @@
 <div class="card" style="padding:1.75rem;min-width:0;overflow:hidden;">
 
     <p style="color:var(--ink-3);font-size:.875rem;margin-bottom:1.5rem;line-height:1.5;">
-        Supported: CSV, XLSX, XLS, PDF &nbsp;·&nbsp; Max 20 MB
+        Supported: CSV, XLSX, XLS &nbsp;·&nbsp; ZIP of these for several clients &nbsp;·&nbsp; Max 20 MB
     </p>
 
     <form
@@ -74,7 +74,7 @@
                     type="file"
                     name="file"
                     id="fileInput"
-                    accept=".csv,.xlsx,.xls,.pdf"
+                    accept=".csv,.xlsx,.xls,.zip"
                     required
                     style="
                         position:absolute;
