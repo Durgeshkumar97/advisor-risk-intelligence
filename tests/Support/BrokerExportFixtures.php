@@ -39,6 +39,27 @@ final class BrokerExportFixtures
     }
 
     /**
+     * The Groww layout (9 title rows, header on row 10) with the funds given.
+     *
+     * @param  list<list<mixed>>  $funds  rows of [fund name, isin, units, invested value, current value]
+     */
+    public static function growwFunds(string $path, array $funds): void
+    {
+        $rows = [
+            1 => ['Holdings report as on 29-09-2026'],
+            3 => ['Name', 'Test Investor'],
+            5 => ['Summary'],
+            10 => ['Fund Name', 'ISIN', 'Total Units', 'Invested Value', 'Current Value', 'Folio Number'],
+        ];
+
+        foreach ($funds as $i => [$name, $isin, $units, $invested, $current]) {
+            $rows[11 + $i] = [$name, $isin, $units, $invested, $current, sprintf('%07d/01', $i + 1)];
+        }
+
+        self::save($path, 'Xlsx', $rows);
+    }
+
+    /**
      * INDmoney US-stocks holdings (.xls, real BIFF8): 4 account-detail rows,
      * blank rows 5–7, header on row 8 with "($)" markers, 16 holdings on
      * rows 9–24, blank rows 25–28, a disclaimer block on rows 29–35.
