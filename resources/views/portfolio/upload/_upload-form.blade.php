@@ -1,9 +1,28 @@
 {{-- LEFT — UPLOAD CARD --}}
 <div class="card" style="padding:1.75rem;min-width:0;overflow:hidden;">
 
-    <p style="color:var(--ink-3);font-size:.875rem;margin-bottom:1.5rem;line-height:1.5;">
-        Supported: CSV, XLSX, XLS &nbsp;·&nbsp; ZIP of these for several clients &nbsp;·&nbsp; Max 20 MB
-    </p>
+    <div style="color:var(--ink-3);font-size:.875rem;margin-bottom:1.5rem;line-height:1.6;">
+        <p style="margin:0 0 .5rem;"><strong>One client</strong> — upload their file directly.</p>
+        <p style="margin:0 0 .5rem;"><strong>Several clients</strong> — upload a ZIP with <strong>one folder per client</strong>. The folder name becomes the client's name.</p>
+        <p style="margin:0 0 .5rem;"><strong>One client, several brokers</strong> — put all of that client's files in their folder. They are combined into one portfolio and one report.</p>
+        <p style="margin:0 0 .5rem;"><strong>Supported:</strong> CSV, XLSX, XLS — upload exports exactly as downloaded from the broker. PDF statements are not supported yet. US-dollar exports are not supported yet.</p>
+
+        <details style="margin-top:.75rem;">
+            <summary style="cursor:pointer;font-weight:600;">How to prepare a ZIP</summary>
+<pre style="margin:.75rem 0;padding:.75rem 1rem;background:var(--paper-2,rgba(255,255,255,.03));border:1px solid var(--paper-3,rgba(255,255,255,.08));border-radius:10px;font-size:.8rem;line-height:1.5;overflow-x:auto;">clients.zip
+├── Rajesh Kumar/
+│   ├── groww-export.xlsx
+│   └── zerodha-holdings.csv
+└── Priya Sharma/
+    └── holdings.xlsx</pre>
+            <ul style="margin:0;padding-left:1.1rem;">
+                <li>One person per folder. Files from different people in one folder are combined into a single portfolio and will give a meaningless score.</li>
+                <li>Don't include the same file twice.</li>
+                <li>Don't rename or edit columns inside the export.</li>
+                <li>Up to 20 files per client · 20 MB per upload.</li>
+            </ul>
+        </details>
+    </div>
 
     <form
         method="POST"
