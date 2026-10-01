@@ -9,6 +9,7 @@ use App\Models\Portfolio;
 use App\Models\PortfolioFile;
 use App\Models\Subscription;
 use App\Services\PortfolioUploadService;
+use App\Services\ZipClientLayout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -131,6 +132,12 @@ class PortfolioUploadController extends Controller
                     ->withInput();
             }
 
+            if ($zipMeta['client_count'] > ZipClientLayout::MAX_CLIENTS) {
+                return back()
+                    ->withErrors(['file' => 'This ZIP has too many clients ('.number_format($zipMeta['client_count']).'). Maximum allowed is '.number_format(ZipClientLayout::MAX_CLIENTS).' per upload — please split it into smaller batches.'])
+                    ->withInput();
+            }
+
             $peekCount = $zipMeta['client_count'];
             if ($peekCount > 0 && $currentCount + $peekCount > $limit) {
                 $remaining = max(0, $limit - $currentCount);
@@ -218,6 +225,7 @@ class PortfolioUploadController extends Controller
 
         $allowed = ['csv', 'xlsx', 'xls', 'pdf'];
         $clientCount = 0;
+        $clientFolders = [];
         $totalSize = 0;
 
         for ($i = 0; $i < $entryCount; $i++) {
@@ -242,21 +250,27 @@ class PortfolioUploadController extends Controller
             }
 
             $name = $stat['name'];
-            if (str_ends_with($name, '/')) {
+            if (ZipClientLayout::isDirectory($name) || ZipClientLayout::isIgnored($name)) {
                 continue;
             }
-            $base = basename($name);
-            if (str_starts_with($base, '.') || str_starts_with($base, '__')) {
+            if (! in_array(strtolower(pathinfo(ZipClientLayout::filename($name), PATHINFO_EXTENSION)), $allowed, true)) {
                 continue;
             }
-            if (in_array(strtolower(pathinfo($base, PATHINFO_EXTENSION)), $allowed, true)) {
+
+            // A top-level folder is one client however many files it holds;
+            // a file at the root is one client on its own.
+            $folder = ZipClientLayout::folder($name);
+
+            if ($folder === null) {
                 $clientCount++;
+            } else {
+                $clientFolders[ZipClientLayout::clientName($folder)] = true;
             }
         }
 
         $zip->close();
 
-        return ['opened' => true, 'entry_count' => $entryCount, 'total_uncompressed_size' => $totalSize, 'client_count' => $clientCount];
+        return ['opened' => true, 'entry_count' => $entryCount, 'total_uncompressed_size' => $totalSize, 'client_count' => $clientCount + count($clientFolders)];
     }
 
     public function destroy(int $id): RedirectResponse

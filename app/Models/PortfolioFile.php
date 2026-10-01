@@ -141,6 +141,10 @@ class PortfolioFile extends Model
                 $query->whereNull('meta->extension')
                     ->orWhere('meta->extension', '!=', 'zip');
             })
+            // One client counts once. In a ZIP client folder the extra broker
+            // files carry merged_into_file_id (the client's lead file); only
+            // the lead is counted, however many files the folder holds.
+            ->whereNull('meta->merged_into_file_id')
             ->count();
     }
 }
