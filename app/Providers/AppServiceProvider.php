@@ -25,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UncompromisedVerifier::class, function ($app) {
             return new NotPwnedVerifier($app[HttpFactory::class], 5);
         });
+
+        // Exchange rates come from the operator's entries. A licensed feed
+        // later is a different implementation of this one interface.
+        $this->app->bind(\App\Contracts\FxRateProvider::class, \App\Services\Fx\DatabaseFxRateProvider::class);
     }
 
     /**
