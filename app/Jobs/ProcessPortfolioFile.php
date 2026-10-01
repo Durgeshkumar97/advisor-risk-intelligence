@@ -337,7 +337,7 @@ class ProcessPortfolioFile implements ShouldQueue
                 }
 
                 $reportPath = $riskScore
-                    ? $this->generatePdfReport($file, $riskScore, $portfolioId)
+                    ? $this->generatePdfReport($file, $riskScore, $portfolioId, $parseResult['client_sources'] ?? null)
                     : null;
 
                 /*
@@ -451,7 +451,12 @@ class ProcessPortfolioFile implements ShouldQueue
         }
     }
 
-    private function generatePdfReport(PortfolioFile $file, RiskScore $riskScore, ?int $portfolioId): string
+    /**
+     * @param  ?array  $clientSources  a client folder's included and skipped files, printed on
+     *                                 the report; passed in because the file's meta does not
+     *                                 hold them yet when the report is rendered
+     */
+    private function generatePdfReport(PortfolioFile $file, RiskScore $riskScore, ?int $portfolioId, ?array $clientSources = null): string
     {
         $assets = $portfolioId
             ? PortfolioAsset::where('portfolio_id', $portfolioId)->orderByDesc('risk_score')->get()
@@ -459,7 +464,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
         $portfolio = $portfolioId ? Portfolio::find($portfolioId) : null;
 
-        $pdf = Pdf::loadView('reports.risk-report', compact('portfolio', 'riskScore', 'assets', 'file'));
+        $pdf = Pdf::loadView('reports.risk-report', compact('portfolio', 'riskScore', 'assets', 'file', 'clientSources'));
         $path = 'reports/'.now()->format('Y/m').'/'.Str::uuid()->toString().'.pdf';
 
         Storage::disk(self::DISK)->put($path, $pdf->output());

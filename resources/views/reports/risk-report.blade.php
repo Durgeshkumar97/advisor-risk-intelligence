@@ -79,6 +79,27 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
     </tr>
 </table>
 
+@php
+    $provenance = \App\Services\ReportProvenance::for($assets, $clientSources ?? null);
+    $provenanceLines = array_filter([...$provenance['currency'], $provenance['staleness'], $provenance['valuation'], $provenance['sources']]);
+@endphp
+@if($provenanceLines)
+{{-- What this report was built from and how it was valued. Printed on the
+     report itself because the report travels without the upload page. --}}
+<div class="section-heading">How This Report Was Built</div>
+<div class="action-box">
+    @foreach($provenanceLines as $line)
+    {{ $line }}<br>
+    @endforeach
+    @if($provenance['skipped'])
+    Not included:
+    @foreach($provenance['skipped'] as $skippedFile)
+    <br>&#8226; {{ $skippedFile }}
+    @endforeach
+    @endif
+</div>
+@endif
+
 @if(!empty($riskScore->meta['next_action']))
 <div class="section-heading">Observations</div>
 <div class="action-box">{{ $riskScore->meta['next_action'] }}</div>
@@ -182,11 +203,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
             $isStale = $stockRisk && ($stockRisk['stale'] ?? false);
         @endphp
         <tr class="{{ $i % 2 === 1 ? 'even' : '' }}">
-            <td style="font-weight:600;">{{ $asset->name }}</td>
+            <td style="font-weight:600;">{{ $asset->name }}@if(!empty($asset->meta['fx_rate'])) <span style="font-weight:400;color:#64748b;">&middot; USD</span>@endif</td>
             <td style="color:#64748b;">{{ $asset->asset_type }}</td>
             <td style="color:#94a3b8;">{{ $asset->symbol ?: ($asset->isin ?: '—') }}</td>
             <td style="text-align:right;">{{ $asset->quantity }}</td>
-            <td style="text-align:right;">{{ $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' }}</td>
+            <td style="text-align:right;">{{ $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' }}@if(($asset->meta['value_basis'] ?? 'market') === 'cost')<br><span style="color:#64748b;">at cost</span>@endif</td>
             <td style="text-align:right;" class="{{ $plPositive ? 'green' : 'red' }}">
                 {{ $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' }}
             </td>
