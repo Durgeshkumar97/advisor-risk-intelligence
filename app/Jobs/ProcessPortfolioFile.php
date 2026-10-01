@@ -9,9 +9,11 @@ use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
 use App\Services\RiskEngine\AssetRiskScorer;
+use App\Services\RiskEngine\HoldingsMerger;
 use App\Services\RiskEngine\PortfolioParser;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
 use App\Services\StockRiskService;
+use App\Services\ZipClientLayout;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -75,7 +77,8 @@ class ProcessPortfolioFile implements ShouldQueue
         PortfolioParser $parser,
         AssetRiskScorer $assetScorer,
         PortfolioRiskCalculator $calculator,
-        StockRiskService $stockRiskService
+        StockRiskService $stockRiskService,
+        HoldingsMerger $merger
     ): void {
         $file = $this->portfolioFile->fresh();
 
@@ -119,7 +122,13 @@ class ProcessPortfolioFile implements ShouldQueue
                 return;
             }
 
-            $parseResult = $parser->parse($file);
+            // A client folder from a ZIP: every broker file in the folder is
+            // parsed and the holdings are merged into ONE portfolio before
+            // scoring. Anything else is a single file, parsed as before.
+            $clientSources = $this->clientSourceFiles($file);
+            $parseResult = $clientSources === null
+                ? $parser->parse($file)
+                : $this->parseClientSources($clientSources, $parser, $merger, $file->meta['client_skipped_at_extraction'] ?? []);
             $holdings = $parseResult['rows'];
             $parseErrors = $parseResult['errors'];
             $parseWarnings = $parseResult['warnings'] ?? [];
@@ -185,7 +194,7 @@ class ProcessPortfolioFile implements ShouldQueue
             }
 
             DB::transaction(function () use (
-                $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings,
+                $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings, $parseResult,
                 $stockRiskMap, $marketSnapshot, &$riskScore, &$reportPath
             ) {
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
@@ -212,6 +221,17 @@ class ProcessPortfolioFile implements ShouldQueue
                         // file | derived (quantity × cost price) | unknown (stored as null, not 0)
                         'invested_value_source' => $row['invested_value_source'] ?? null,
                     ];
+
+                    // Merged client folder: where each figure came from.
+                    if (isset($row['sources'])) {
+                        $meta += [
+                            'sources' => $row['sources'],
+                            'currency' => $row['currency'],
+                            'value_basis' => $row['value_basis'],
+                            'cost_known' => $row['cost_known'],
+                            'as_of' => $row['as_of'],
+                        ];
+                    }
 
                     if ($isStock) {
                         $meta['stock_risk'] = [
@@ -344,7 +364,9 @@ class ProcessPortfolioFile implements ShouldQueue
                         'holdings_parsed' => count($holdings),
                         'parse_errors' => $parseErrors,
                         'parse_warnings' => $parseWarnings,
-                    ] + ($riskScore ? [] : [
+                    ] + (isset($parseResult['client_sources']) ? [
+                        'client_sources' => $parseResult['client_sources'],
+                    ] : []) + ($riskScore ? [] : [
                         'failed_at' => now()->toIso8601String(),
                         'error_message' => $failureMessage,
                     ])),
@@ -355,6 +377,8 @@ class ProcessPortfolioFile implements ShouldQueue
                 'id' => $file->id,
                 'holdings_saved' => count($holdings),
             ]);
+
+            $this->recordSourceOutcomes($file, $parseResult['source_outcomes'] ?? [], $riskScore !== null);
 
             if ($reportPath && empty($file->fresh()->meta['extracted_from_zip_id'] ?? null)) {
                 try {
@@ -379,6 +403,12 @@ class ProcessPortfolioFile implements ShouldQueue
                     'error_message' => $e->getMessage(),
                 ]),
             ]);
+
+            // The other files of a client folder have no job of their own.
+            PortfolioFile::whereIn('id', $file->meta['client_source_file_ids'] ?? [])
+                ->where('id', '!=', $file->id)
+                ->where('status', PortfolioFile::STATUS_PENDING)
+                ->update(['status' => PortfolioFile::STATUS_FAILED]);
 
             Log::error('ProcessPortfolioFile: failed.', [
                 'id' => $file->id,
@@ -435,8 +465,10 @@ class ProcessPortfolioFile implements ShouldQueue
                 throw new \Exception("Failed to open ZIP archive (ZipArchive error code: {$result}).");
             }
 
-            $safeEntries = [];
+            $skipReasons = [];      // root files and unsafe entries, keyed by name
             $rejectedEntries = [];
+            $rootFiles = [];        // accepted files at the ZIP root — one client each
+            $folders = [];          // client name => files / skipped / nested
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = $zip->getNameIndex($i);
@@ -447,12 +479,48 @@ class ProcessPortfolioFile implements ShouldQueue
 
                 if ($this->isUnsafeZipEntryName($name)) {
                     $rejectedEntries[] = $name;
+                    $skipReasons[$name] = 'Unsafe entry name — not extracted';
 
                     continue;
                 }
 
-                $safeEntries[] = $name;
+                if (ZipClientLayout::isDirectory($name) || ZipClientLayout::isIgnored($name)) {
+                    continue;
+                }
+
+                $filename = ZipClientLayout::filename($name);
+                $folder = ZipClientLayout::folder($name);
+                $clientName = $folder === null ? null : ZipClientLayout::clientName($folder);
+
+                if ($clientName !== null) {
+                    $folders[$clientName] ??= ['files' => [], 'skipped' => [], 'nested' => false];
+                    $folders[$clientName]['nested'] = $folders[$clientName]['nested'] || ZipClientLayout::isNested($name);
+                }
+
+                $entry = $this->extractZipEntry($zip, $i, $filename, $tempDir);
+
+                if (isset($entry['skip'])) {
+                    if ($clientName === null) {
+                        $skipReasons[$filename] = $entry['skip'];
+                    } else {
+                        // Keyed by the full entry name: two same-named files in
+                        // different subfolders must each keep their own reason.
+                        $folders[$clientName]['skipped'][$name] = $entry['skip'];
+                    }
+
+                    continue;
+                }
+
+                $entry['zip_entry'] = $name;
+
+                if ($clientName === null) {
+                    $rootFiles[] = $entry;
+                } else {
+                    $folders[$clientName]['files'][] = $entry;
+                }
             }
+
+            $zip->close();
 
             if (! empty($rejectedEntries)) {
                 Log::warning('ZIP extraction: rejected unsafe entry names before extraction.', [
@@ -461,111 +529,181 @@ class ProcessPortfolioFile implements ShouldQueue
                 ]);
             }
 
-            if (! empty($safeEntries)) {
-                $zip->extractTo($tempDir, $safeEntries);
-            }
+            /*
+            |------------------------------------------------------------------
+            | CLIENTS
+            |------------------------------------------------------------------
+            | A file at the root is one client, named from its filename (the
+            | pre-folder behaviour). A top-level folder is one client, named
+            | from the folder, however many broker files it holds.
+            */
 
-            $zip->close();
-
-            $realTempDir = realpath($tempDir);
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS)
-            );
-
-            $childFiles = [];
-            $skipReasons = [];
+            $clients = [];
+            $failedClients = [];
+            $clientSkipReasons = [];
             $nameCounts = [];
             $nameIndex = 0;
 
-            foreach ($iterator as $extractedFile) {
-                if ($extractedFile->isDir()) {
-                    continue;
-                }
+            $uniqueName = function (string $name) use (&$nameCounts): string {
+                $nameCounts[$name] = ($nameCounts[$name] ?? 0) + 1;
 
-                $realFilePath = realpath($extractedFile->getPathname());
+                return $nameCounts[$name] === 1 ? $name : $name.' '.$nameCounts[$name];
+            };
 
-                if ($realFilePath === false || ! str_starts_with($realFilePath, $realTempDir)) {
-                    $skipReasons[$extractedFile->getFilename()] = 'Security: path traversal detected';
-
-                    continue;
-                }
-
-                $originalName = $extractedFile->getFilename();
-
-                if (str_starts_with($originalName, '.') || str_starts_with($originalName, '__')) {
-                    continue;
-                }
-
-                $ext = strtolower($extractedFile->getExtension());
-
-                if (! in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
-                    $skipReasons[$originalName] = 'Unsupported file type: .'.$ext;
-
-                    continue;
-                }
-
-                if ($extractedFile->getSize() === 0) {
-                    $skipReasons[$originalName] = 'File is empty (0 bytes)';
-
-                    continue;
-                }
-
-                $detectedFile = new \Symfony\Component\HttpFoundation\File\File($realFilePath);
-                $result = \App\Rules\PortfolioFileType::contentMatchesAllowedType($detectedFile, $ext, self::ALLOWED_EXTENSIONS);
-
-                if (! $result['acceptable']) {
-                    $skipReasons[$originalName] = 'File content does not match a supported type (claimed .'.$ext.', detected: '.($result['detectedExtension'] ?? 'unrecognized').')';
-
-                    continue;
-                }
-
+            foreach ($rootFiles as $entry) {
                 $nameIndex++;
-                $clientName = $this->deriveClientName($originalName, $nameIndex);
-                $nameCounts[$clientName] = ($nameCounts[$clientName] ?? 0) + 1;
-                $finalName = $nameCounts[$clientName] === 1
-                    ? $clientName
-                    : $clientName.' '.$nameCounts[$clientName];
-
-                $portfolio = Portfolio::create([
-                    'user_id' => $file->user_id,
-                    'name' => $finalName,
-                ]);
-
-                $directory = now()->format('Y/m');
-                $storedFilename = Str::uuid()->toString().'.'.$ext;
-                $storedPath = $directory.'/'.$storedFilename;
-
-                Storage::disk(self::DISK)->put($storedPath, file_get_contents($realFilePath));
-
-                $childFile = PortfolioFile::create([
-                    'user_id' => $file->user_id,
-                    'portfolio_id' => $portfolio->id,
-                    'original_name' => $originalName,
-                    'stored_name' => $storedFilename,
-                    'path' => $storedPath,
-                    'mime_type' => $result['detectedMimeType'] ?: (self::MIME_MAP[$ext] ?? 'application/octet-stream'),
-                    'file_size' => $extractedFile->getSize(),
-                    'status' => PortfolioFile::STATUS_PENDING,
-                    'meta' => [
-                        'uploaded_at' => now()->toIso8601String(),
-                        'extension' => $ext,
-                        'extracted_from_zip_id' => $file->id,
-                        'extracted_from_zip_name' => $file->original_name,
-                        'client_name' => $finalName,
-                    ],
-                ]);
-
-                $childFiles[] = $childFile;
+                $clients[] = [
+                    'name' => $uniqueName($this->deriveClientName($entry['original_name'], $nameIndex)),
+                    'files' => [$entry],
+                    'folder' => false,
+                ];
             }
 
-            if (empty($childFiles)) {
+            foreach ($folders as $folderClient => $folderData) {
+                $nameIndex++;
+                $name = $uniqueName($folderClient === '' ? 'Client '.$nameIndex : $folderClient);
+
+                // A byte-identical file twice in one folder is an accidental
+                // duplicate download; summing it would double the portfolio.
+                $files = [];
+                $skipped = $folderData['skipped'];
+                $seenHashes = [];
+
+                foreach ($folderData['files'] as $entry) {
+                    if (isset($seenHashes[$entry['sha256']])) {
+                        $skipped[$entry['zip_entry']] = 'Duplicate of '.ZipClientLayout::labelWithinClient($seenHashes[$entry['sha256']]).' (identical file)';
+
+                        continue;
+                    }
+
+                    $seenHashes[$entry['sha256']] = $entry['zip_entry'];
+                    $files[] = $entry;
+                }
+
+                if (count($files) >= 5) {
+                    Log::info('ZIP extraction: client folder with 5 or more files.', [
+                        'user_id' => $file->user_id,
+                        'file_count' => count($files),
+                    ]);
+                }
+
+                if ($skipped !== []) {
+                    $clientSkipReasons[$name] = $skipped;
+                }
+
+                if (count($files) > ZipClientLayout::MAX_FILES_PER_CLIENT) {
+                    $failedClients[$name] = sprintf(
+                        'This client folder has %d files; the maximum is %d per client.',
+                        count($files),
+                        ZipClientLayout::MAX_FILES_PER_CLIENT,
+                    );
+
+                    continue;
+                }
+
+                if ($files === []) {
+                    $failedClients[$name] = 'No usable files in this client folder.';
+
+                    continue;
+                }
+
+                $clients[] = ['name' => $name, 'files' => $files, 'folder' => true, 'skipped' => $skipped];
+            }
+
+            if (count($clients) > ZipClientLayout::MAX_CLIENTS) {
+                $file->update([
+                    'status' => PortfolioFile::STATUS_FAILED,
+                    'meta' => array_merge($file->meta ?? [], [
+                        'failed_at' => now()->toIso8601String(),
+                        'error_message' => sprintf(
+                            'This ZIP has %s clients; the maximum is %s per upload — please split it into smaller batches.',
+                            number_format(count($clients)),
+                            number_format(ZipClientLayout::MAX_CLIENTS),
+                        ),
+                    ]),
+                ]);
+
+                return;
+            }
+
+            $leadFiles = [];
+            $childCount = 0;
+
+            foreach ($clients as $client) {
+                $portfolio = Portfolio::create([
+                    'user_id' => $file->user_id,
+                    'name' => $client['name'],
+                ]);
+
+                $rows = [];
+
+                foreach ($client['files'] as $entry) {
+                    // Stored under a UUID; no name from the ZIP is ever used
+                    // to build a path.
+                    $storedFilename = Str::uuid()->toString().'.'.$entry['ext'];
+                    $storedPath = now()->format('Y/m').'/'.$storedFilename;
+
+                    Storage::disk(self::DISK)->put($storedPath, file_get_contents($entry['temp_path']));
+
+                    $rows[] = PortfolioFile::create([
+                        'user_id' => $file->user_id,
+                        'portfolio_id' => $portfolio->id,
+                        'original_name' => $entry['original_name'],
+                        'stored_name' => $storedFilename,
+                        'path' => $storedPath,
+                        'mime_type' => $entry['mime'],
+                        'file_size' => $entry['size'],
+                        'status' => PortfolioFile::STATUS_PENDING,
+                        'meta' => [
+                            'uploaded_at' => now()->toIso8601String(),
+                            'extension' => $entry['ext'],
+                            'extracted_from_zip_id' => $file->id,
+                            'extracted_from_zip_name' => $file->original_name,
+                            'client_name' => $client['name'],
+                        ] + ($client['folder'] ? [
+                            'client_folder' => true,
+                            'zip_entry' => $entry['zip_entry'],
+                            'content_sha256' => $entry['sha256'],
+                        ] : []),
+                    ]);
+                }
+
+                // The first file leads: it carries the client's one job and
+                // one report. The others are sources merged into it.
+                $lead = $rows[0];
+
+                if ($client['folder']) {
+                    foreach (array_slice($rows, 1) as $source) {
+                        $source->update(['meta' => array_merge($source->meta, ['merged_into_file_id' => $lead->id])]);
+                    }
+
+                    // Files of this client dropped during extraction travel with
+                    // the lead, so the upload-history warning names them too —
+                    // not only _SUMMARY.txt.
+                    $lead->update(['meta' => array_merge($lead->meta, [
+                        'client_source_file_ids' => array_map(fn ($row) => $row->id, $rows),
+                        'client_skipped_at_extraction' => $client['skipped'],
+                    ])]);
+                }
+
+                $leadFiles[] = $lead;
+                $childCount += count($rows);
+            }
+
+            $clientDetails = [
+                'failed_clients' => $failedClients,
+                'client_skip_reasons' => $clientSkipReasons,
+                'zip_notes' => $this->zipLayoutNotes($folders, $rootFiles),
+            ];
+
+            if (empty($leadFiles)) {
                 $file->update([
                     'status' => PortfolioFile::STATUS_FAILED,
                     'meta' => array_merge($file->meta ?? [], [
                         'failed_at' => now()->toIso8601String(),
                         'error_message' => 'No valid client files found in ZIP archive.',
                         'skip_reasons' => $skipReasons,
-                    ]),
+                    ], $clientDetails),
                 ]);
 
                 Log::warning('ZIP extraction: no valid files found.', [
@@ -579,13 +717,14 @@ class ProcessPortfolioFile implements ShouldQueue
             $file->update([
                 'meta' => array_merge($file->meta ?? [], [
                     'extension' => 'zip',
-                    'extracted_files_count' => count($childFiles),
+                    'extracted_files_count' => $childCount,
+                    'client_count' => count($leadFiles),
                     'skip_reasons' => $skipReasons,
-                ]),
+                ], $clientDetails),
             ]);
 
             $parentId = $file->id;
-            $jobs = array_map(fn ($cf) => new self($cf), $childFiles);
+            $jobs = array_map(fn ($lead) => new self($lead), $leadFiles);
 
             Bus::batch($jobs)
                 ->finally(function () use ($parentId) {
@@ -596,12 +735,256 @@ class ProcessPortfolioFile implements ShouldQueue
             Log::info('ZIP archive extracted and batch queued.', [
                 'portfolio_file_id' => $file->id,
                 'user_id' => $file->user_id,
-                'child_count' => count($childFiles),
+                'child_count' => $childCount,
+                'client_count' => count($leadFiles),
                 'skipped' => count($skipReasons),
             ]);
 
         } finally {
             $this->cleanupTempDir($tempDir);
+        }
+    }
+
+    /**
+     * Copy one ZIP entry to a temp file and validate it.
+     *
+     * The temp name is built only from the entry's position in the archive and
+     * its allow-listed extension, so no folder or file name supplied by the
+     * ZIP ever reaches the filesystem.
+     *
+     * @return array{skip: string}|array{original_name: string, ext: string, temp_path: string, size: int, mime: string, sha256: string}
+     */
+    private function extractZipEntry(\ZipArchive $zip, int $index, string $filename, string $tempDir): array
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        if (! in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+            return ['skip' => 'Unsupported file type: .'.$ext];
+        }
+
+        $stat = $zip->statIndex($index);
+
+        if (! $stat || $stat['size'] === 0) {
+            return ['skip' => 'File is empty (0 bytes)'];
+        }
+
+        $tempPath = $tempDir.DIRECTORY_SEPARATOR.'entry_'.$index.'.'.$ext;
+        $in = $zip->getStreamIndex($index);
+
+        if ($in === false) {
+            return ['skip' => 'Could not read this entry from the ZIP'];
+        }
+
+        $out = fopen($tempPath, 'wb');
+        stream_copy_to_stream($in, $out);
+        fclose($in);
+        fclose($out);
+
+        $detectedFile = new \Symfony\Component\HttpFoundation\File\File($tempPath);
+        $result = \App\Rules\PortfolioFileType::contentMatchesAllowedType($detectedFile, $ext, self::ALLOWED_EXTENSIONS);
+
+        if (! $result['acceptable']) {
+            return ['skip' => 'File content does not match a supported type (claimed .'.$ext.', detected: '.($result['detectedExtension'] ?? 'unrecognized').')'];
+        }
+
+        return [
+            'original_name' => $filename,
+            'ext' => $ext,
+            'temp_path' => $tempPath,
+            'size' => filesize($tempPath),
+            'mime' => $result['detectedMimeType'] ?: (self::MIME_MAP[$ext] ?? 'application/octet-stream'),
+            'sha256' => hash_file('sha256', $tempPath),
+        ];
+    }
+
+    /**
+     * Plain-language notes about how the ZIP was read, for _SUMMARY.txt.
+     *
+     * @return list<string>
+     */
+    private function zipLayoutNotes(array $folders, array $rootFiles): array
+    {
+        $notes = [];
+
+        if ($folders !== [] && $rootFiles !== []) {
+            $notes[] = 'This ZIP has both client folders and files at the top level. Each top-level file was treated as one client, named from its filename.';
+        }
+
+        foreach ($folders as $name => $folder) {
+            if ($folder['nested']) {
+                $notes[] = "Subfolders inside '{$name}' were ignored for naming: every file under a client folder belongs to that client.";
+            }
+        }
+
+        $names = array_map('strval', array_keys($folders));
+
+        foreach ($names as $i => $a) {
+            foreach (array_slice($names, $i + 1) as $b) {
+                if ($a !== $b && mb_strtolower($a) === mb_strtolower($b)) {
+                    $notes[] = "Folders '{$a}' and '{$b}' differ only by case — treated as two clients.";
+                }
+            }
+        }
+
+        return $notes;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLIENT FOLDERS — several broker files, one portfolio
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * The source files of a client folder when $file leads one, else null.
+     */
+    private function clientSourceFiles(PortfolioFile $file): ?\Illuminate\Support\Collection
+    {
+        if (empty($file->meta['client_folder'])) {
+            return null;
+        }
+
+        return PortfolioFile::whereIn('id', $file->meta['client_source_file_ids'] ?? [$file->id])
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * Parse every source file of one client and merge the holdings.
+     *
+     * A file that cannot be used (unsupported, US-dollar, unparseable, or a
+     * duplicate of another file's holdings) is skipped with its reason and the
+     * client is scored from the rest. If nothing can be used the client fails
+     * with that reason.
+     */
+    private function parseClientSources(\Illuminate\Support\Collection $sources, PortfolioParser $parser, HoldingsMerger $merger, array $skippedAtExtraction = []): array
+    {
+        $holdings = [];
+        $errors = [];
+        $warnings = [];
+        $included = [];
+        // Keyed by the file's full name inside the ZIP (unique), never by its
+        // bare filename: two "holdings.csv" in different subfolders must both
+        // keep their reason. Starts with what extraction already dropped.
+        $skipped = $skippedAtExtraction;
+        $fileCount = count($sources) + count($skippedAtExtraction);
+        $outcomes = [];
+        $fingerprints = [];
+
+        foreach ($sources as $source) {
+            $entryName = $source->meta['zip_entry'] ?? $source->original_name;
+            $result = $parser->parse($source);
+
+            if ($result['rows'] === []) {
+                $reason = count($result['errors']) === 1 ? $result['errors'][0] : self::NO_HOLDINGS_MESSAGE;
+            } elseif (isset($fingerprints[$fingerprint = $this->holdingsFingerprint($result['rows'])])) {
+                $reason = 'Duplicate of '.$fingerprints[$fingerprint].' (identical holdings)';
+            } else {
+                $reason = null;
+                $fingerprints[$fingerprint] = ZipClientLayout::labelWithinClient($entryName);
+            }
+
+            $outcomes[$source->id] = $reason;
+
+            if ($reason !== null) {
+                $skipped[$entryName] = $reason;
+
+                continue;
+            }
+
+            $included[] = ZipClientLayout::labelWithinClient($entryName);
+            $warnings = array_merge($warnings, $result['warnings'] ?? []);
+
+            foreach ($result['errors'] as $error) {
+                $errors[] = $source->original_name.': '.$error;
+            }
+
+            foreach ($result['rows'] as $row) {
+                // Normalised holding: the parser's row plus where it came from.
+                $holdings[] = $row + [
+                    'source_file' => $source->original_name,
+                    'currency' => 'INR',
+                    'cost_known' => $row['invested_value'] !== null,
+                    'value_basis' => 'market',
+                    'as_of' => null,
+                ];
+            }
+        }
+
+        $describe = fn (array $map) => implode('; ', array_map(
+            fn ($entry, $reason) => ZipClientLayout::labelWithinClient((string) $entry).' — '.$reason,
+            array_keys($map),
+            $map,
+        ));
+
+        if ($included === []) {
+            $reasons = array_values(array_unique($skipped));
+            $errors = [count($reasons) === 1
+                ? $reasons[0]
+                : sprintf("None of this client's %d files could be used: %s", $fileCount, $describe($skipped))];
+        } elseif ($skipped !== []) {
+            array_unshift($warnings, sprintf(
+                'Scored from %d of %d files; skipped: %s',
+                count($included),
+                $fileCount,
+                $describe($skipped),
+            ));
+        }
+
+        $rows = $merger->merge($holdings);
+
+        return [
+            'rows' => $rows,
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'count' => count($rows),
+            'client_sources' => ['included' => $included, 'skipped' => $skipped],
+            'source_outcomes' => $outcomes,
+        ];
+    }
+
+    /** Identical for two files that hold the same positions, whatever their bytes. */
+    private function holdingsFingerprint(array $rows): string
+    {
+        $lines = array_map(fn ($row) => implode('|', [
+            strtoupper((string) ($row['isin'] ?? '')) ?: mb_strtolower(trim(preg_replace('/\s+/u', ' ', $row['name']))),
+            (string) $row['quantity'],
+            (string) $row['current_value'],
+        ]), $rows);
+
+        sort($lines);
+
+        return sha1(implode("\n", $lines));
+    }
+
+    /**
+     * Mark the non-lead source files of a client folder with their outcome.
+     *
+     * @param  array<int, ?string>  $outcomes  file id => skip reason, or null if included
+     */
+    private function recordSourceOutcomes(PortfolioFile $lead, array $outcomes, bool $scored): void
+    {
+        foreach ($outcomes as $fileId => $reason) {
+            if ($fileId === $lead->id) {
+                continue;
+            }
+
+            $source = PortfolioFile::find($fileId);
+
+            if (! $source) {
+                continue;
+            }
+
+            $used = $reason === null && $scored;
+
+            $source->update([
+                'status' => $used ? PortfolioFile::STATUS_PROCESSED : PortfolioFile::STATUS_FAILED,
+                'processed_at' => now(),
+                'meta' => array_merge($source->meta ?? [], $used ? [] : [
+                    'failed_at' => now()->toIso8601String(),
+                    'error_message' => $reason ?? 'No report was produced for this client.',
+                ]),
+            ]);
         }
     }
 

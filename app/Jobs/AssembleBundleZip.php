@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\BundleReportMail;
 use App\Models\PortfolioFile;
+use App\Services\ZipClientLayout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -50,8 +51,25 @@ class AssembleBundleZip implements ShouldQueue
         }
 
         $skipReasons = $parent->meta['skip_reasons'] ?? [];
-        $withReport = $children->filter(fn ($c) => $c->isProcessed() && $c->report_path);
-        $without = $children->reject(fn ($c) => $c->isProcessed() && $c->report_path);
+        $failedClients = $parent->meta['failed_clients'] ?? [];
+
+        // One client per portfolio. A client folder has several source files
+        // and one lead file that carries the client's report; a file at the
+        // ZIP root is a client on its own.
+        $clients = $children->groupBy('portfolio_id')->map(function ($files) {
+            $lead = $files->first(fn ($f) => empty($f->meta['merged_into_file_id'])) ?? $files->first();
+
+            return [
+                'lead' => $lead,
+                'files' => $files,
+                'name' => $lead->meta['client_name'] ?? pathinfo($lead->original_name, PATHINFO_FILENAME),
+            ];
+        })->values();
+
+        $hasReport = fn (array $client) => $client['lead']->isProcessed() && $client['lead']->report_path;
+        $withReport = $clients->filter($hasReport)->values();
+        $without = $clients->reject($hasReport)->values();
+        $failedCount = $without->count() + \count($failedClients) + \count($skipReasons);
 
         $tempZipPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.Str::uuid()->toString().'-bundle.zip';
 
@@ -61,10 +79,16 @@ class AssembleBundleZip implements ShouldQueue
             $zip = new \ZipArchive;
             $zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
-            foreach ($withReport as $child) {
-                $clientName = $child->meta['client_name'] ?? pathinfo($child->original_name, PATHINFO_FILENAME);
-                $pdfName = Str::slug($clientName, '_').'_report.pdf';
-                $zip->addFromString($pdfName, Storage::disk(self::DISK)->get($child->report_path));
+            // Unique names: two clients whose names reduce to the same slug
+            // (or to nothing, for a non-Latin name) must not overwrite each other.
+            $usedNames = [];
+
+            foreach ($withReport as $client) {
+                $base = Str::slug($client['name'], '_') ?: 'client';
+                $usedNames[$base] = ($usedNames[$base] ?? 0) + 1;
+                $pdfName = $base.($usedNames[$base] > 1 ? '_'.$usedNames[$base] : '').'_report.pdf';
+
+                $zip->addFromString($pdfName, Storage::disk(self::DISK)->get($client['lead']->report_path));
             }
 
             $zip->addFromString('_SUMMARY.txt', $this->buildSummary($parent, $withReport, $without));
@@ -80,7 +104,7 @@ class AssembleBundleZip implements ShouldQueue
                 'meta' => array_merge($parent->meta ?? [], [
                     'processing_completed_at' => now()->toIso8601String(),
                     'bundle_processed_count' => $withReport->count(),
-                    'bundle_failed_count' => $without->count() + \count($skipReasons),
+                    'bundle_failed_count' => $failedCount,
                 ]),
             ]);
 
@@ -89,7 +113,7 @@ class AssembleBundleZip implements ShouldQueue
             Log::info('AssembleBundleZip: bundle created.', [
                 'parent_id' => $this->parentFileId,
                 'processed' => $withReport->count(),
-                'failed' => $without->count() + \count($skipReasons),
+                'failed' => $failedCount,
             ]);
 
             $parent->loadMissing('user');
@@ -123,7 +147,12 @@ class AssembleBundleZip implements ShouldQueue
     private function buildSummary(PortfolioFile $parent, $withReport, $without): string
     {
         $skipReasons = $parent->meta['skip_reasons'] ?? [];
-        $totalFound = $withReport->count() + $without->count() + count($skipReasons);
+        $failedClients = $parent->meta['failed_clients'] ?? [];
+        $clientSkipReasons = $parent->meta['client_skip_reasons'] ?? [];
+        $notes = $parent->meta['zip_notes'] ?? [];
+        $failedCount = $without->count() + count($failedClients) + count($skipReasons);
+
+        $isFolder = fn (array $client) => ! empty($client['lead']->meta['client_folder']);
 
         $lines = [
             'RiskSignal — Multi-Client Portfolio Report Bundle',
@@ -133,18 +162,34 @@ class AssembleBundleZip implements ShouldQueue
             '',
             'SUMMARY',
             '-------',
-            'Total files found:       '.$totalFound,
+            'Total clients found:     '.($withReport->count() + $failedCount),
             'Successfully processed:  '.$withReport->count(),
-            'Failed / skipped:        '.($without->count() + count($skipReasons)),
+            'Failed / skipped:        '.$failedCount,
         ];
 
-        if ($without->isNotEmpty()) {
+        if ($notes !== []) {
+            $lines[] = '';
+            $lines[] = 'NOTES';
+            $lines[] = '-----';
+            foreach ($notes as $note) {
+                $lines[] = '  '.$note;
+            }
+        }
+
+        if ($without->isNotEmpty() || $failedClients !== []) {
             $lines[] = '';
             $lines[] = 'FAILED DURING PROCESSING';
             $lines[] = '------------------------';
-            foreach ($without as $f) {
-                $reason = $f->meta['error_message'] ?? 'Processing failed — no report generated';
-                $lines[] = '  '.$f->original_name.': '.$reason;
+            foreach ($without as $client) {
+                $reason = $client['lead']->meta['error_message'] ?? 'Processing failed — no report generated';
+                $label = $isFolder($client) ? $client['name'] : $client['lead']->original_name;
+                $lines[] = '  '.$label.': '.$reason;
+            }
+            foreach ($failedClients as $name => $reason) {
+                $lines[] = '  '.$name.': '.$reason;
+                foreach ($clientSkipReasons[$name] ?? [] as $entry => $fileReason) {
+                    $lines[] = '      skipped: '.ZipClientLayout::labelWithinClient((string) $entry).' — '.$fileReason;
+                }
             }
         }
 
@@ -161,9 +206,28 @@ class AssembleBundleZip implements ShouldQueue
             $lines[] = '';
             $lines[] = 'PROCESSED CLIENTS';
             $lines[] = '-----------------';
-            foreach ($withReport as $p) {
-                $clientName = $p->meta['client_name'] ?? pathinfo($p->original_name, PATHINFO_FILENAME);
-                $lines[] = '  OK  '.$clientName.' ('.$p->original_name.')';
+            foreach ($withReport as $client) {
+                if (! $isFolder($client)) {
+                    $lines[] = '  OK  '.$client['name'].' ('.$client['lead']->original_name.')';
+
+                    continue;
+                }
+
+                // One line per client folder: the files its portfolio was
+                // built from, then every file that was left out and why.
+                $sources = $client['lead']->meta['client_sources'] ?? [];
+                // Both maps are keyed by the full name inside the ZIP, so a
+                // union can never drop a reason.
+                $skipped = ($sources['skipped'] ?? []) + ($clientSkipReasons[$client['name']] ?? []);
+
+                $lines[] = '  OK  '.$client['name'].' — built from: '.implode(', ', $sources['included'] ?? []);
+
+                if ($skipped !== []) {
+                    $lines[] = '      NOT INCLUDED in this client\'s portfolio:';
+                    foreach ($skipped as $entry => $reason) {
+                        $lines[] = '        '.ZipClientLayout::labelWithinClient((string) $entry).' — '.$reason;
+                    }
+                }
             }
         }
 

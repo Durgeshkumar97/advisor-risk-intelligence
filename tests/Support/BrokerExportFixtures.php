@@ -104,6 +104,60 @@ final class BrokerExportFixtures
         $writer->save($path);
     }
 
+    /**
+     * A plain holdings workbook with the header on row 1.
+     *
+     * @param  list<list<mixed>>  $holdings  rows of [name, isin, units, invested value, current value];
+     *                                       use null for a blank cell
+     * @param  bool  $withCost  false omits the Invested Value column entirely
+     */
+    public static function holdingsWorkbook(string $path, array $holdings, bool $withCost = true, string $format = 'Xlsx'): void
+    {
+        $header = $withCost
+            ? ['Scheme Name', 'ISIN', 'Units', 'Invested Value', 'Current Value']
+            : ['Scheme Name', 'ISIN', 'Units', 'Current Value'];
+
+        $rows = [1 => $header];
+
+        foreach ($holdings as $i => $holding) {
+            [$name, $isin, $units, $invested, $current] = $holding;
+            $rows[$i + 2] = $withCost ? [$name, $isin, $units, $invested, $current] : [$name, $isin, $units, $current];
+        }
+
+        self::save($path, $format, $rows);
+    }
+
+    /**
+     * Assemble a ZIP from generated files. Each entry is either literal file
+     * content (string) or a callable that writes a file to the path it is
+     * given — e.g. one of the builders in this class. An entry name ending in
+     * "/" adds an empty folder.
+     *
+     * @param  array<string, string|callable(string): void>  $entries  keyed by entry name inside the ZIP
+     */
+    public static function zip(string $path, array $entries): void
+    {
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        $scratch = [];
+
+        foreach ($entries as $entryName => $content) {
+            if (str_ends_with($entryName, '/')) {
+                $zip->addEmptyDir(rtrim($entryName, '/'));
+            } elseif (is_string($content)) {
+                $zip->addFromString($entryName, $content);
+            } else {
+                $scratch[] = $file = tempnam(sys_get_temp_dir(), 'fixture_');
+                $content($file);
+                $zip->addFromString($entryName, file_get_contents($file));
+            }
+        }
+
+        $zip->close();
+        array_map('unlink', $scratch);
+    }
+
     /** @param array<int, list<mixed>> $rows keyed by 1-based row number */
     private static function save(string $path, string $format, array $rows): void
     {
