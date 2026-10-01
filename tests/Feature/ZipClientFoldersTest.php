@@ -344,6 +344,7 @@ class ZipClientFoldersTest extends TestCase
             'Rajesh Kumar/groww/holdings.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
             'Rajesh Kumar/zerodha/holdings.csv' => '',                                    // empty
             'Rajesh Kumar/upstox/holdings.csv' => "<?php system(\$_GET['cmd']); ?>",      // not a CSV
+            'Priya Sharma/other.csv' => $this->csv([['Example Liquid Fund', 'INF000TEST02', 5, 500, 520]]),   // a second client: 'Rajesh Kumar' is not a lone outer folder
         ]);
 
         $lead = PortfolioFile::where('original_name', 'holdings.csv')->sole();
@@ -372,13 +373,14 @@ class ZipClientFoldersTest extends TestCase
             'Rajesh Kumar/a/statement.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
             'Rajesh Kumar/b/statement.csv' => "just,some\nvalues,here\n",
             'Rajesh Kumar/c/statement.csv' => "Stock Symbol,Quantity,Avg. Price ($),Total Value ($)\nTSTA,1,10,10\n",
+            'Priya Sharma/other.csv' => $this->csv([['Example Liquid Fund', 'INF000TEST02', 5, 500, 520]]),   // a second client: 'Rajesh Kumar' is not a lone outer folder
         ]);
 
         $expected = [
             'Rajesh Kumar/b/statement.csv' => PortfolioParser::NO_HEADER_MESSAGE,
             'Rajesh Kumar/c/statement.csv' => sprintf(PortfolioParser::USD_MESSAGE, 1),
         ];
-        $lead = PortfolioFile::whereNotNull('report_path')->sole();
+        $lead = PortfolioFile::where('portfolio_id', Portfolio::where('name', 'Rajesh Kumar')->sole()->id)->whereNotNull('report_path')->sole();
 
         $this->assertSame($expected, $lead->meta['client_sources']['skipped']);
         $this->assertStringContainsString('b/statement.csv — '.PortfolioParser::NO_HEADER_MESSAGE, $lead->meta['parse_warnings'][0]);
@@ -436,11 +438,121 @@ class ZipClientFoldersTest extends TestCase
         $parent = $this->processZip([
             'Rajesh Kumar/groww/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
             'Rajesh Kumar/zerodha/b.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+            'Priya Sharma/other.csv' => $this->csv([['Example Liquid Fund', 'INF000TEST02', 5, 500, 520]]),   // a second client: 'Rajesh Kumar' is not a lone outer folder
+        ]);
+
+        $this->assertSame(['Rajesh Kumar', 'Priya Sharma'], $this->clientNames());
+        $this->assertSame(2, PortfolioAsset::where('portfolio_id', Portfolio::where('name', 'Rajesh Kumar')->sole()->id)->count());
+        $this->assertStringContainsString("Subfolders inside 'Rajesh Kumar' were ignored for naming", $this->summary($parent));
+        $this->assertStringNotContainsString('was treated as a container', $this->summary($parent));
+    }
+
+    // ─── an outer folder around the client folders ───────────────────────
+
+    public function test_a_zip_made_by_compressing_a_parent_folder_is_unwrapped_into_its_client_folders(): void
+    {
+        $parent = $this->processZip([
+            'clients/' => '',
+            'clients/Asha Rao/a.csv' => $this->csv([['Example Gilt Fund', 'INF000TEST09', 10, 1000, 1100]]),
+            'clients/Asha Rao/b.csv' => $this->csv([['Example Liquid Fund', 'INF000TEST02', 5, 500, 520]]),
+            'clients/Vikram Rao/a.csv' => $this->csv([['Example Flexi Cap Fund', 'INF000TEST01', 1, 100, 110]]),
+            '__MACOSX/clients/Asha Rao/._a.csv' => 'resource fork',      // what macOS adds beside it
+        ]);
+
+        // Two clients, not one client called "clients" holding everyone's money.
+        $this->assertSame(['Asha Rao', 'Vikram Rao'], $this->clientNames());
+        $this->assertSame(2, $parent->meta['client_count']);
+        $this->assertSame(2, PortfolioAsset::where('portfolio_id', Portfolio::where('name', 'Asha Rao')->sole()->id)->count());
+        $this->assertSame(1, PortfolioAsset::where('portfolio_id', Portfolio::where('name', 'Vikram Rao')->sole()->id)->count());
+
+        $summary = $this->summary($parent);
+        $this->assertSame(["Outer folder 'clients' was treated as a container."], $parent->meta['zip_notes']);
+        $this->assertStringContainsString("Outer folder 'clients' was treated as a container.", $summary);
+        $this->assertStringContainsString('OK  Asha Rao — built from: a.csv, b.csv', $summary);
+        $this->assertStringContainsString('OK  Vikram Rao — built from: a.csv', $summary);
+    }
+
+    public function test_a_single_folder_holding_only_files_is_one_client_not_a_container(): void
+    {
+        $parent = $this->processZip([
+            'Rajesh Kumar/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'Rajesh Kumar/b.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
         ]);
 
         $this->assertSame(['Rajesh Kumar'], $this->clientNames());
         $this->assertSame(2, PortfolioAsset::count());
-        $this->assertStringContainsString("Subfolders inside 'Rajesh Kumar' were ignored for naming", $this->summary($parent));
+        $this->assertSame([], $parent->meta['zip_notes']);
+    }
+
+    public function test_loose_files_inside_the_outer_folder_are_clients_of_their_own_and_noted(): void
+    {
+        $parent = $this->processZip([
+            'clients/amit_verma.csv' => "name,asset_type,current_value\nHDFC Bank,stock,20000\n",
+            'clients/Asha Rao/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'clients/Vikram Rao/a.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+        ]);
+
+        $this->assertSame(['Amit Verma', 'Asha Rao', 'Vikram Rao'], $this->clientNames());
+        $this->assertSame([
+            "Outer folder 'clients' was treated as a container.",
+            'This ZIP has both client folders and files at the top level. Each top-level file was treated as one client, named from its filename.',
+        ], $parent->meta['zip_notes']);
+        $this->assertStringContainsString('OK  Amit Verma (amit_verma.csv)', $this->summary($parent));
+    }
+
+    public function test_a_lone_client_folder_with_broker_subfolders_is_unwrapped_and_the_summary_says_so(): void
+    {
+        // Indistinguishable from a wrapped ZIP. The subfolders become clients
+        // with visibly wrong names — a mistake the advisor can see, unlike
+        // several people merged into one score.
+        $parent = $this->processZip([
+            'Rajesh Kumar/groww/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'Rajesh Kumar/zerodha/b.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+        ]);
+
+        $this->assertSame(['groww', 'zerodha'], $this->clientNames());
+        $this->assertStringContainsString("Outer folder 'Rajesh Kumar' was treated as a container.", $this->summary($parent));
+    }
+
+    public function test_only_one_outer_level_is_unwrapped(): void
+    {
+        $parent = $this->processZip([
+            'outer/inner/Asha Rao/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'outer/inner/Vikram Rao/a.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+        ]);
+
+        $this->assertSame(['inner'], $this->clientNames());
+        $this->assertSame([
+            "Outer folder 'outer' was treated as a container.",
+            "Subfolders inside 'inner' were ignored for naming: every file under a client folder belongs to that client.",
+        ], $parent->meta['zip_notes']);
+    }
+
+    public function test_a_folder_is_not_a_container_when_a_file_sits_beside_it_at_the_zip_root(): void
+    {
+        $parent = $this->processZip([
+            'amit_verma.csv' => "name,asset_type,current_value\nHDFC Bank,stock,20000\n",
+            'Rajesh Kumar/groww/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'Rajesh Kumar/zerodha/b.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+        ]);
+
+        $this->assertSame(['Amit Verma', 'Rajesh Kumar'], $this->clientNames());
+        $this->assertStringNotContainsString('was treated as a container', $this->summary($parent));
+    }
+
+    public function test_skip_reasons_inside_an_unwrapped_zip_are_shown_relative_to_the_client_folder(): void
+    {
+        $parent = $this->processZip([
+            'clients/Asha Rao/good.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'clients/Asha Rao/empty.csv' => '',
+            'clients/Vikram Rao/a.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+        ]);
+
+        $this->assertSame(['Asha Rao' => ['Asha Rao/empty.csv' => 'File is empty (0 bytes)']], $parent->meta['client_skip_reasons']);
+        $this->assertSame(
+            'Scored from 1 of 2 files; skipped: empty.csv — File is empty (0 bytes)',
+            PortfolioFile::where('original_name', 'good.csv')->sole()->meta['parse_warnings'][0],
+        );
     }
 
     public function test_folders_differing_only_by_case_stay_separate_and_the_summary_says_so(): void

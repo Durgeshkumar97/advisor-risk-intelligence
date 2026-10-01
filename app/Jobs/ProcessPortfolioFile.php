@@ -470,6 +470,20 @@ class ProcessPortfolioFile implements ShouldQueue
             $rootFiles = [];        // accepted files at the ZIP root — one client each
             $folders = [];          // client name => files / skipped / nested
 
+            // A ZIP made by compressing a parent folder has one outer folder
+            // around the client folders; it is a container, not a client.
+            $layoutNames = [];
+
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+
+                if ($name !== false && ! ZipClientLayout::isDirectory($name) && ! ZipClientLayout::isIgnored($name)) {
+                    $layoutNames[] = $name;
+                }
+            }
+
+            $wrapper = ZipClientLayout::wrapperFolder($layoutNames);
+
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = $zip->getNameIndex($i);
 
@@ -488,6 +502,7 @@ class ProcessPortfolioFile implements ShouldQueue
                     continue;
                 }
 
+                $name = ZipClientLayout::unwrap($name, $wrapper);
                 $filename = ZipClientLayout::filename($name);
                 $folder = ZipClientLayout::folder($name);
                 $clientName = $folder === null ? null : ZipClientLayout::clientName($folder);
@@ -693,7 +708,7 @@ class ProcessPortfolioFile implements ShouldQueue
             $clientDetails = [
                 'failed_clients' => $failedClients,
                 'client_skip_reasons' => $clientSkipReasons,
-                'zip_notes' => $this->zipLayoutNotes($folders, $rootFiles),
+                'zip_notes' => $this->zipLayoutNotes($folders, $rootFiles, $wrapper),
             ];
 
             if (empty($leadFiles)) {
@@ -802,9 +817,13 @@ class ProcessPortfolioFile implements ShouldQueue
      *
      * @return list<string>
      */
-    private function zipLayoutNotes(array $folders, array $rootFiles): array
+    private function zipLayoutNotes(array $folders, array $rootFiles, ?string $wrapper = null): array
     {
         $notes = [];
+
+        if ($wrapper !== null) {
+            $notes[] = "Outer folder '{$wrapper}' was treated as a container.";
+        }
 
         if ($folders !== [] && $rootFiles !== []) {
             $notes[] = 'This ZIP has both client folders and files at the top level. Each top-level file was treated as one client, named from its filename.';

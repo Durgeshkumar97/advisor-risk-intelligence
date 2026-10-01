@@ -226,6 +226,7 @@ class PortfolioUploadController extends Controller
         $allowed = ['csv', 'xlsx', 'xls', 'pdf'];
         $clientCount = 0;
         $clientFolders = [];
+        $entries = [];
         $totalSize = 0;
 
         for ($i = 0; $i < $entryCount; $i++) {
@@ -245,21 +246,32 @@ class PortfolioUploadController extends Controller
                 return ['opened' => true, 'entry_count' => $entryCount, 'total_uncompressed_size' => $totalSize, 'client_count' => $clientCount];
             }
 
-            if ($stat['size'] === 0) {
-                continue;
-            }
-
             $name = $stat['name'];
             if (ZipClientLayout::isDirectory($name) || ZipClientLayout::isIgnored($name)) {
                 continue;
             }
-            if (! in_array(strtolower(pathinfo(ZipClientLayout::filename($name), PATHINFO_EXTENSION)), $allowed, true)) {
+
+            $entries[] = [
+                'name' => $name,
+                'countable' => $stat['size'] > 0
+                    && in_array(strtolower(pathinfo(ZipClientLayout::filename($name), PATHINFO_EXTENSION)), $allowed, true),
+            ];
+        }
+
+        $zip->close();
+
+        // The same container rule the extraction job applies, over the same
+        // entries, so the count here matches the clients it will create.
+        $wrapper = ZipClientLayout::wrapperFolder(array_column($entries, 'name'));
+
+        foreach ($entries as $entry) {
+            if (! $entry['countable']) {
                 continue;
             }
 
             // A top-level folder is one client however many files it holds;
             // a file at the root is one client on its own.
-            $folder = ZipClientLayout::folder($name);
+            $folder = ZipClientLayout::folder(ZipClientLayout::unwrap($entry['name'], $wrapper));
 
             if ($folder === null) {
                 $clientCount++;
@@ -267,8 +279,6 @@ class PortfolioUploadController extends Controller
                 $clientFolders[ZipClientLayout::clientName($folder)] = true;
             }
         }
-
-        $zip->close();
 
         return ['opened' => true, 'entry_count' => $entryCount, 'total_uncompressed_size' => $totalSize, 'client_count' => $clientCount + count($clientFolders)];
     }

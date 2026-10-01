@@ -16,6 +16,7 @@
 └── Priya Sharma/
     └── holdings.xlsx</pre>
             <ul style="margin:0;padding-left:1.1rem;">
+                <li>Put each client's files directly in their folder — no folders inside it.</li>
                 <li>One person per folder. Files from different people in one folder are combined into a single portfolio and will give a meaningless score.</li>
                 <li>Don't include the same file twice.</li>
                 <li>Don't rename or edit columns inside the export.</li>

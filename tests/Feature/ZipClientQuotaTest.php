@@ -117,4 +117,35 @@ class ZipClientQuotaTest extends TestCase
 
         @unlink($zipPath);
     }
+
+    public function test_the_upload_time_quota_check_counts_the_clients_inside_an_outer_folder(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Starter', 'slug' => 'starter-'.uniqid(), 'price' => 999, 'duration_days' => 30,
+            'is_active' => true, 'monthly_client_limit' => 2,
+        ]);
+        Subscription::create([
+            'user_id' => $this->user->id, 'plan_id' => $plan->id, 'status' => 'active',
+            'starts_at' => now(), 'ends_at' => now()->addDays(30), 'provider' => 'razorpay',
+        ]);
+
+        // One outer folder, three clients inside it: over a limit of 2. Counted
+        // as the single folder "clients" this would be let through.
+        $zipPath = tempnam(sys_get_temp_dir(), 'quota_').'.zip';
+        Fixtures::zip($zipPath, [
+            'clients/Rajesh Kumar/a.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
+            'clients/Priya Sharma/a.csv' => $this->csv([['Example Liquid Fund', '', 5, 500, 520]]),
+            'clients/Amit Verma/a.csv' => $this->csv([['Example Flexi Cap Fund', '', 5, 500, 530]]),
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('portfolio.upload.store'), [
+            'file' => new UploadedFile($zipPath, 'clients.zip', 'application/zip', null, true),
+        ]);
+
+        $response->assertSessionHasErrors('file');
+        $this->assertStringContainsString('This ZIP has 3 client(s) but only 2 slot(s) remain.', session('errors')->first('file'));
+        $this->assertSame([], $this->clientNames());
+
+        @unlink($zipPath);
+    }
 }

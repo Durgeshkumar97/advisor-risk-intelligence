@@ -27,6 +27,7 @@ class UploadPageInstructionsTest extends TestCase
             ->assertSee('They are combined into one portfolio and one report.')
             ->assertSee('PDF statements are not supported yet.')
             ->assertSee('US-dollar exports are not supported yet.')
+            ->assertSee("Put each client's files directly in their folder — no folders inside it.", false)
             ->assertSee('Up to 20 files per client');
     }
 }

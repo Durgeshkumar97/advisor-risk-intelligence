@@ -14,6 +14,10 @@ namespace App\Services;
  *   └── someone.csv           a file at the root = one client, named from the
  *                             filename (the pre-folder behaviour, unchanged)
  *
+ * Zipping a parent folder (right-click → compress) adds one outer folder
+ * around the client folders. That outer folder is a container, not a client:
+ * see wrapperFolder().
+ *
  * Entry names are untrusted input. Nothing here touches the filesystem, and a
  * folder name is only ever used as a display name and a grouping key.
  */
@@ -66,6 +70,53 @@ class ZipClientLayout
 
         return str_starts_with($filename, '__')
             || in_array(strtolower($filename), self::IGNORED_FILENAMES, true);
+    }
+
+    /**
+     * The outer folder to strip when the whole ZIP is one folder wrapped around
+     * the client folders, or null when there is none.
+     *
+     * It is a container when nothing sits at the ZIP root, there is exactly one
+     * top-level folder, and that folder holds at least one subfolder with a
+     * file in it. A single folder holding only files is one client.
+     *
+     * A lone client folder with per-broker subfolders has the same shape and is
+     * unwrapped too — its subfolders become visibly misnamed clients, which an
+     * advisor notices, rather than several people merged silently into one score.
+     *
+     * @param  list<string>  $entryNames  every file entry in the ZIP that is not clutter
+     */
+    public static function wrapperFolder(array $entryNames): ?string
+    {
+        $wrapper = null;
+        $hasSubfolders = false;
+
+        foreach ($entryNames as $entryName) {
+            $segments = self::segments($entryName);
+
+            if (count($segments) < 2) {
+                return null;    // a file at the root
+            }
+
+            if ($wrapper !== null && $segments[0] !== $wrapper) {
+                return null;    // more than one top-level folder
+            }
+
+            $wrapper = $segments[0];
+            $hasSubfolders = $hasSubfolders || count($segments) > 2;
+        }
+
+        return $hasSubfolders ? $wrapper : null;
+    }
+
+    /** The entry name with the container folder removed — one level only. */
+    public static function unwrap(string $entryName, ?string $wrapper): string
+    {
+        if ($wrapper === null) {
+            return $entryName;
+        }
+
+        return implode('/', array_slice(self::segments($entryName), 1));
     }
 
     /** The top-level folder an entry sits in, or null for a file at the root. */
