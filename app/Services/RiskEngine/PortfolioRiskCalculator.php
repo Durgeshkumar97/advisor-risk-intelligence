@@ -124,7 +124,14 @@ class PortfolioRiskCalculator
         // (invested_value is null when the file gave none). Comparing total
         // current value against a partial cost total would count the
         // unknown-cost holdings as pure profit and hide real losses.
-        $knownCostAssets = $assets->filter(fn ($a) => $a->invested_value !== null);
+        //
+        // A holding valued at cost (meta.value_basis = 'cost': its source has
+        // no market price, so its current value IS its cost) is left out for
+        // the same reason from the other side: it would count as money that
+        // has not moved and dilute the losses of everything else.
+        $knownCostAssets = $assets->filter(
+            fn ($a) => $a->invested_value !== null && ($a->meta['value_basis'] ?? 'market') !== 'cost'
+        );
         $totalInvestedValue = (float) $knownCostAssets->sum('invested_value');
         $currentValueWithKnownCost = (float) $knownCostAssets->sum('current_value');
 

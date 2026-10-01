@@ -479,3 +479,40 @@ it('measures unrealised loss only over holdings whose cost is known', function (
         ->and($result['score'])->toBe(64.5)
         ->and($result['risk_flags'])->toContain('SIGNIFICANT_DRAWDOWN');
 });
+
+// ---------------------------------------------------------------------------
+// Holdings valued at cost (meta.value_basis = 'cost')
+// ---------------------------------------------------------------------------
+
+it('leaves a holding valued at cost out of the unrealised-loss measure, while still weighting it', function () {
+    // A: cost 1,00,000 → now 85,000 (−15%).
+    // B: a US stock whose export has no market price, carried at its cost of
+    //    1,00,000. Its "current value" equals its cost by construction.
+    // Counting B would read as "1,00,000 that has not moved": the loss
+    // becomes 15,000 on 2,00,000 = 7.5%, drawdown factor 25, score 49.66.
+    // Measured over A alone: 15% → drawdown factor 50 → score 54.66.
+    $assets = collect([
+        makeAsset(['current_value' => 85000, 'invested_value' => 100000, 'risk_score' => 65]),
+        makeAsset(['asset_type' => 'foreign_stock', 'current_value' => 100000, 'invested_value' => 100000, 'risk_score' => 65, 'meta' => ['value_basis' => 'cost']]),
+    ]);
+
+    $result = calc()->calculate($assets, 1.0);
+
+    expect($result['drawdown'])->toBe(15.0)
+        ->and($result['meta']['drawdown_score'])->toBe(50.0)
+        ->and($result['meta']['total_invested'])->toBe(100000.0)      // the measured subset: A only
+        ->and($result['score'])->toBe(54.66)
+        // B still counts for allocation: the portfolio is 1,85,000, all equity.
+        ->and($result['meta']['total_current'])->toBe(185000.0)
+        ->and($result['meta']['equity_ratio_pct'])->toBe(100.0)
+        ->and($result['meta']['hhi'])->toBe(0.5033);
+});
+
+it('measures a market-valued holding exactly as before, whatever else its meta says', function () {
+    $assets = collect([
+        makeAsset(['current_value' => 85000, 'invested_value' => 100000, 'risk_score' => 65, 'meta' => ['value_basis' => 'market', 'currency' => 'USD']]),
+        makeAsset(['current_value' => 100000, 'invested_value' => 100000, 'risk_score' => 65]),
+    ]);
+
+    expect(calc()->calculate($assets, 1.0)['drawdown'])->toBe(7.5);
+});
