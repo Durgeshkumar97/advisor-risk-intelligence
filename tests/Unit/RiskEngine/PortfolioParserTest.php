@@ -1,15 +1,28 @@
 <?php
 
+use App\Contracts\FxRateProvider;
 use App\Models\PortfolioFile;
 use App\Services\RiskEngine\PortfolioParser;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\FixedFxRate;
 
 uses(\Tests\TestCase::class);
 
 beforeEach(function () {
     Storage::fake('portfolios');
+    Carbon::setTestNow('2026-10-01 10:00:00');
+
+    // No exchange rate unless a test sets one.
+    app()->instance(FxRateProvider::class, FixedFxRate::none());
     $this->parser = new PortfolioParser;
 });
+
+/** A parser that converts US dollars at the fixed test rate, dated $asOf. */
+function usdParser(string $asOf = '2026-09-29'): PortfolioParser
+{
+    return new PortfolioParser(fxRates: new FixedFxRate(asOf: $asOf));
+}
 
 // ---------------------------------------------------------------------------
 // Helper — write CSV to fake disk and return a PortfolioFile stub
@@ -718,15 +731,144 @@ it('reads a Groww mutual-fund export whose header is on row 10', function () {
         ->and($result['rows'][0]['isin'])->toBe('INF000TEST01');
 });
 
-it('rejects an INDmoney US-dollar export, naming the 16 holdings it found', function () {
+it('converts an INDmoney US-dollar export to rupees and records the rate and the dollar amounts', function () {
     $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
 
-    $result = $this->parser->parse($file);
+    $result = usdParser()->parse($file);
 
     // 16 = every holding on rows 9–24; the blank rows and the 7-line
     // disclaimer block contributed none.
+    expect($result['rows'])->toHaveCount(16)
+        ->and($result['errors'])->toBeEmpty();
+
+    // Row 9: 0.25 shares at an average of $10 — $2.50 paid.
+    $first = $result['rows'][0];
+
+    expect($first['name'])->toBe('TSTA')
+        ->and($first['quantity'])->toBe(0.25)
+        ->and($first['invested_value'])->toBe(239.96)        // 2.50 × 95.985
+        ->and($first['current_value'])->toBe(239.96)
+        ->and($first['buy_price'])->toBe(959.85)             // 10 × 95.985
+        ->and($first['currency'])->toBe('USD')
+        ->and($first['fx'])->toBe(['rate' => 95.985, 'as_of' => '2026-09-29', 'source' => FixedFxRate::SOURCE])
+        ->and($first['original'])->toBe(['current_value' => 2.5, 'invested_value' => 2.5, 'buy_price' => 10.0, 'current_price' => 0.0]);
+
+    // Every row is converted: none is left at its dollar figure.
+    foreach ($result['rows'] as $row) {
+        expect($row['current_value'])->toBe(round($row['original']['current_value'] * 95.985, 2))
+            ->and($row['fx']['rate'])->toBe(95.985);
+    }
+});
+
+it('values a US-dollar file that has a cost and no market value at cost, with the gain or loss unknown', function () {
+    $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    $result = usdParser()->parse($file);
+    $last = $result['rows'][15];     // row 24: 7.75 shares at an average of $122.50
+
+    expect(array_unique(array_column($result['rows'], 'value_basis')))->toBe(['cost'])
+        ->and($last['original']['invested_value'])->toBe(949.38)
+        ->and($last['current_value'])->toBe($last['invested_value'])     // carried at what was paid
+        ->and($last['invested_value_source'])->toBe('derived')
+        ->and($last['profit_loss'])->toBeNull()                          // unknown, not zero
+        ->and($last['current_price'])->toBe(0.0)                         // no market price is invented
+        ->and($result['warnings'])->toBe([sprintf(PortfolioParser::VALUED_AT_COST_WARNING, 16, 's are', 'they are')]);
+});
+
+it('converts a US-dollar file that has market values at market, keeping its gain or loss', function () {
+    $file = csvFile('us.csv', implode("\n", [
+        'Stock Symbol,Quantity,Avg. Price ($),Market Value ($)',
+        'TSTA,2,100,250',
+    ]));
+
+    $result = usdParser()->parse($file);
+    $row = $result['rows'][0];
+
+    expect($row['value_basis'])->toBe('market')
+        ->and($row['current_value'])->toBe(23996.25)       // 250 × 95.985
+        ->and($row['invested_value'])->toBe(19197.0)       // 200 × 95.985
+        ->and($row['profit_loss'])->toBe(4799.25)
+        ->and($row['current_price'])->toBe(11998.13)       // 125 × 95.985
+        ->and($row['original']['current_value'])->toBe(250.0)
+        ->and($result['warnings'])->toBeEmpty();
+});
+
+it('scores a US-dollar holding with no stated type as a foreign stock, without an unknown-type warning', function () {
+    $typed = csvFile('typed.csv', "Stock Symbol,Type,Quantity,Avg. Price ($),Market Value ($)\nTSTA,ETF,2,100,250\nTSTB,,2,100,250\n");
+    $result = usdParser()->parse($typed);
+
+    expect(array_column($result['rows'], 'asset_type'))->toBe(['etf', 'foreign_stock'])
+        ->and($result['warnings'])->toBeEmpty();
+});
+
+it('rejects a US-dollar file when no exchange rate is set, rather than reading dollars as rupees', function () {
+    $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    $result = $this->parser->parse($file);     // no rate configured
+
     expect($result['rows'])->toBeEmpty()
-        ->and($result['errors'])->toBe([sprintf(PortfolioParser::USD_MESSAGE, 16)]);
+        ->and($result['errors'])->toBe([PortfolioParser::NO_FX_RATE_MESSAGE])
+        ->and(PortfolioParser::NO_FX_RATE_MESSAGE)->toBe("US-dollar holdings can't be valued yet: no exchange rate is set.");
+});
+
+it('rejects a US-dollar file when the rate is more than 31 days old, naming its date', function () {
+    $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    $expired = usdParser('2026-08-30')->parse($file);      // 32 days before 1 Oct
+    $lastDay = usdParser('2026-08-31')->parse($file);      // 31 days
+
+    expect($expired['rows'])->toBeEmpty()
+        ->and($expired['errors'])->toBe(["US-dollar holdings can't be valued: the exchange rate on file is dated 30 Aug 2026, which is more than 31 days old."])
+        ->and($lastDay['rows'])->toHaveCount(16);
+});
+
+it('accepts a rate more than 7 days old and says so in a warning', function () {
+    $file = fixtureFile('indmoney.xls', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
+
+    $stale = usdParser('2026-09-23')->parse($file);        // 8 days before 1 Oct
+    $fresh = usdParser('2026-09-24')->parse($file);        // 7 days
+
+    $note = 'US-dollar holdings were converted at an exchange rate dated 23 Sep 2026, which is more than 7 days old.';
+
+    expect($stale['rows'])->toHaveCount(16)
+        ->and($stale['warnings'])->toContain($note)
+        ->and(implode(' ', $fresh['warnings']))->not->toContain('days old');
+});
+
+it('still rejects a US-dollar file with neither a market value nor a cost basis', function () {
+    $file = csvFile('us-nothing.csv', implode("\n", [
+        'Stock Symbol,Quantity,Holding Since ($)',
+        'TSTA,2,01-01-2025',
+    ]));
+
+    $result = usdParser()->parse($file);
+
+    expect($result['rows'])->toBeEmpty()
+        ->and($result['errors'])->toBe([PortfolioParser::NO_MARKET_VALUE_MESSAGE]);
+});
+
+it('skips a row of a cost-valued US-dollar file whose cost cannot be worked out', function () {
+    $file = csvFile('us.csv', implode("\n", [
+        'Stock Symbol,Quantity,Avg. Price ($)',
+        'TSTA,2,100',
+        'TSTB,3,',
+    ]));
+
+    $result = usdParser()->parse($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['errors'])->toBe(['Row 3: skipped (missing required data).']);
+});
+
+it('returns rupee rows exactly as before: no currency, basis or conversion keys', function () {
+    $file = fixtureFile('groww.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'growwMutualFundHoldings']);
+
+    $rows = usdParser()->parse($file)['rows'];
+
+    expect(array_keys($rows[0]))->toBe([
+        'name', 'asset_type', 'symbol', 'isin', 'quantity', 'buy_price', 'current_price',
+        'invested_value', 'current_value', 'profit_loss', 'invested_value_source',
+    ])->and($rows[0]['current_value'])->toBe(55000.0);
 });
 
 it('identifies the format from content, not the extension', function () {
@@ -734,7 +876,7 @@ it('identifies the format from content, not the extension', function () {
     $biffNamedXlsx = fixtureFile('indmoney-really-xls.xlsx', [\Tests\Support\BrokerExportFixtures::class, 'indmoneyUsStocks']);
 
     expect($this->parser->parse($ooxmlNamedXls)['rows'])->toHaveCount(3)
-        ->and($this->parser->parse($biffNamedXlsx)['errors'])->toBe([sprintf(PortfolioParser::USD_MESSAGE, 16)]);
+        ->and(usdParser()->parse($biffNamedXlsx)['rows'])->toHaveCount(16);
 });
 
 it('keeps each value in its own column when a cell in the row is blank (D2-02)', function () {
@@ -855,7 +997,7 @@ it('derives cost only from a cost price, never from a market price', function ()
         ->and($rows[1]['profit_loss'])->toBeNull();
 });
 
-it('rejects a file with no source of current market value', function () {
+it('rejects a rupee file with no source of current market value, even when it has a cost basis', function () {
     $file = csvFile('cost-only.csv', implode("\n", [
         'name,quantity,avg. price',
         'Example Holding,10,90',

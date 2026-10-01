@@ -2,6 +2,8 @@
 
 namespace App\Services\RiskEngine;
 
+use App\Contracts\FxRateProvider;
+use App\DTOs\FxQuote;
 use App\Models\PortfolioFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -40,8 +42,24 @@ use Illuminate\Support\Facades\Storage;
  *
  * FILE-LEVEL REJECTIONS
  * ─────────────────────
- *   No header, values in US dollars (never converted, never read as rupees),
- *   no source of current market value, or more than MAX_ROWS holdings.
+ *   No header, no source of current market value, more than MAX_ROWS
+ *   holdings, or US-dollar values with no usable exchange rate.
+ *
+ * US-DOLLAR FILES
+ * ───────────────
+ *   A header carrying "($)" or "USD" marks the whole file as US dollars.
+ *   Every amount is converted to rupees at the rate in force (FxRateProvider)
+ *   before a row leaves this class: parse() never returns a dollar amount,
+ *   and a dollar file with no rate, or a rate more than 31 days old, is
+ *   rejected whole rather than read as rupees. Each converted row records the
+ *   rate, its date and source, and the original dollar amounts.
+ *
+ *   A dollar file with a cost basis but no market value at all (INDmoney's US
+ *   export) is valued at cost: current_value is the cost, value_basis is
+ *   'cost', and profit_loss is null — the gain or loss is unknown, not zero.
+ *   This applies to dollar files only. In a rupee file a missing market value
+ *   usually means a header this parser did not recognise, so it stays a
+ *   rejection.
  *
  * UNKNOWN IS NOT ZERO
  * ───────────────────
@@ -66,6 +84,11 @@ use Illuminate\Support\Facades\Storage;
  *     'profit_loss'           => float|null,
  *     'invested_value_source' => 'file'|'derived'|'unknown',
  *   ]
+ *   Rows from a US-dollar file (amounts above already in rupees) also carry:
+ *     'currency'    => 'USD',               // the currency of the source figures
+ *     'value_basis' => 'market'|'cost',
+ *     'fx'          => ['rate', 'as_of', 'source'],
+ *     'original'    => ['current_value', 'invested_value', 'buy_price', 'current_price'],
  */
 class PortfolioParser
 {
@@ -104,7 +127,13 @@ class PortfolioParser
 
     public const NO_MARKET_VALUE_MESSAGE = 'This file has no current market value for its holdings. RiskSignal needs a Current Value or Market Value column, or Quantity with a current price or NAV.';
 
-    public const USD_MESSAGE = 'This export\'s values are in US dollars (%d holdings found). RiskSignal scores portfolios in Indian rupees; please upload an INR export.';
+    public const NO_FX_RATE_MESSAGE = 'US-dollar holdings can\'t be valued yet: no exchange rate is set.';
+
+    public const EXPIRED_FX_RATE_MESSAGE = 'US-dollar holdings can\'t be valued: the exchange rate on file is dated %s, which is more than 31 days old.';
+
+    public const STALE_FX_RATE_WARNING = 'US-dollar holdings were converted at an exchange rate dated %s, which is more than 7 days old.';
+
+    public const VALUED_AT_COST_WARNING = '%d holding%s valued at cost: this export has no current market price, so %s left out of the gain/loss figure.';
 
     public const UNSUPPORTED_MESSAGE = 'File type .%s is not supported. Supported: CSV, XLSX, XLS, or a ZIP of these.';
 
@@ -127,8 +156,12 @@ class PortfolioParser
      */
     private array $unknownAssetTypes = [];
 
+    /** Notes about how a US-dollar file was valued. Reset per parse() call. */
+    private array $valuationWarnings = [];
+
     public function __construct(
         private readonly SpreadsheetRowReader $spreadsheetReader = new SpreadsheetRowReader,
+        private readonly ?FxRateProvider $fxRates = null,
     ) {}
 
     /*
@@ -228,6 +261,7 @@ class PortfolioParser
         // Reset per call — this service can be resolved once and reused for
         // several files in the same worker process.
         $this->unknownAssetTypes = [];
+        $this->valuationWarnings = [];
 
         $path = Storage::disk(self::DISK)->path($portfolioFile->path);
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
@@ -253,7 +287,7 @@ class PortfolioParser
      */
     private function buildWarnings(): array
     {
-        $warnings = [];
+        $warnings = $this->valuationWarnings;
 
         foreach ($this->unknownAssetTypes as $raw => $count) {
             $warnings[] = sprintf(
@@ -369,9 +403,32 @@ class PortfolioParser
         $hasMarketValue = isset($headerMap['current_value'])
             || (isset($headerMap['quantity']) && isset($headerMap['current_price']));
 
+        $hasCostBasis = isset($headerMap['invested_value'])
+            || (isset($headerMap['quantity']) && isset($headerMap['buy_price']));
+
+        // US-dollar files only: with a cost basis and no market value at all,
+        // each holding is valued at what was paid for it.
+        $valueAtCost = $header['usd'] && ! $hasMarketValue && $hasCostBasis;
+        $usable = $hasMarketValue || $valueAtCost;
+
+        // The rate is settled before any row is read: a dollar file is either
+        // converted in full or rejected, never partly read.
+        $quote = null;
+
+        if ($header['usd'] && $usable) {
+            $quote = ($this->fxRates ?? app(FxRateProvider::class))->current('USD');
+
+            if ($quote === null) {
+                return $this->failure(self::NO_FX_RATE_MESSAGE);
+            }
+
+            if ($quote->isExpired()) {
+                return $this->failure(sprintf(self::EXPIRED_FX_RATE_MESSAGE, $quote->asOf->format('j M Y')));
+            }
+        }
+
         $rows = [];
         $errors = [];
-        $candidateCount = 0;
 
         foreach (array_slice($rawRows, $header['index'] + 1, null, true) as $index => $rawRow) {
             $lineNum = $index + 1;
@@ -395,10 +452,8 @@ class PortfolioParser
                 continue;
             }
 
-            $candidateCount++;
-
-            if ($header['usd'] || ! $hasMarketValue) {
-                // File-level rejection follows; only count what was found.
+            if (! $usable) {
+                // File-level rejection follows.
                 continue;
             }
 
@@ -407,7 +462,7 @@ class PortfolioParser
                 return $this->failure(self::MAX_ROWS_MESSAGE);
             }
 
-            $row = $this->mapRow($rawRow, $headerMap);
+            $row = $this->mapRow($rawRow, $headerMap, $header['usd'], $valueAtCost);
 
             if ($row === null) {
                 $errors[] = "Row {$lineNum}: skipped (missing required data).";
@@ -415,15 +470,22 @@ class PortfolioParser
                 continue;
             }
 
-            $rows[] = $row;
+            $rows[] = $quote === null ? $row : $this->convertToRupees($row, $quote);
         }
 
-        if ($header['usd']) {
-            return $this->failure(sprintf(self::USD_MESSAGE, $candidateCount));
-        }
-
-        if (! $hasMarketValue) {
+        if (! $usable) {
             return $this->failure(self::NO_MARKET_VALUE_MESSAGE);
+        }
+
+        if ($quote !== null && $rows !== []) {
+            if ($quote->isStale()) {
+                $this->valuationWarnings[] = sprintf(self::STALE_FX_RATE_WARNING, $quote->asOf->format('j M Y'));
+            }
+
+            if ($valueAtCost) {
+                $one = count($rows) === 1;
+                $this->valuationWarnings[] = sprintf(self::VALUED_AT_COST_WARNING, count($rows), $one ? ' is' : 's are', $one ? 'it is' : 'they are');
+            }
         }
 
         return ['rows' => $rows, 'errors' => $errors, 'count' => count($rows)];
@@ -562,7 +624,7 @@ class PortfolioParser
      * Map a raw row to a normalised holding array.
      * Returns null if the row cannot produce a valid holding.
      */
-    private function mapRow(array $rawRow, array $headerMap): ?array
+    private function mapRow(array $rawRow, array $headerMap, bool $usd = false, bool $valueAtCost = false): ?array
     {
         $get = fn (string $field): string => $this->cell($rawRow, $headerMap, $field);
 
@@ -571,7 +633,11 @@ class PortfolioParser
             return null;
         }
 
-        $assetType = $this->normaliseAssetType($get('asset_type'), $name);
+        // A dollar holding with no stated type is a foreign stock. Guessing
+        // from a ticker ("TSTA") would make it a domestic one.
+        $assetType = ($usd && $get('asset_type') === '')
+            ? 'foreign_stock'
+            : $this->normaliseAssetType($get('asset_type'), $name);
 
         $quantity = $this->toFloat($get('quantity'));
         $buyPrice = $this->toFloat($get('buy_price'));
@@ -584,7 +650,7 @@ class PortfolioParser
         }
 
         // Must have a current value to be meaningful
-        if ($currentValue <= 0) {
+        if ($currentValue <= 0 && ! $valueAtCost) {
             return null;
         }
 
@@ -610,10 +676,24 @@ class PortfolioParser
             $buyPrice = round($investedValue / $quantity, 2);
         }
 
+        if ($valueAtCost) {
+            // No market value anywhere in the file: the holding is carried at
+            // its cost so it still counts toward allocation. Its market price
+            // and its gain or loss are unknown, and are not invented.
+            if ($investedValue === null || $investedValue <= 0) {
+                return null;
+            }
+
+            $currentValue = $investedValue;
+            $currentPrice = 0.0;
+        }
+
         // Derive current price if still zero
-        if ($currentPrice <= 0 && $quantity > 0 && $currentValue > 0) {
+        if (! $valueAtCost && $currentPrice <= 0 && $quantity > 0 && $currentValue > 0) {
             $currentPrice = round($currentValue / $quantity, 2);
         }
+
+        $unknownPnl = $investedValue === null || $valueAtCost;
 
         return [
             'name' => $name,
@@ -625,8 +705,53 @@ class PortfolioParser
             'current_price' => $currentPrice,
             'invested_value' => $investedValue,
             'current_value' => $currentValue,
-            'profit_loss' => $investedValue === null ? null : round($currentValue - $investedValue, 2),
+            'profit_loss' => $unknownPnl ? null : round($currentValue - $investedValue, 2),
             'invested_value_source' => $investedSource,
+        ] + ($usd ? [
+            'currency' => 'USD',
+            'value_basis' => $valueAtCost ? 'cost' : 'market',
+        ] : []);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENCY — dollars to rupees
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Convert every amount of a US-dollar row to rupees and record how.
+     *
+     * `currency` stays 'USD': it names the currency of the source figures,
+     * kept in `original`. The amounts the rest of the application reads are
+     * rupees from here on.
+     */
+    private function convertToRupees(array $row, FxQuote $quote): array
+    {
+        $toRupees = fn (?float $amount): ?float => $amount === null ? null : round($amount * $quote->rate, 2);
+
+        $original = [
+            'current_value' => $row['current_value'],
+            'invested_value' => $row['invested_value'],
+            'buy_price' => $row['buy_price'],
+            'current_price' => $row['current_price'],
+        ];
+
+        foreach (array_keys($original) as $field) {
+            $row[$field] = $toRupees($row[$field]);
+        }
+
+        if ($row['profit_loss'] !== null) {
+            $row['profit_loss'] = round($row['current_value'] - $row['invested_value'], 2);
+        }
+
+        return $row + [
+            'fx' => [
+                'rate' => $quote->rate,
+                'as_of' => $quote->asOf->toDateString(),
+                'source' => $quote->source,
+            ],
+            'original' => $original,
         ];
     }
 

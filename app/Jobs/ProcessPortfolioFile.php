@@ -139,6 +139,8 @@ class ProcessPortfolioFile implements ShouldQueue
                 'parse_errors' => $parseErrors,
             ]);
 
+            $this->assertAllAmountsAreRupees($holdings);
+
             $portfolioId = $file->portfolio_id;
             $riskScore = null;
             $reportPath = null;
@@ -231,6 +233,19 @@ class ProcessPortfolioFile implements ShouldQueue
                             'cost_known' => $row['cost_known'],
                             'as_of' => $row['as_of'],
                         ];
+                    }
+
+                    // A holding whose source figures were not rupees: the rate
+                    // it was converted at, and the amounts as the file gave them.
+                    if (isset($row['fx'])) {
+                        $meta = array_merge($meta, [
+                            'currency' => $row['currency'],
+                            'value_basis' => $row['value_basis'],
+                            'fx_rate' => $row['fx']['rate'],
+                            'fx_as_of' => $row['fx']['as_of'],
+                            'fx_source' => $row['fx']['source'],
+                            'original' => $row['original'],
+                        ]);
                     }
 
                     if ($isStock) {
@@ -418,6 +433,21 @@ class ProcessPortfolioFile implements ShouldQueue
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Last line of defence against mixing currencies: every amount stored and
+     * scored is rupees. The parser converts a foreign-currency holding and
+     * records the rate; a holding that claims another currency with no
+     * conversion on record would be read as rupees, so nothing is stored.
+     */
+    private function assertAllAmountsAreRupees(array $holdings): void
+    {
+        foreach ($holdings as $row) {
+            if (($row['currency'] ?? 'INR') !== 'INR' && empty($row['fx']['rate'])) {
+                throw new \RuntimeException('A '.$row['currency'].' holding reached scoring without being converted to rupees. Nothing was stored.');
+            }
         }
     }
 
@@ -871,7 +901,8 @@ class ProcessPortfolioFile implements ShouldQueue
     /**
      * Parse every source file of one client and merge the holdings.
      *
-     * A file that cannot be used (unsupported, US-dollar, unparseable, or a
+     * A file that cannot be used (unsupported, unparseable, US-dollar with no
+     * exchange rate, or a
      * duplicate of another file's holdings) is skipped with its reason and the
      * client is scored from the rest. If nothing can be used the client fails
      * with that reason.

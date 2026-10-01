@@ -192,7 +192,9 @@ class ZipClientFoldersTest extends TestCase
         $this->assertSame([true, false], array_column($asset->meta['sources'], 'cost_known'));
     }
 
-    // ─── 5. C1 — a US-dollar file in a folder ────────────────────────────
+    // ─── 5. C1 — a US-dollar file in a folder, with no exchange rate set ─
+    // (No rate exists in these tests, so a dollar file cannot be valued and is
+    // skipped. With a rate it is converted: see UsdHoldingsTest.)
 
     public function test_a_us_dollar_file_is_skipped_and_the_client_is_scored_from_the_rupee_files(): void
     {
@@ -201,7 +203,7 @@ class ZipClientFoldersTest extends TestCase
             'Rajesh Kumar/us-stocks.xls' => [Fixtures::class, 'indmoneyUsStocks'],
         ]);
 
-        $usd = sprintf(PortfolioParser::USD_MESSAGE, 16);
+        $usd = PortfolioParser::NO_FX_RATE_MESSAGE;
         $lead = PortfolioFile::where('original_name', 'groww.xlsx')->sole();
 
         $this->assertSame(PortfolioFile::STATUS_PROCESSED, $lead->status);
@@ -225,7 +227,7 @@ class ZipClientFoldersTest extends TestCase
             'Priya Sharma/holdings.csv' => $this->csv([['Example Gilt Fund', '', 10, 1000, 1100]]),
         ]);
 
-        $usd = sprintf(PortfolioParser::USD_MESSAGE, 16);
+        $usd = PortfolioParser::NO_FX_RATE_MESSAGE;
         $lead = PortfolioFile::where('original_name', 'us-stocks.xls')->sole();
 
         $this->assertSame(PortfolioFile::STATUS_FAILED, $lead->status);
@@ -316,7 +318,7 @@ class ZipClientFoldersTest extends TestCase
             'Priya Sharma/other.csv' => $this->csv([['Example Liquid Fund', 'INF000TEST02', 5, 500, 520]]),
         ]);
 
-        $usd = sprintf(PortfolioParser::USD_MESSAGE, 16);
+        $usd = PortfolioParser::NO_FX_RATE_MESSAGE;
         $leadOf = fn (string $client) => PortfolioFile::where('portfolio_id', Portfolio::where('name', $client)->sole()->id)
             ->whereNotNull('report_path')->sole();
 
@@ -378,18 +380,18 @@ class ZipClientFoldersTest extends TestCase
 
         $expected = [
             'Rajesh Kumar/b/statement.csv' => PortfolioParser::NO_HEADER_MESSAGE,
-            'Rajesh Kumar/c/statement.csv' => sprintf(PortfolioParser::USD_MESSAGE, 1),
+            'Rajesh Kumar/c/statement.csv' => PortfolioParser::NO_FX_RATE_MESSAGE,
         ];
         $lead = PortfolioFile::where('portfolio_id', Portfolio::where('name', 'Rajesh Kumar')->sole()->id)->whereNotNull('report_path')->sole();
 
         $this->assertSame($expected, $lead->meta['client_sources']['skipped']);
         $this->assertStringContainsString('b/statement.csv — '.PortfolioParser::NO_HEADER_MESSAGE, $lead->meta['parse_warnings'][0]);
-        $this->assertStringContainsString('c/statement.csv — '.sprintf(PortfolioParser::USD_MESSAGE, 1), $lead->meta['parse_warnings'][0]);
+        $this->assertStringContainsString('c/statement.csv — '.PortfolioParser::NO_FX_RATE_MESSAGE, $lead->meta['parse_warnings'][0]);
 
         $summary = $this->summary($parent);
         $this->assertStringContainsString('built from: a/statement.csv', $summary);
         $this->assertStringContainsString('b/statement.csv — '.PortfolioParser::NO_HEADER_MESSAGE, $summary);
-        $this->assertStringContainsString('c/statement.csv — '.sprintf(PortfolioParser::USD_MESSAGE, 1), $summary);
+        $this->assertStringContainsString('c/statement.csv — '.PortfolioParser::NO_FX_RATE_MESSAGE, $summary);
     }
 
     // ─── 8. flat ZIP — unchanged ─────────────────────────────────────────

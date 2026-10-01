@@ -21,8 +21,13 @@ namespace App\Services\RiskEngine;
  *     source_file  string       the file this holding came from
  *     currency     string       e.g. 'INR'
  *     cost_known   bool         invested_value is a real figure
- *     value_basis  string       'market' (current_value is a market value)
+ *     value_basis  string       'market' (current_value is a market value) or
+ *                               'cost' (it is what was paid; gain/loss unknown)
  *     as_of        string|null  date of the figures (Y-m-d), null if unknown
+ *   and, when the source figures were in another currency (all amounts above
+ *   are already converted):
+ *     fx           array        the conversion: rate, as_of, source
+ *     original     array        the amounts in the source currency
  *
  * MERGE RULES
  * ───────────
@@ -33,6 +38,8 @@ namespace App\Services\RiskEngine;
  *   - Holdings from the SAME source file are never merged with each other, so
  *     a file gives the same result alone as inside a client folder.
  *   - Matched holdings are summed: quantity, current_value, invested_value.
+ *   - A holding valued at cost has no known gain or loss, merged or not: its
+ *     profit_loss stays null and it gets no market price.
  *   - Unknown cost wins: if any contributing holding has cost_known = false,
  *     the merged invested_value and profit_loss are null. A partial sum would
  *     understate cost and overstate profit.
@@ -115,17 +122,37 @@ class HoldingsMerger
         $merged['quantity'] = $quantity;
         $merged['current_value'] = $currentValue;
         $merged['invested_value'] = $investedValue;
-        $merged['profit_loss'] = $costKnown ? round($currentValue - $investedValue, 2) : null;
+        $atCost = $merged['value_basis'] === 'cost';
+
+        $merged['profit_loss'] = ($costKnown && ! $atCost) ? round($currentValue - $investedValue, 2) : null;
         $merged['cost_known'] = $costKnown;
         $merged['invested_value_source'] = $this->combinedCostSource($merged, $holding, $costKnown);
-        $merged['current_price'] = $quantity > 0 ? round($currentValue / $quantity, 2) : 0.0;
+        $merged['current_price'] = ($quantity > 0 && ! $atCost) ? round($currentValue / $quantity, 2) : 0.0;
         $merged['buy_price'] = ($costKnown && $quantity > 0) ? round($investedValue / $quantity, 2) : 0.0;
         $merged['isin'] = $merged['isin'] ?: ($holding['isin'] ?? null);
         $merged['symbol'] = $merged['symbol'] ?: ($holding['symbol'] ?? null);
         $merged['as_of'] = $this->oldest($merged['as_of'] ?? null, $holding['as_of'] ?? null);
         $merged['sources'][] = $this->sourceEntry($holding);
 
+        if (isset($merged['original'], $holding['original'])) {
+            $merged['original'] = $this->combineOriginal($merged['original'], $holding['original'], $quantity, $costKnown, $atCost);
+        }
+
         return $merged;
+    }
+
+    /** The source-currency amounts of a merged holding, by the same rules as the converted ones. */
+    private function combineOriginal(array $a, array $b, float $quantity, bool $costKnown, bool $atCost): array
+    {
+        $currentValue = round((float) $a['current_value'] + (float) $b['current_value'], 2);
+        $investedValue = $costKnown ? round((float) $a['invested_value'] + (float) $b['invested_value'], 2) : null;
+
+        return [
+            'current_value' => $currentValue,
+            'invested_value' => $investedValue,
+            'buy_price' => ($costKnown && $quantity > 0) ? round($investedValue / $quantity, 2) : 0.0,
+            'current_price' => ($quantity > 0 && ! $atCost) ? round($currentValue / $quantity, 2) : 0.0,
+        ];
     }
 
     private function combinedCostSource(array $merged, array $holding, bool $costKnown): string

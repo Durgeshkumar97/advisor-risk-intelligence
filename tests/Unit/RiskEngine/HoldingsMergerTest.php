@@ -133,3 +133,28 @@ it('passes a single source through unchanged apart from recording its source', f
     expect($merged[0]['sources'])->toBe([['source_file' => 'broker-a.xlsx', 'cost_known' => true, 'as_of' => null]])
         ->and(array_diff_key($merged[0], ['sources' => 1]))->toBe(array_diff_key($input, ['source_file' => 1]));
 });
+
+it('keeps the gain or loss unknown when two cost-valued holdings merge, and sums their source-currency amounts', function () {
+    $usd = fn (array $overrides) => holding([
+        'name' => 'TSTA', 'isin' => null, 'asset_type' => 'foreign_stock',
+        'currency' => 'USD', 'value_basis' => 'cost', 'profit_loss' => null, 'current_price' => 0.0,
+        'fx' => ['rate' => 95.985, 'as_of' => '2026-09-29', 'source' => 'test'],
+    ] + $overrides);
+
+    $merged = (new HoldingsMerger)->merge([
+        $usd(['quantity' => 2.0, 'invested_value' => 19197.0, 'current_value' => 19197.0,
+            'original' => ['current_value' => 200.0, 'invested_value' => 200.0, 'buy_price' => 100.0, 'current_price' => 0.0]]),
+        $usd(['source_file' => 'us-b.csv', 'quantity' => 3.0, 'invested_value' => 34554.6, 'current_value' => 34554.6,
+            'original' => ['current_value' => 360.0, 'invested_value' => 360.0, 'buy_price' => 120.0, 'current_price' => 0.0]]),
+    ]);
+
+    // current − invested is 0 here by construction; reporting it would state a
+    // 0% return nobody measured.
+    expect($merged)->toHaveCount(1)
+        ->and($merged[0]['current_value'])->toBe(53751.6)
+        ->and($merged[0]['invested_value'])->toBe(53751.6)
+        ->and($merged[0]['profit_loss'])->toBeNull()
+        ->and($merged[0]['current_price'])->toBe(0.0)
+        ->and($merged[0]['original'])->toBe(['current_value' => 560.0, 'invested_value' => 560.0, 'buy_price' => 112.0, 'current_price' => 0.0])
+        ->and($merged[0]['fx']['rate'])->toBe(95.985);
+});

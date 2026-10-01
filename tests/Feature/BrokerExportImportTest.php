@@ -87,12 +87,12 @@ class BrokerExportImportTest extends TestCase
         $this->assertSame('unknown', $asset->meta['invested_value_source']);
     }
 
-    public function test_a_us_dollar_export_fails_with_the_currency_reason_shown_to_the_advisor(): void
+    public function test_a_us_dollar_export_fails_with_the_reason_shown_to_the_advisor_when_no_exchange_rate_is_set(): void
     {
         $file = $this->upload('indmoney.xls', [BrokerExportFixtures::class, 'indmoneyUsStocks']);
 
         $this->assertSame(PortfolioFile::STATUS_FAILED, $file->status);
-        $this->assertStringContainsString('US dollars (16 holdings found)', $file->meta['error_message']);
+        $this->assertSame("US-dollar holdings can't be valued yet: no exchange rate is set.", $file->meta['error_message']);
         $this->assertSame(0, PortfolioAsset::count());
     }
 }
