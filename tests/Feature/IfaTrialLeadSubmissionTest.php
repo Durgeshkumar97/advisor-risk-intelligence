@@ -28,9 +28,9 @@ class IfaTrialLeadSubmissionTest extends TestCase
         $response = $this->withServerVariables([
             'REMOTE_ADDR' => '203.0.113.10',
         ])->from(route('home'))->post(route('ifa.submit'), [
-            'advisor_name' => 'Durgesh Kumar',
+            'advisor_name' => 'Asha Rao',
             'whatsapp' => '+91 98765 43210',
-            'email' => 'durgesh@example.test',
+            'email' => 'asha@example.test',
             'firm_name' => 'RiskSignal Advisors',
             'cf-turnstile-response' => 'test-token',
         ]);
@@ -41,9 +41,9 @@ class IfaTrialLeadSubmissionTest extends TestCase
         $response->assertRedirect(route('onboarding'));
 
         $this->assertDatabaseHas('client_intakes', [
-            'name' => 'Durgesh Kumar',
+            'name' => 'Asha Rao',
             'whatsapp' => '+91 98765 43210',
-            'email' => 'durgesh@example.test',
+            'email' => 'asha@example.test',
             'firm_name' => 'RiskSignal Advisors',
             'status' => 'trial',
         ]);
@@ -52,9 +52,9 @@ class IfaTrialLeadSubmissionTest extends TestCase
             AdminFreeTrialLeadSubmittedMail::class,
             function (AdminFreeTrialLeadSubmittedMail $mail): bool {
                 return $mail->hasTo('owner@risksignal.test')
-                    && $mail->advisorName === 'Durgesh Kumar'
+                    && $mail->advisorName === 'Asha Rao'
                     && $mail->whatsapp === '+91 98765 43210'
-                    && $mail->email === 'durgesh@example.test'
+                    && $mail->email === 'asha@example.test'
                     && $mail->firmName === 'RiskSignal Advisors'
                     && $mail->ipAddress === '203.0.113.10'
                     && $mail->queue === 'mail';
