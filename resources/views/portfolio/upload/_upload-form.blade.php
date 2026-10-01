@@ -5,7 +5,8 @@
         <p style="margin:0 0 .5rem;"><strong>One client</strong> — upload their file directly.</p>
         <p style="margin:0 0 .5rem;"><strong>Several clients</strong> — upload a ZIP with <strong>one folder per client</strong>. The folder name becomes the client's name.</p>
         <p style="margin:0 0 .5rem;"><strong>One client, several brokers</strong> — put all of that client's files in their folder. They are combined into one portfolio and one report.</p>
-        <p style="margin:0 0 .5rem;"><strong>Supported:</strong> CSV, XLSX, XLS — upload exports exactly as downloaded from the broker. PDF statements are not supported yet. US-dollar exports are not supported yet.</p>
+        <p style="margin:0 0 .5rem;"><strong>Supported:</strong> CSV, XLSX, XLS — upload exports exactly as downloaded from the broker. PDF statements are not supported yet.</p>
+        <p style="margin:0 0 .5rem;"><strong>US stocks:</strong> US-dollar values are converted to rupees at the rate shown on your report. Some US broker exports don't include current prices; those holdings are valued at what was paid and are left out of the gain/loss figure.</p>
 
         <details style="margin-top:.75rem;">
             <summary style="cursor:pointer;font-weight:600;">How to prepare a ZIP</summary>
@@ -86,7 +87,7 @@
                         Drop file here or click to browse
                     </div>
                     <div style="color:var(--ink-3);font-size:.8rem;">
-                        CSV, XLSX, XLS, PDF — up to 20 MB
+                        CSV, XLSX, XLS or ZIP — up to 20 MB
                     </div>
                 </div>
 
