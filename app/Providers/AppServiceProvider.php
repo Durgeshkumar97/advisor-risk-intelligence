@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Closure;
+use Illuminate\Console\Events\ScheduledBackgroundTaskFinished;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -54,6 +56,35 @@ class AppServiceProvider extends ServiceProvider
 
             URL::forceScheme('https');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | REPORT FAILED BACKGROUND SCHEDULED COMMANDS
+        |--------------------------------------------------------------------------
+        |
+        | Laravel reports a scheduled command that exits non-zero — unless it
+        | was scheduled with runInBackground(). Then the exit code only arrives
+        | later, in a separate `schedule:finish` process, and nothing is
+        | reported: market-risk:sync exited 1 every day and nobody was told.
+        |
+        | report() goes to the exception handler and so to Sentry. A log line
+        | would not: the log stack here is a file. The message matches the one
+        | the framework uses for foreground commands.
+        |
+        | This only reports. It runs after the command has ended and changes
+        | nothing about what the command did.
+        |
+        */
+
+        Event::listen(function (ScheduledBackgroundTaskFinished $event): void {
+            if ($event->task->exitCode !== 0) {
+                report(new \RuntimeException(sprintf(
+                    'Scheduled command [%s] failed with exit code [%s].',
+                    $event->task->command,
+                    $event->task->exitCode,
+                )));
+            }
+        });
 
         /*
         |--------------------------------------------------------------------------
