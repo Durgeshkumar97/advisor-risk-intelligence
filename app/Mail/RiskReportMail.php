@@ -2,8 +2,10 @@
 
 namespace App\Mail;
 
+use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
+use App\Services\ReportHeadline;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -30,7 +32,16 @@ class RiskReportMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        return new Content(markdown: 'emails.risk-report');
+        // The same two headline figures the attached PDF shows, worked out
+        // from the same holdings.
+        $assets = $this->portfolioFile->portfolio_id
+            ? PortfolioAsset::where('portfolio_id', $this->portfolioFile->portfolio_id)->get()
+            : collect();
+
+        return new Content(markdown: 'emails.risk-report', with: [
+            'largest' => ReportHeadline::largestHolding($assets),
+            'gainLoss' => ReportHeadline::gainLoss($assets),
+        ]);
     }
 
     public function attachments(): array

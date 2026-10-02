@@ -35,7 +35,14 @@ class RupeeRegressionTest extends TestCase
 
     private const SCORE_BEFORE = '{"score":"30.82","volatility":"14.93","drawdown":"0.00","meta":{"composition_score":35.81,"concentration_score":1.2,"equity_ratio_score":73.23,"drawdown_score":0,"equity_ratio_pct":73.2,"hhi":0.3413,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":150000,"total_current":162500,"market_multiplier":1.05,"risk_flags":["LOW_DIVERSIFICATION"],"risk_level":"MEDIUM","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Overall risk sits within acceptable risk parameters."}}';
 
-    private const REPORT_SHA256_BEFORE = 'f030a6fa41139bb42990708dab44002a5f39ee318c4e4128c7a1e064d1ee25a4';
+    /**
+     * The rendered report. Unlike the rows and score above, this is NOT the
+     * pre-US-dollar value any more: it is re-recorded whenever the report
+     * template is changed on purpose. History:
+     *   f030a6fa…25a4  main at 6a40e82, before the US-dollar phase
+     *   62dbe31d…e894  page one: "Largest holding" and "Gain / loss vs cost" tiles
+     */
+    private const REPORT_SHA256 = '62dbe31d49f99c2a9b8e0e450fc0575b38159da8742f433857b24fb9cbb4e894';
 
     protected function setUp(): void
     {
@@ -93,7 +100,7 @@ class RupeeRegressionTest extends TestCase
 
         $this->assertSame(self::ROWS_BEFORE, $result['rows']);
         $this->assertSame(self::SCORE_BEFORE, $result['score']);
-        $this->assertSame(self::REPORT_SHA256_BEFORE, $result['report'], 'The rendered report of an all-rupee upload changed.');
+        $this->assertSame(self::REPORT_SHA256, $result['report'], 'The rendered report of an all-rupee upload changed.');
     }
 
     public function test_having_an_exchange_rate_on_file_changes_nothing_for_an_all_rupee_upload(): void
@@ -104,6 +111,6 @@ class RupeeRegressionTest extends TestCase
 
         $this->assertSame(self::ROWS_BEFORE, $result['rows']);
         $this->assertSame(self::SCORE_BEFORE, $result['score']);
-        $this->assertSame(self::REPORT_SHA256_BEFORE, $result['report']);
+        $this->assertSame(self::REPORT_SHA256, $result['report']);
     }
 }

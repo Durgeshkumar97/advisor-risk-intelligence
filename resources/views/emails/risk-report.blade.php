@@ -8,8 +8,8 @@ Your portfolio risk analysis is complete. The full PDF report is attached to thi
 | Portfolio | {{ $portfolioFile->portfolio?->name ?? $portfolioFile->original_name }} |
 | Risk Score | {{ number_format($riskScore->score, 0) }}/100 |
 | Risk Level | {{ $riskScore->level() }} |
-| Volatility | {{ number_format($riskScore->volatility, 2) }}% |
-| Max Drawdown | {{ number_format($riskScore->drawdown, 2) }}% |
+| Largest holding | {{ $largest ? number_format($largest['share'], 1).'% — '.$largest['name'] : '—' }} |
+| Gain / loss vs cost | {{ $gainLoss['pct'] !== null ? \App\Services\ReportHeadline::signed($gainLoss['pct']).'%'.($gainLoss['counted'] < $gainLoss['total'] ? ' (on '.$gainLoss['counted'].' of '.$gainLoss['total'].' holdings)' : '') : '— (cost not available)' }} |
 
 @if(!empty($riskScore->meta['next_action']))
 **Observations:** {{ $riskScore->meta['next_action'] }}

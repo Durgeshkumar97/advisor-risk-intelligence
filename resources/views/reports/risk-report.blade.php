@@ -17,6 +17,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 .summary-label { font-size: 8px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 700; display: block; margin-bottom: 5px; }
 .summary-value { font-size: 22px; font-weight: 700; display: block; }
 .summary-unit { font-size: 11px; font-weight: 400; }
+.summary-note { font-size: 8px; font-weight: 400; color: #64748b; display: block; margin-top: 4px; }
 
 .risk-high { color: #dc2626; }
 .risk-medium { color: #d97706; }
@@ -54,7 +55,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
     </div>
 </div>
 
-@php $level = $riskScore->level(); @endphp
+@php
+    $level = $riskScore->level();
+    $largest = \App\Services\ReportHeadline::largestHolding($assets);
+    $gainLoss = \App\Services\ReportHeadline::gainLoss($assets);
+@endphp
 
 <table class="summary-table">
     <tr>
@@ -69,12 +74,25 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
             </span>
         </td>
         <td>
-            <span class="summary-label">Volatility</span>
-            <span class="summary-value">{{ number_format($riskScore->volatility, 2) }}<span class="summary-unit">%</span></span>
+            <span class="summary-label">Largest holding</span>
+            @if($largest)
+            <span class="summary-value">{{ number_format($largest['share'], 1) }}<span class="summary-unit">%</span></span>
+            <span class="summary-note">{{ $largest['name'] }}</span>
+            @else
+            <span class="summary-value">—</span>
+            @endif
         </td>
         <td>
-            <span class="summary-label">Max Drawdown</span>
-            <span class="summary-value">{{ number_format($riskScore->drawdown, 2) }}<span class="summary-unit">%</span></span>
+            <span class="summary-label">Gain / loss vs cost</span>
+            @if($gainLoss['pct'] !== null)
+            <span class="summary-value {{ round($gainLoss['pct'], 1) < 0 ? 'red' : 'green' }}">{{ \App\Services\ReportHeadline::signed($gainLoss['pct']) }}<span class="summary-unit">%</span></span>
+            @if($gainLoss['counted'] < $gainLoss['total'])
+            <span class="summary-note">on {{ $gainLoss['counted'] }} of {{ $gainLoss['total'] }} holdings</span>
+            @endif
+            @else
+            <span class="summary-value">—</span>
+            <span class="summary-note">cost not available</span>
+            @endif
         </td>
     </tr>
 </table>
