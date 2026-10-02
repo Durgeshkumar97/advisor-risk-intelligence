@@ -47,6 +47,43 @@ class PortfolioRiskCalculator
 
     /*
     |--------------------------------------------------------------------------
+    | RISK FLAG THRESHOLDS
+    |--------------------------------------------------------------------------
+    |
+    | Where each risk flag is raised (see buildRiskFlags). Public so that the
+    | report's wording for a flag reads the same number the flag is raised on.
+    |
+    */
+
+    /** Concentration score (normalised HHI, 0–100) above which HIGH_CONCENTRATION is raised. */
+    public const HIGH_CONCENTRATION_ABOVE = 60;
+
+    /** Concentration score above which MODERATE_CONCENTRATION is raised. */
+    public const MODERATE_CONCENTRATION_ABOVE = 30;
+
+    /** Equity share of portfolio value (0–1) above which EQUITY_HEAVY is raised. */
+    public const EQUITY_HEAVY_ABOVE = 0.90;
+
+    /** Equity share of portfolio value (0–1) below which UNDERWEIGHTED_EQUITY is raised. */
+    public const UNDERWEIGHTED_EQUITY_BELOW = 0.10;
+
+    /** Unrealised loss (% of known cost) above which SIGNIFICANT_DRAWDOWN is raised. */
+    public const SIGNIFICANT_DRAWDOWN_ABOVE = 15;
+
+    /** Unrealised loss (% of known cost) above which MODERATE_DRAWDOWN is raised. */
+    public const MODERATE_DRAWDOWN_ABOVE = 7;
+
+    /** Number of holdings below which LOW_DIVERSIFICATION is raised. */
+    public const LOW_DIVERSIFICATION_BELOW = 4;
+
+    /** Number of holdings above which OVER_DIVERSIFICATION is raised. */
+    public const OVER_DIVERSIFICATION_ABOVE = 25;
+
+    /** Final score above which ELEVATED_OVERALL_RISK is raised. */
+    public const ELEVATED_OVERALL_RISK_ABOVE = 75;
+
+    /*
+    |--------------------------------------------------------------------------
     | EQUITY ASSET TYPES (used for equity-ratio factor)
     |--------------------------------------------------------------------------
     */
@@ -360,33 +397,33 @@ class PortfolioRiskCalculator
     ): array {
         $flags = [];
 
-        if ($concentrationScore > 60) {
+        if ($concentrationScore > self::HIGH_CONCENTRATION_ABOVE) {
             $flags[] = 'HIGH_CONCENTRATION';
-        } elseif ($concentrationScore > 30) {
+        } elseif ($concentrationScore > self::MODERATE_CONCENTRATION_ABOVE) {
             $flags[] = 'MODERATE_CONCENTRATION';
         }
 
-        if ($equityRatio > 0.90) {
+        if ($equityRatio > self::EQUITY_HEAVY_ABOVE) {
             $flags[] = 'EQUITY_HEAVY';
-        } elseif ($equityRatio < 0.10) {
+        } elseif ($equityRatio < self::UNDERWEIGHTED_EQUITY_BELOW) {
             $flags[] = 'UNDERWEIGHTED_EQUITY';
         }
 
-        if ($drawdownPct > 15) {
+        if ($drawdownPct > self::SIGNIFICANT_DRAWDOWN_ABOVE) {
             $flags[] = 'SIGNIFICANT_DRAWDOWN';
-        } elseif ($drawdownPct > 7) {
+        } elseif ($drawdownPct > self::MODERATE_DRAWDOWN_ABOVE) {
             $flags[] = 'MODERATE_DRAWDOWN';
         }
 
-        if ($assetCount < 4) {
+        if ($assetCount < self::LOW_DIVERSIFICATION_BELOW) {
             $flags[] = 'LOW_DIVERSIFICATION';
         }
 
-        if ($assetCount > 25) {
+        if ($assetCount > self::OVER_DIVERSIFICATION_ABOVE) {
             $flags[] = 'OVER_DIVERSIFICATION';
         }
 
-        if ($finalScore > 75) {
+        if ($finalScore > self::ELEVATED_OVERALL_RISK_ABOVE) {
             $flags[] = 'ELEVATED_OVERALL_RISK';
         }
 

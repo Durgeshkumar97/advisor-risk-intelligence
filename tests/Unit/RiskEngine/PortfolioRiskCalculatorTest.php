@@ -516,3 +516,110 @@ it('measures a market-valued holding exactly as before, whatever else its meta s
 
     expect(calc()->calculate($assets, 1.0)['drawdown'])->toBe(7.5);
 });
+
+// ---------------------------------------------------------------------------
+// Risk-flag thresholds — one test either side of each named constant, so a
+// change to any of them is a failing test, not a silent change of behaviour.
+// ---------------------------------------------------------------------------
+
+/** Two stocks split $share / (1 − $share); concentration score = (2·share − 1)² × 100. */
+function twoStockSplit(float $share): array
+{
+    return calc()->calculate(collect([
+        makeAsset(['current_value' => $share * 100000, 'invested_value' => $share * 100000, 'risk_score' => 65]),
+        makeAsset(['current_value' => (1 - $share) * 100000, 'invested_value' => (1 - $share) * 100000, 'risk_score' => 65]),
+    ]), 1.0);
+}
+
+/** One stock and one bond; the stock is $equityShare of the value. */
+function equitySplit(float $equityShare): array
+{
+    return calc()->calculate(collect([
+        makeAsset(['current_value' => $equityShare * 100000, 'invested_value' => $equityShare * 100000, 'risk_score' => 65]),
+        makeAsset(['asset_type' => 'bond', 'current_value' => (1 - $equityShare) * 100000, 'invested_value' => (1 - $equityShare) * 100000, 'risk_score' => 15]),
+    ]), 1.0);
+}
+
+/** Four equal bonds that cost 1,00,000 in total and are now worth $currentTotal. */
+function bondsWorth(float $currentTotal): array
+{
+    return calc()->calculate(collect(array_map(
+        fn () => makeAsset(['asset_type' => 'bond', 'current_value' => $currentTotal / 4, 'invested_value' => 25000, 'risk_score' => 15]),
+        range(1, 4),
+    )), 1.0);
+}
+
+it('raises HIGH_CONCENTRATION above a concentration score of 60 and not below', function () {
+    $above = twoStockSplit(0.89);     // (0.78)² × 100 = 60.84
+    $below = twoStockSplit(0.88);     // (0.76)² × 100 = 57.76
+
+    expect($above['meta']['concentration_score'])->toBe(60.84)
+        ->and($above['risk_flags'])->toContain('HIGH_CONCENTRATION')
+        ->and($below['meta']['concentration_score'])->toBe(57.76)
+        ->and($below['risk_flags'])->toContain('MODERATE_CONCENTRATION')->not->toContain('HIGH_CONCENTRATION')
+        ->and(PortfolioRiskCalculator::HIGH_CONCENTRATION_ABOVE)->toBe(60);
+});
+
+it('raises MODERATE_CONCENTRATION above a concentration score of 30 and not below', function () {
+    $above = twoStockSplit(0.78);     // (0.56)² × 100 = 31.36
+    $below = twoStockSplit(0.77);     // (0.54)² × 100 = 29.16
+
+    expect($above['risk_flags'])->toContain('MODERATE_CONCENTRATION')
+        ->and($below['risk_flags'])->not->toContain('MODERATE_CONCENTRATION')
+        ->and(PortfolioRiskCalculator::MODERATE_CONCENTRATION_ABOVE)->toBe(30);
+});
+
+it('raises EQUITY_HEAVY above 90% equity and not at 89%', function () {
+    expect(equitySplit(0.91)['risk_flags'])->toContain('EQUITY_HEAVY')
+        ->and(equitySplit(0.89)['risk_flags'])->not->toContain('EQUITY_HEAVY')
+        ->and(PortfolioRiskCalculator::EQUITY_HEAVY_ABOVE)->toBe(0.90);
+});
+
+it('raises UNDERWEIGHTED_EQUITY below 10% equity and not at 11%', function () {
+    expect(equitySplit(0.09)['risk_flags'])->toContain('UNDERWEIGHTED_EQUITY')
+        ->and(equitySplit(0.11)['risk_flags'])->not->toContain('UNDERWEIGHTED_EQUITY')
+        ->and(PortfolioRiskCalculator::UNDERWEIGHTED_EQUITY_BELOW)->toBe(0.10);
+});
+
+it('raises SIGNIFICANT_DRAWDOWN above a 15% loss and MODERATE_DRAWDOWN just below it', function () {
+    $above = bondsWorth(84900);     // 15.1% below cost
+    $below = bondsWorth(85100);     // 14.9% below cost
+
+    expect($above['risk_flags'])->toContain('SIGNIFICANT_DRAWDOWN')
+        ->and($below['risk_flags'])->toContain('MODERATE_DRAWDOWN')->not->toContain('SIGNIFICANT_DRAWDOWN')
+        ->and(PortfolioRiskCalculator::SIGNIFICANT_DRAWDOWN_ABOVE)->toBe(15);
+});
+
+it('raises MODERATE_DRAWDOWN above a 7% loss and not below', function () {
+    expect(bondsWorth(92900)['risk_flags'])->toContain('MODERATE_DRAWDOWN')          // 7.1%
+        ->and(bondsWorth(93100)['risk_flags'])->not->toContain('MODERATE_DRAWDOWN')  // 6.9%
+        ->and(PortfolioRiskCalculator::MODERATE_DRAWDOWN_ABOVE)->toBe(7);
+});
+
+it('raises LOW_DIVERSIFICATION for 3 holdings and not for 4, OVER_DIVERSIFICATION for 26 and not for 25', function () {
+    $portfolioOf = fn (int $n) => calc()->calculate(collect(array_map(
+        fn () => makeAsset(['current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 65]),
+        range(1, $n),
+    )), 1.0)['risk_flags'];
+
+    expect($portfolioOf(3))->toContain('LOW_DIVERSIFICATION')
+        ->and($portfolioOf(4))->not->toContain('LOW_DIVERSIFICATION')
+        ->and($portfolioOf(25))->not->toContain('OVER_DIVERSIFICATION')
+        ->and($portfolioOf(26))->toContain('OVER_DIVERSIFICATION')
+        ->and(PortfolioRiskCalculator::LOW_DIVERSIFICATION_BELOW)->toBe(4)
+        ->and(PortfolioRiskCalculator::OVER_DIVERSIFICATION_ABOVE)->toBe(25);
+});
+
+it('raises ELEVATED_OVERALL_RISK above a score of 75 and not at 75', function () {
+    // One stock scored 100, 30% below cost: (100×0.30 + 0 + 100×0.25 + 100×0.20) = 75 before the multiplier.
+    $asset = fn () => collect([makeAsset(['current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100])]);
+
+    $at = calc()->calculate($asset(), 1.0);
+    $above = calc()->calculate($asset(), 1.02);
+
+    expect($at['score'])->toBe(75.0)
+        ->and($at['risk_flags'])->not->toContain('ELEVATED_OVERALL_RISK')
+        ->and($above['score'])->toBe(76.5)
+        ->and($above['risk_flags'])->toContain('ELEVATED_OVERALL_RISK')
+        ->and(PortfolioRiskCalculator::ELEVATED_OVERALL_RISK_ABOVE)->toBe(75);
+});
