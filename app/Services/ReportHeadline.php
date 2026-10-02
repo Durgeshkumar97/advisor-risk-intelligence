@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\RiskEngine\PortfolioRiskCalculator as Calculator;
 use Illuminate\Support\Collection;
 
 /**
@@ -9,7 +10,8 @@ use Illuminate\Support\Collection;
  *
  * The figures on page one of a risk report that are worked out for display:
  * the largest holding's share, and the gain or loss against cost. Nothing
- * here feeds the score, and nothing here is stored.
+ * here feeds the score, and nothing here is stored. It also puts the
+ * calculator's risk flags into words.
  *
  * These replaced two tiles that printed stored score inputs under names they
  * did not deserve: "Volatility" (the spread of the holdings' own risk scores,
@@ -71,6 +73,34 @@ class ReportHeadline
             'invested' => $invested,
             'current' => $current,
         ];
+    }
+
+    /**
+     * A risk flag in plain words: what was measured and the line it crossed.
+     *
+     * Descriptive only — it states a fact about the portfolio and never says
+     * what to do about it. Every number is read from the calculator's own
+     * threshold, so the sentence cannot drift from the rule that raised the
+     * flag. A flag this does not know is shown as its name in ordinary words,
+     * never as a blank.
+     */
+    public static function flagLine(string $flag): string
+    {
+        $pct = fn (float $ratio): string => rtrim(rtrim(number_format($ratio * 100, 1), '0'), '.');
+
+        return match ($flag) {
+            'HIGH_CONCENTRATION' => sprintf('Value is concentrated in a few holdings (concentration index above %d of 100)', Calculator::HIGH_CONCENTRATION_ABOVE),
+            'MODERATE_CONCENTRATION' => sprintf('Value is moderately concentrated (concentration index above %d of 100)', Calculator::MODERATE_CONCENTRATION_ABOVE),
+            'EQUITY_HEAVY' => sprintf('Equity makes up more than %s%% of the portfolio', $pct(Calculator::EQUITY_HEAVY_ABOVE)),
+            'UNDERWEIGHTED_EQUITY' => sprintf('Equity makes up less than %s%% of the portfolio', $pct(Calculator::UNDERWEIGHTED_EQUITY_BELOW)),
+            'SIGNIFICANT_DRAWDOWN' => sprintf('Holdings with a known cost are more than %d%% below what was paid', Calculator::SIGNIFICANT_DRAWDOWN_ABOVE),
+            'MODERATE_DRAWDOWN' => sprintf('Holdings with a known cost are more than %d%% below what was paid', Calculator::MODERATE_DRAWDOWN_ABOVE),
+            'LOW_DIVERSIFICATION' => sprintf('Fewer than %d holdings', Calculator::LOW_DIVERSIFICATION_BELOW),
+            'OVER_DIVERSIFICATION' => sprintf('More than %d holdings', Calculator::OVER_DIVERSIFICATION_ABOVE),
+            'ELEVATED_OVERALL_RISK' => sprintf('Overall risk score is above %d of 100', Calculator::ELEVATED_OVERALL_RISK_ABOVE),
+            'NO_HOLDINGS' => 'No holdings',
+            default => ucfirst(strtolower(trim(str_replace('_', ' ', $flag)))),
+        };
     }
 
     /** "+2.1", "−1.6", "0.0" — always signed when not zero, with a true minus sign. */

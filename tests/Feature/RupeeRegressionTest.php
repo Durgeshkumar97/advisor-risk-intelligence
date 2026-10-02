@@ -41,8 +41,9 @@ class RupeeRegressionTest extends TestCase
      * template is changed on purpose. History:
      *   f030a6fa…25a4  main at 6a40e82, before the US-dollar phase
      *   62dbe31d…e894  page one: "Largest holding" and "Gain / loss vs cost" tiles
+     *   55969888…ee40  risk flags printed as sentences
      */
-    private const REPORT_SHA256 = '62dbe31d49f99c2a9b8e0e450fc0575b38159da8742f433857b24fb9cbb4e894';
+    private const REPORT_SHA256 = '559698880cabe0370c3df599469a9df4b8bb139b4786c53a9a523f76b8cbee40';
 
     protected function setUp(): void
     {

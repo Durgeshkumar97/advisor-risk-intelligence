@@ -192,7 +192,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 @if(!empty($riskScore->meta['risk_flags']))
 <div class="section-heading">Risk Flags</div>
 @foreach($riskScore->meta['risk_flags'] as $flag)
-<div class="flag-row">&#8226; {{ $flag }}</div>
+<div class="flag-row">&#8226; {{ \App\Services\ReportHeadline::flagLine((string) $flag) }}</div>
 @endforeach
 @endif
 
