@@ -82,6 +82,20 @@ class UsdReportTest extends TestCase
         return trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags($row))));
     }
 
+    /** Everything printed inside the "How This Report Was Built" box, or null when there is no box. */
+    private function box(string $html): ?string
+    {
+        $heading = strpos($html, '<div class="section-heading">'.self::HEADING.'</div>');
+
+        if ($heading === false) {
+            return null;
+        }
+
+        $start = strpos($html, '<div class="action-box">', $heading);
+
+        return trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags(substr($html, $start, strpos($html, '</div>', $start) - $start)), ENT_QUOTES)));
+    }
+
     // ─── currency line ───────────────────────────────────────────────────
 
     public function test_the_report_states_the_rate_its_source_and_its_date_when_a_holding_was_converted(): void
@@ -158,9 +172,30 @@ class UsdReportTest extends TestCase
     {
         $html = $this->render([$this->rupeeAsset()]);
 
-        foreach ([self::HEADING, 'US-dollar', 'per USD', 'days old', 'valued at cost', 'at cost', 'Built from', 'Not included', '· USD'] as $absent) {
+        foreach (['US-dollar', 'per USD', 'days old', 'valued at cost', 'at cost', 'Built from', 'Not included', '· USD'] as $absent) {
             $this->assertStringNotContainsString($absent, $html);
         }
+
+        // The box now appears on every report that has a score not taken from
+        // market data, and for this one it holds that line and nothing else.
+        $this->assertSame("Risk scores: 1 estimated from the fund's name.", $this->box($html));
+    }
+
+    public function test_a_report_whose_scores_are_all_from_market_data_has_no_box_and_no_heading_at_all(): void
+    {
+        // Rupees, a single file, and every holding a stock scored from a classification.
+        $liveStock = fn (string $name) => new PortfolioAsset([
+            'name' => $name, 'asset_type' => 'stock', 'quantity' => 10,
+            'current_value' => 25000, 'invested_value' => 20000, 'profit_loss' => 5000,
+            'risk_score' => 50, 'risk_level' => 'MEDIUM',
+            'meta' => ['invested_value_source' => 'file', 'stock_risk' => ['source' => \App\Services\RiskEngine\AssetRiskScorer::SOURCE_LIVE, 'confidence' => 0.9]],
+        ]);
+
+        $html = $this->render([$liveStock('Example Industries'), $liveStock('Example Steel')]);
+
+        $this->assertNull($this->box($html));
+        $this->assertStringNotContainsString(self::HEADING, $html);
+        $this->assertStringNotContainsString('Risk scores:', $html);
     }
 
     // ─── the job hands the report what it needs ──────────────────────────
@@ -205,7 +240,8 @@ class UsdReportTest extends TestCase
         $this->assertStringContainsString('statement.pdf — File type .pdf is not supported.', $folderClient);
         $this->assertSame(16, substr_count($folderClient, '&middot; USD'));
 
-        // A single file at the ZIP root: no sources line, nothing else either.
-        $this->assertStringNotContainsString(self::HEADING, $rendered['Priya Sharma']);
+        // A single file at the ZIP root: no sources line, nothing else either —
+        // the box holds only the line about how its one score was arrived at.
+        $this->assertSame('Risk scores: 1 by asset category.', $this->box($rendered['Priya Sharma']));
     }
 }
