@@ -438,7 +438,7 @@
                         <div class="expect-icon">📊</div>
                         <div class="expect-text">
                             <strong>Risk Score</strong>
-                            Portfolio volatility score 0–100
+                            Portfolio risk score 0–100
                         </div>
                     </div>
                     <div class="expect-item">
