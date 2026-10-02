@@ -15,7 +15,7 @@ echo "Current commit: $PREV_COMMIT"
 # `|| true` matters: set -e applies inside the trap too, so without it a
 # failing `artisan up` would abort the trap before the rollback hint printed —
 # exactly the case where the operator most needs to read it.
-trap 'php artisan up >/dev/null 2>&1 || true; echo "DEPLOY FAILED — attempted to bring the site back up. Verify it is serving, then roll back with: git checkout '"$PREV_COMMIT"' && php artisan migrate:rollback"' ERR
+trap 'php artisan up >/dev/null 2>&1 || true; echo "DEPLOY FAILED — attempted to bring the site back up. Verify it is serving, then roll back with: git checkout '"$PREV_COMMIT"' && php artisan config:cache && php artisan route:cache && php artisan view:cache"' ERR
 
 # Pre-migration backup. Deliberately blocking: migrate --force is irreversible
 # in practice on shared hosting, and this is the only rollback that covers a
@@ -39,4 +39,4 @@ php artisan up
 
 echo "── Deploy complete ──────────────────────────────────"
 echo "Previous commit was: $PREV_COMMIT"
-echo "To roll back: git checkout $PREV_COMMIT && php artisan migrate:rollback"
+echo "To roll back: git checkout $PREV_COMMIT && php artisan config:cache && php artisan route:cache && php artisan view:cache"
