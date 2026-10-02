@@ -222,7 +222,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
         @endphp
         <tr class="{{ $i % 2 === 1 ? 'even' : '' }}">
             <td style="font-weight:600;">{{ $asset->name }}@if(!empty($asset->meta['fx_rate'])) <span style="font-weight:400;color:#64748b;">&middot; USD</span>@endif</td>
-            <td style="color:#64748b;">{{ $asset->asset_type }}</td>
+            <td style="color:#64748b;">{{ $asset->formattedAssetType() }}</td>
             <td style="color:#94a3b8;">{{ $asset->symbol ?: ($asset->isin ?: '—') }}</td>
             <td style="text-align:right;">{{ $asset->quantity }}</td>
             <td style="text-align:right;">{{ $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' }}@if(($asset->meta['value_basis'] ?? 'market') === 'cost')<br><span style="color:#64748b;">at cost</span>@endif</td>

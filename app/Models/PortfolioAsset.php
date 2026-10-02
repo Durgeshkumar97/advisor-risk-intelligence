@@ -152,6 +152,8 @@ class PortfolioAsset extends Model
 
             'foreign_stock' => 'Foreign Stock',
 
+            'etf' => 'ETF',
+
             default => ucwords(
                 str_replace('_', ' ', $this->asset_type)
             ),
