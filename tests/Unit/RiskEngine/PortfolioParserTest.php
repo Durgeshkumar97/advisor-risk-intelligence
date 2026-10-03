@@ -1040,3 +1040,75 @@ it('rejects a spreadsheet taller than the read cap instead of silently truncatin
     expect($result['rows'])->toBeEmpty()
         ->and($result['errors'])->toBe([PortfolioParser::MAX_ROWS_MESSAGE]);
 });
+
+// ---------------------------------------------------------------------------
+// Funds are recognised before anything else
+//
+// The type decides the score, and a fund's name routinely contains a word
+// that means "stock" somewhere else: "Long Term Equity Fund", "Stock
+// Opportunities Fund". The alias map tries stock first, so those were typed
+// stock (65) instead of mutual_fund (45). And a scheme name with no "fund" in
+// it at all ("Flexi Cap Direct Growth") matched nothing and fell to stock.
+// ---------------------------------------------------------------------------
+
+/** The type the parser gives a holding from its name alone (no type column). */
+function typeFromName(string $name): string
+{
+    return test()->parser->parse(csvFile('typed.csv', "name,current_value\n\"{$name}\",1000\n"))['rows'][0]['asset_type'];
+}
+
+/** The type the parser gives a value in a Type column. */
+function typeFromColumn(string $value): string
+{
+    return test()->parser->parse(csvFile('typed.csv', "name,type,current_value\nExample Holding,\"{$value}\",1000\n"))['rows'][0]['asset_type'];
+}
+
+it('types a fund as a mutual fund even when its name contains a word for stock', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'Example Long Term Equity Fund Direct Growth',
+    'Example Equity Savings Fund',
+    'Example Focused Equity Fund Direct Growth',
+    'Example Stock Opportunities Fund',
+    'Example Shareholder Yield Fund',
+    'Example Frequent Income Fund',           // "eq" inside "frequent"
+]);
+
+it('types a scheme as a mutual fund from its scheme words when the name has no "fund" in it', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'EXAMPLE ELSS TAX SAVER - DIRECT PLAN',
+    'Example Flexi Cap Direct Growth',
+    'Example Flexi Cap Regular Growth',
+    'Example Midcap Direct Plan IDCW',
+    'Example Midcap Regular Plan',
+    'Example Small Cap IDCW',
+    'Example Liquid Direct Growth',           // was cash, from "liquid"
+    'Example Gilt Direct-Growth',             // was bond, from "gilt"
+]);
+
+it('does not take "growth" or "direct" on their own as a sign of a fund', function (string $name) {
+    expect(typeFromName($name))->toBe('stock');
+})->with([
+    'Example Growth Industries',
+    'Example Direct Line Insurance',
+    'Example Flexi Cap Direct',
+    'Example Growth Plan Motors',
+]);
+
+it('types an exchange traded fund as an ETF, and a fund of funds that holds one as a mutual fund', function () {
+    expect(typeFromName('Example Nifty 50 Exchange Traded Fund'))->toBe('etf')     // was mutual_fund, from "fund"
+        ->and(typeFromName('Example Nifty 50 ETF'))->toBe('etf')
+        ->and(typeFromName('Example Silver ETF Fund of Fund'))->toBe('mutual_fund')
+        ->and(typeFromName('Example Gold ETF FoF'))->toBe('mutual_fund');          // was etf
+});
+
+it('applies the same rule to a Type column: a fund word wins over "equity"', function () {
+    expect(typeFromColumn('Equity Mutual Fund'))->toBe('mutual_fund')
+        ->and(typeFromColumn('Equity ETF'))->toBe('etf')
+        ->and(typeFromColumn('ELSS'))->toBe('mutual_fund')
+        ->and(typeFromColumn('mutual_fund'))->toBe('mutual_fund')
+        // No fund word: unchanged.
+        ->and(typeFromColumn('Equity'))->toBe('stock')
+        ->and(typeFromColumn('Debt'))->toBe('bond');
+});

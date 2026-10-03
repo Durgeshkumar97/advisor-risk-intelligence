@@ -245,6 +245,32 @@ class PortfolioParser
 
     /*
     |--------------------------------------------------------------------------
+    | FUNDS FIRST
+    |--------------------------------------------------------------------------
+    |
+    | Checked before ASSET_TYPE_MAP, as whole words. A fund's name routinely
+    | contains a word that means something else in the map — "Long Term Equity
+    | Fund", "Stock Opportunities Fund", "Liquid Direct Growth" — and the map
+    | tries stock first. The type decides the score, so a fund read as a stock
+    | is scored as one.
+    |
+    | Fund words: fund(s), ELSS, IDCW, and "direct" or "regular" followed by
+    | plan, growth or IDCW. "growth" or "direct" alone is not a fund word: a
+    | company can be called "Growth Industries".
+    |
+    | A fund of funds is a mutual fund even when it holds an ETF, so it is
+    | checked before the ETF words.
+    |
+    */
+
+    private const FUND_OF_FUNDS_WORDS = '/\b(?:fof|funds?\s+of\s+funds?)\b/';
+
+    private const ETF_WORDS = '/\b(?:etfs?|exchange\s+traded\s+funds?)\b/';
+
+    private const FUND_WORDS = '/\b(?:funds?|elss|idcw|(?:direct|regular)\s+(?:plan|growth|idcw))\b/';
+
+    /*
+    |--------------------------------------------------------------------------
     | PARSE
     |--------------------------------------------------------------------------
     */
@@ -770,6 +796,12 @@ class PortfolioParser
 
         $lower = strtolower(trim($raw));
 
+        $fundType = $this->fundTypeOf($lower);
+
+        if ($fundType !== null) {
+            return $fundType;
+        }
+
         foreach (self::ASSET_TYPE_MAP as $canonical => $aliases) {
             foreach ($aliases as $alias) {
                 if (str_contains($lower, $alias)) {
@@ -791,6 +823,22 @@ class PortfolioParser
         $this->unknownAssetTypes[$lower] = ($this->unknownAssetTypes[$lower] ?? 0) + 1;
 
         return 'stock'; // safe default
+    }
+
+    /**
+     * 'mutual_fund' or 'etf' when the text names a fund, else null. See FUNDS FIRST.
+     */
+    private function fundTypeOf(string $lower): ?string
+    {
+        // "mutual_fund", "direct-growth": separators are word breaks here.
+        $words = preg_replace('/[_\-]+/', ' ', $lower);
+
+        return match (true) {
+            preg_match(self::FUND_OF_FUNDS_WORDS, $words) === 1 => 'mutual_fund',
+            preg_match(self::ETF_WORDS, $words) === 1 => 'etf',
+            preg_match(self::FUND_WORDS, $words) === 1 => 'mutual_fund',
+            default => null,
+        };
     }
 
     /*
