@@ -43,8 +43,9 @@ class RupeeRegressionTest extends TestCase
      *   62dbe31d…e894  page one: "Largest holding" and "Gain / loss vs cost" tiles
      *   55969888…ee40  risk flags printed as sentences
      *   ad248915…87ae  asset types printed as labels
+     *   c31fb733…32ec  each score says where it came from, plus the "Risk scores:" line
      */
-    private const REPORT_SHA256 = 'ad2489155da38f0110b9a226e5a1c2b713a0148ac7a80eb44630488d815187ae';
+    private const REPORT_SHA256 = 'c31fb73309d330168f5997f7e3bb797c092d49feeb6badef29f8c2dc8be632ec';
 
     protected function setUp(): void
     {

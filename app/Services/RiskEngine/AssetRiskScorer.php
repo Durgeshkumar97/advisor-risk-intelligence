@@ -195,6 +195,34 @@ class AssetRiskScorer
 
     /*
     |--------------------------------------------------------------------------
+    | WAS THE SCORE MOVED BY THE NAME?
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * True when score() adjusts this holding's category default because of a
+     * keyword in its name — that is, a fund or ETF whose name matches one of
+     * KEYWORD_ADJUSTMENTS. Read-only: it reports what score() does and plays
+     * no part in scoring. The report uses it to say that such a score is an
+     * estimate from the fund's name, not a measurement.
+     */
+    public function nameAdjustsScore(string $assetType, string $name): bool
+    {
+        if (! in_array(strtolower(trim($assetType)), ['mutual_fund', 'etf'], true)) {
+            return false;
+        }
+
+        foreach (self::KEYWORD_ADJUSTMENTS as ['pattern' => $pattern]) {
+            if (preg_match($pattern, $name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | RISK LEVEL FROM SCORE
     |--------------------------------------------------------------------------
     */

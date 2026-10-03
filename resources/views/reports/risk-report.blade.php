@@ -99,7 +99,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 
 @php
     $provenance = \App\Services\ReportProvenance::for($assets, $clientSources ?? null);
-    $provenanceLines = array_filter([...$provenance['currency'], $provenance['staleness'], $provenance['valuation'], $provenance['sources']]);
+    $provenanceLines = array_filter([...$provenance['currency'], $provenance['staleness'], $provenance['valuation'], $provenance['sources'], $provenance['scores']]);
 @endphp
 @if($provenanceLines)
 {{-- What this report was built from and how it was valued. Printed on the
@@ -229,7 +229,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
             <td style="text-align:right;" class="{{ $plPositive ? 'green' : 'red' }}">
                 {{ $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' }}
             </td>
-            <td style="text-align:center;font-weight:700;" class="{{ $lvlClass }}">{{ number_format($asset->risk_score, 0) }}</td>
+            <td style="text-align:center;font-weight:700;" class="{{ $lvlClass }}">{{ number_format($asset->risk_score, 0) }}<br><span style="font-weight:400;color:#64748b;white-space:nowrap;">{{ \App\Services\ReportProvenance::scoreBasisLabel($asset) }}</span></td>
             <td style="text-align:center;font-weight:700;font-size:8px;" class="{{ $lvlClass }}">
                 {{ $asset->risk_level }}
                 @if($lowConfidence)
