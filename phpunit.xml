@@ -34,6 +34,6 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <!-- Scales every risk score. Pinned so tests never take it from a
              developer's .env; it must match config/risk.php's default. -->
-        <env name="RISK_MARKET_MULTIPLIER" value="1.05"/>
+        <env name="RISK_MARKET_MULTIPLIER" value="1.0"/>
     </php>
 </phpunit>

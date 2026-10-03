@@ -11,13 +11,18 @@ return [
     | macro market conditions. Change this from your .env WITHOUT a deploy.
     |
     | Range: 0.80 (calm / bull market) → 1.30 (high-volatility / correction)
-    | Default: 1.05 (slightly elevated — reflects normal Indian market noise)
+    | Default: 1.0 (neutral — the score is what its four factors give). It was
+    | 1.05 until Oct 2026: a fixed uplift on every score with no market data
+    | behind it, since no market snapshot was being produced. When a dated
+    | snapshot exists, the upload job uses that snapshot's multiplier instead.
+    |
+    | tests: phpunit.xml pins this variable to the same value as the default.
     |
     | .env:  RISK_MARKET_MULTIPLIER=1.10
     |
     */
 
-    'market_multiplier' => (float) env('RISK_MARKET_MULTIPLIER', 1.05),
+    'market_multiplier' => (float) env('RISK_MARKET_MULTIPLIER', 1.0),
 
     /*
     |--------------------------------------------------------------------------

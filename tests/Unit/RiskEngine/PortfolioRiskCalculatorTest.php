@@ -623,3 +623,22 @@ it('raises ELEVATED_OVERALL_RISK above a score of 75 and not at 75', function ()
         ->and($above['risk_flags'])->toContain('ELEVATED_OVERALL_RISK')
         ->and(PortfolioRiskCalculator::ELEVATED_OVERALL_RISK_ABOVE)->toBe(75);
 });
+
+// ---------------------------------------------------------------------------
+// The calculator's own fallback multiplier (used only if the config key is
+// missing) is neutral, the same as config/risk.php's default.
+// ---------------------------------------------------------------------------
+
+it('falls back to a neutral multiplier of 1.0 when the config key is missing', function () {
+    $risk = config('risk');
+    unset($risk['market_multiplier']);
+    config(['risk' => $risk]);
+
+    // One stock scored 100, 30% below cost: 75 before any multiplier.
+    $result = calc()->calculate(collect([
+        makeAsset(['current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100]),
+    ]));
+
+    expect($result['meta']['market_multiplier'])->toBe(1.0)
+        ->and($result['score'])->toBe(75.0);
+});

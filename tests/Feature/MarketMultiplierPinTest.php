@@ -43,4 +43,42 @@ class MarketMultiplierPinTest extends TestCase
     {
         $this->assertSame((float) (string) $this->pin()['value'], config('risk.market_multiplier'));
     }
+
+    /** config/risk.php's own default: what applies when no environment sets the variable. */
+    private function configDefault(): float
+    {
+        $key = 'RISK_MARKET_MULTIPLIER';
+        $saved = [$_ENV[$key] ?? null, $_SERVER[$key] ?? null, getenv($key)];
+
+        unset($_ENV[$key], $_SERVER[$key]);
+        putenv($key);
+
+        try {
+            return (require config_path('risk.php'))['market_multiplier'];
+        } finally {
+            if ($saved[0] !== null) {
+                $_ENV[$key] = $saved[0];
+            }
+            if ($saved[1] !== null) {
+                $_SERVER[$key] = $saved[1];
+            }
+            if ($saved[2] !== false) {
+                putenv($key.'='.$saved[2]);
+            }
+        }
+    }
+
+    public function test_the_default_market_multiplier_is_neutral(): void
+    {
+        // No market snapshot is being produced, so there is no measurement to
+        // adjust a score by. 1.0 leaves the score as the four factors give it.
+        $this->assertSame(1.0, $this->configDefault());
+    }
+
+    public function test_the_pin_is_the_config_default_so_recorded_scores_track_the_default(): void
+    {
+        // Change one without the other and the scores the tests record are no
+        // longer the scores a fresh install produces.
+        $this->assertSame($this->configDefault(), (float) (string) $this->pin()['value']);
+    }
 }

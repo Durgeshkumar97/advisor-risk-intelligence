@@ -99,7 +99,7 @@ class PortfolioRiskCalculator
     |
     | Set RISK_MARKET_MULTIPLIER in .env to override.
     | Range: 0.85 (calm market) → 1.25 (high-volatility market).
-    | Default: 1.05 (slightly elevated — typical Indian market)
+    | Default: 1.0 (neutral — see config/risk.php)
     |
     */
 
@@ -115,7 +115,7 @@ class PortfolioRiskCalculator
      */
     private function resolveMarketMultiplier(?float $override): float
     {
-        $m = $override ?? (float) config('risk.market_multiplier', 1.05);
+        $m = $override ?? (float) config('risk.market_multiplier', 1.0);
 
         return max(0.80, min(1.30, $m));
     }
