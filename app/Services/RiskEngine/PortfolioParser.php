@@ -245,6 +245,32 @@ class PortfolioParser
 
     /*
     |--------------------------------------------------------------------------
+    | FUNDS FIRST
+    |--------------------------------------------------------------------------
+    |
+    | Checked before ASSET_TYPE_MAP, as whole words. A fund's name routinely
+    | contains a word that means something else in the map — "Long Term Equity
+    | Fund", "Stock Opportunities Fund", "Liquid Direct Growth" — and the map
+    | tries stock first. The type decides the score, so a fund read as a stock
+    | is scored as one.
+    |
+    | Fund words: fund(s), ELSS, IDCW, and "direct" or "regular" followed by
+    | plan, growth or IDCW. "growth" or "direct" alone is not a fund word: a
+    | company can be called "Growth Industries".
+    |
+    | A fund of funds is a mutual fund even when it holds an ETF, so it is
+    | checked before the ETF words.
+    |
+    */
+
+    private const FUND_OF_FUNDS_WORDS = '/\b(?:fof|funds?\s+of\s+funds?)\b/';
+
+    private const ETF_WORDS = '/\b(?:etfs?|exchange\s+traded\s+funds?)\b/';
+
+    private const FUND_WORDS = '/\b(?:funds?|elss|idcw|(?:direct|regular)\s+(?:plan|growth|idcw))\b/';
+
+    /*
+    |--------------------------------------------------------------------------
     | PARSE
     |--------------------------------------------------------------------------
     */
@@ -770,9 +796,15 @@ class PortfolioParser
 
         $lower = strtolower(trim($raw));
 
+        $fundType = $this->fundTypeOf($lower);
+
+        if ($fundType !== null) {
+            return $fundType;
+        }
+
         foreach (self::ASSET_TYPE_MAP as $canonical => $aliases) {
             foreach ($aliases as $alias) {
-                if (str_contains($lower, $alias)) {
+                if ($this->hasWord($lower, $alias)) {
                     return $canonical;
                 }
             }
@@ -791,6 +823,43 @@ class PortfolioParser
         $this->unknownAssetTypes[$lower] = ($this->unknownAssetTypes[$lower] ?? 0) + 1;
 
         return 'stock'; // safe default
+    }
+
+    /**
+     * True when $alias appears in $text as a word of its own, or as its plural.
+     *
+     * A plain substring test fired inside unrelated words: "mf" in "Comfort"
+     * made a company a mutual fund, "bond" in "Bondada" a bond, "etf" in
+     * "Netflix" an ETF. A word here ends where letters and digits end, so
+     * "mutual_fund", "g-sec" and "fixed deposit" all still match as written.
+     * The plural is allowed so a Type column saying "Bonds" or "Equities"
+     * keeps working.
+     */
+    private function hasWord(string $text, string $alias): bool
+    {
+        $forms = [preg_quote($alias, '/').'(?:s|es)?'];
+
+        if (str_ends_with($alias, 'y')) {
+            $forms[] = preg_quote(substr($alias, 0, -1), '/').'ies';
+        }
+
+        return preg_match('/(?<![a-z0-9])(?:'.implode('|', $forms).')(?![a-z0-9])/', $text) === 1;
+    }
+
+    /**
+     * 'mutual_fund' or 'etf' when the text names a fund, else null. See FUNDS FIRST.
+     */
+    private function fundTypeOf(string $lower): ?string
+    {
+        // "mutual_fund", "direct-growth": separators are word breaks here.
+        $words = preg_replace('/[_\-]+/', ' ', $lower);
+
+        return match (true) {
+            preg_match(self::FUND_OF_FUNDS_WORDS, $words) === 1 => 'mutual_fund',
+            preg_match(self::ETF_WORDS, $words) === 1 => 'etf',
+            preg_match(self::FUND_WORDS, $words) === 1 => 'mutual_fund',
+            default => null,
+        };
     }
 
     /*

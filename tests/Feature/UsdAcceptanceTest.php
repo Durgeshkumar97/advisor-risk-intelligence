@@ -83,7 +83,7 @@ class UsdAcceptanceTest extends TestCase
         return [
             'Asha Rao/groww-holdings.xlsx' => fn (string $path) => Fixtures::growwFunds($path, [
                 ['Example ELSS Tax Saver Fund Direct Growth', 'INF000TEST21', 410.25, 55000, 52340.25],
-                ['Example Long Term Equity Fund Direct Growth', 'INF000TEST22', 1320.5, 66000, 61875.40],
+                ['Example Long Term Equity Fund Direct Growth', 'INF000TEST22', 1320.5, 66000, 61875.40],     // a fund, typed as one despite "Equity"
                 ['Example Tax Advantage Fund Direct Growth', 'INF000TEST23', 96.125, 41000, 38214.10],
             ]),
             'Asha Rao/indmoney-us-stocks.xls' => [Fixtures::class, 'indmoneyUsStocks'],
@@ -157,7 +157,7 @@ class UsdAcceptanceTest extends TestCase
         $this->assertSame('5.91', $riskScore->drawdown);
         $this->assertEquals(162000, $riskScore->meta['total_invested']);
         $this->assertEquals(681790.87, $riskScore->meta['total_current']);
-        $this->assertSame('50.78', $riskScore->score);                    // 47.77 if the US stocks were counted as unmoved money
+        $this->assertSame('50.24', $riskScore->score);                    // 47.22 if the US stocks were counted as unmoved money
         $this->assertSame([null], $us->pluck('profit_loss')->unique()->values()->all());
 
         // Built from both files, and the report says how it was valued.

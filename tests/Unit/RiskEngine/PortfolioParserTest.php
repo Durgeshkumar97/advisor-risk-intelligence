@@ -1040,3 +1040,142 @@ it('rejects a spreadsheet taller than the read cap instead of silently truncatin
     expect($result['rows'])->toBeEmpty()
         ->and($result['errors'])->toBe([PortfolioParser::MAX_ROWS_MESSAGE]);
 });
+
+// ---------------------------------------------------------------------------
+// Funds are recognised before anything else
+//
+// The type decides the score, and a fund's name routinely contains a word
+// that means "stock" somewhere else: "Long Term Equity Fund", "Stock
+// Opportunities Fund". The alias map tries stock first, so those were typed
+// stock (65) instead of mutual_fund (45). And a scheme name with no "fund" in
+// it at all ("Flexi Cap Direct Growth") matched nothing and fell to stock.
+// ---------------------------------------------------------------------------
+
+/** The type the parser gives a holding from its name alone (no type column). */
+function typeFromName(string $name): string
+{
+    return test()->parser->parse(csvFile('typed.csv', "name,current_value\n\"{$name}\",1000\n"))['rows'][0]['asset_type'];
+}
+
+/** The type the parser gives a value in a Type column. */
+function typeFromColumn(string $value): string
+{
+    return test()->parser->parse(csvFile('typed.csv', "name,type,current_value\nExample Holding,\"{$value}\",1000\n"))['rows'][0]['asset_type'];
+}
+
+it('types a fund as a mutual fund even when its name contains a word for stock', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'Example Long Term Equity Fund Direct Growth',
+    'Example Equity Savings Fund',
+    'Example Focused Equity Fund Direct Growth',
+    'Example Stock Opportunities Fund',
+    'Example Shareholder Yield Fund',
+    'Example Frequent Income Fund',           // "eq" inside "frequent"
+]);
+
+it('types a scheme as a mutual fund from its scheme words when the name has no "fund" in it', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'EXAMPLE ELSS TAX SAVER - DIRECT PLAN',
+    'Example Flexi Cap Direct Growth',
+    'Example Flexi Cap Regular Growth',
+    'Example Midcap Direct Plan IDCW',
+    'Example Midcap Regular Plan',
+    'Example Small Cap IDCW',
+    'Example Liquid Direct Growth',           // was cash, from "liquid"
+    'Example Gilt Direct-Growth',             // was bond, from "gilt"
+]);
+
+it('does not take "growth" or "direct" on their own as a sign of a fund', function (string $name) {
+    expect(typeFromName($name))->toBe('stock');
+})->with([
+    'Example Growth Industries',
+    'Example Direct Line Insurance',
+    'Example Flexi Cap Direct',
+    'Example Growth Plan Motors',
+]);
+
+it('types an exchange traded fund as an ETF, and a fund of funds that holds one as a mutual fund', function () {
+    expect(typeFromName('Example Nifty 50 Exchange Traded Fund'))->toBe('etf')     // was mutual_fund, from "fund"
+        ->and(typeFromName('Example Nifty 50 ETF'))->toBe('etf')
+        ->and(typeFromName('Example Silver ETF Fund of Fund'))->toBe('mutual_fund')
+        ->and(typeFromName('Example Gold ETF FoF'))->toBe('mutual_fund');          // was etf
+});
+
+it('applies the same rule to a Type column: a fund word wins over "equity"', function () {
+    expect(typeFromColumn('Equity Mutual Fund'))->toBe('mutual_fund')
+        ->and(typeFromColumn('Equity ETF'))->toBe('etf')
+        ->and(typeFromColumn('ELSS'))->toBe('mutual_fund')
+        ->and(typeFromColumn('mutual_fund'))->toBe('mutual_fund')
+        // No fund word: unchanged.
+        ->and(typeFromColumn('Equity'))->toBe('stock')
+        ->and(typeFromColumn('Debt'))->toBe('bond');
+});
+
+// ---------------------------------------------------------------------------
+// Aliases match whole words
+//
+// The alias map used to match anywhere inside the text, so a short alias
+// fired inside an unrelated word: "mf" in "Comfort" made a company a mutual
+// fund, "bond" in "Bondada" made one a bond, "etf" in "Netflix" an ETF.
+// ---------------------------------------------------------------------------
+
+it('does not find an alias inside a longer word of a company name', function (string $name, string $alias, string $wasTypedAs) {
+    // $alias sits inside a word of $name and used to type it as $wasTypedAs.
+    expect(typeFromName($name))->toBe('stock');
+})->with([
+    'mf' => ['Example Comfort Industries', 'mf', 'mutual_fund'],
+    'fund' => ['Example Fundamental Research Ltd', 'fund', 'mutual_fund'],
+    'etf' => ['Example Netflix Inc', 'etf', 'etf'],
+    'bond' => ['Example Bondada Engineering', 'bond', 'bond'],
+    'ncd' => ['Example Ncdex Markets', 'ncd', 'bond'],
+    'gilt' => ['Example Giltex Ltd', 'gilt', 'bond'],
+    'fd' => ['Example Fdc Ltd', 'fd', 'bond'],
+    'ppf' => ['Example Ppfas Asset Management', 'ppf', 'bond'],
+    'nsc' => ['Example Transcorp Ltd', 'nsc', 'bond'],
+    'debt' => ['Example Debtech Ltd', 'debt', 'bond'],
+    'gold' => ['Example Goldman Industries', 'gold', 'commodity'],
+    'gold, at the end of a word' => ['Example Marigold Exports', 'gold', 'commodity'],
+    'silver' => ['Example Silverline Technologies', 'silver', 'commodity'],
+    'crypto' => ['Example Cryptography Systems', 'crypto', 'crypto'],
+    'cash' => ['Example Cashew Exports', 'cash', 'cash'],
+    'liquid' => ['Example Liquidators Ltd', 'liquid', 'cash'],
+]);
+
+it('still finds an alias that stands as a word of its own', function (string $name, string $type) {
+    expect(typeFromName($name))->toBe($type);
+})->with([
+    ['Example Gold Mines Ltd', 'commodity'],
+    ['Example Silver Bars', 'commodity'],
+    ['Example Bitcoin Trust', 'crypto'],
+    ['Example FD Plus', 'bond'],
+    ['Example Gilt Edge Ltd', 'bond'],
+    ['Example 8.5% NCD 2030', 'bond'],
+    ['Example G-Sec 2033', 'bond'],
+    ['Example T-Bill 91 Day', 'bond'],
+    ['Example International Ltd', 'foreign_stock'],
+]);
+
+it('still types a fund as a fund when its name carries a short alias as a word', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'Example Gold Fund', 'Example Bond Fund', 'Example Debt Fund', 'Example Gilt Fund', 'Example Liquid Fund',
+    'Example Cash Management Fund', 'Example FD Plus Fund', 'Example Comfort Savings Fund', 'Example Crypto Fund',
+]);
+
+it('matches short aliases and plurals in a Type column as whole words', function (string $value, string $type) {
+    expect(typeFromColumn($value))->toBe($type);
+})->with([
+    ['EQ', 'stock'], ['MF', 'mutual_fund'], ['FD', 'bond'], ['NCD', 'bond'], ['ETF', 'etf'],
+    ['Stocks', 'stock'], ['Shares', 'stock'], ['Equities', 'stock'], ['Mutual Funds', 'mutual_fund'], ['ETFs', 'etf'],
+    ['Bonds', 'bond'], ['Debentures', 'bond'], ['NCDs', 'bond'], ['Commodities', 'commodity'],
+    ['Gold', 'commodity'], ['Liquid', 'cash'], ['Crypto', 'crypto'], ['International', 'foreign_stock'],
+]);
+
+it('does not warn about a plural it now recognises', function () {
+    $result = $this->parser->parse(csvFile('typed.csv', "name,type,current_value\nExample Holding,Commodities,1000\n"));
+
+    expect($result['rows'][0]['asset_type'])->toBe('commodity')      // was stock, with an "unrecognised" warning
+        ->and($result['warnings'])->toBeEmpty();
+});
