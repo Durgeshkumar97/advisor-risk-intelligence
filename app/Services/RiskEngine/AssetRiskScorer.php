@@ -101,25 +101,31 @@ class AssetRiskScorer
     | Regex patterns matched case-insensitively against the holding name.
     | First match wins — patterns are ordered from most-specific to least.
     |
+    | "liquid", "overnight" and the cap-size and multi-asset keywords match as
+    | whole words, and the two-part ones match with or without a space or
+    | hyphen between the parts: "Mid Cap", "Mid-Cap" and "Midcap" are the same
+    | keyword. A scheme called "Liquid Direct Growth" is a liquid fund whether
+    | or not its name says "fund".
+    |
     */
 
     private const KEYWORD_ADJUSTMENTS = [
         // Very low risk — money market / arbitrage / overnight
-        ['pattern' => '/overnight|liquid\s+fund|arbitrage|money\s+market/i',        'delta' => -28],
+        ['pattern' => '/\bovernight\b|\bliquid\b|arbitrage|money\s+market/i',  'delta' => -28],
         // Low risk — short duration / floater / gilt
         ['pattern' => '/ultra.short|ultra short|short.term|floater|gilt|banking\s+&?\s*psu/i', 'delta' => -22],
         // Low-moderate — low duration / conservative hybrid
         ['pattern' => '/low\s+duration|conservative|credit\s+risk/i',               'delta' => -15],
         // Moderate — balanced / hybrid / multi asset
-        ['pattern' => '/balanced|hybrid|multi.asset|equity\s+savings/i',            'delta' => -10],
+        ['pattern' => '/balanced|hybrid|\bmulti[\s\-_]*assets?\b|equity\s+savings/i', 'delta' => -10],
         // Neutral/large cap — nifty 50, bluechip, large cap, index
-        ['pattern' => '/nifty\s+50|nifty50|sensex|bluechip|blue.chip|large.cap|index\s+fund/i', 'delta' => -5],
+        ['pattern' => '/nifty\s+50|nifty50|sensex|bluechip|blue.chip|\blarge[\s\-_]*caps?\b|index\s+fund/i', 'delta' => -5],
         // Slightly elevated — flexi cap, focused, value, contra
-        ['pattern' => '/flexi.cap|focused|value\s+fund|contra|dividend\s+yield/i',  'delta' => 5],
+        ['pattern' => '/\bflexi[\s\-_]*caps?\b|focused|value\s+fund|contra|dividend\s+yield/i', 'delta' => 5],
         // Higher — mid cap, dynamic
-        ['pattern' => '/mid.cap|dynamic\s+bond/i',                                   'delta' => 12],
+        ['pattern' => '/\bmid[\s\-_]*caps?\b|dynamic\s+bond/i',                   'delta' => 12],
         // High — small cap, micro, sectoral, thematic
-        ['pattern' => '/small.cap|micro.cap|sector|thematic|infra|pharma|technology|tech\s+fund|banking\s+fund/i', 'delta' => 22],
+        ['pattern' => '/\bsmall[\s\-_]*caps?\b|\bmicro[\s\-_]*caps?\b|sector|thematic|infra|pharma|technology|tech\s+fund|banking\s+fund/i', 'delta' => 22],
     ];
 
     /*

@@ -221,3 +221,66 @@ it('level() returns HIGH for score at or above the high threshold', function () 
     expect($this->scorer->level(70.0))->toBe('HIGH');
     expect($this->scorer->level(100.0))->toBe('HIGH');
 });
+
+// ---------------------------------------------------------------------------
+// Name keywords match whole words, and one-word forms
+//
+// "Liquid Direct Growth" is a liquid fund but the keyword was "liquid fund",
+// so it scored a plain 45. "Midcap" written as one word missed "mid.cap",
+// which needs a character between the two halves; likewise Smallcap,
+// Largecap, Flexicap, Microcap and Multiasset.
+// ---------------------------------------------------------------------------
+
+it('lowers the score for "liquid" and "overnight" as words of their own, not only in "liquid fund"', function () {
+    expect($this->scorer->score('mutual_fund', 'Example Liquid Direct Growth')['score'])->toBe(17.0)     // was 45
+        ->and($this->scorer->score('etf', 'Example Liquid ETF')['score'])->toBe(7.0)                     // was 35
+        ->and($this->scorer->score('mutual_fund', 'Example Liquid Fund')['score'])->toBe(17.0)
+        ->and($this->scorer->score('mutual_fund', 'Example Overnight Direct Growth')['score'])->toBe(17.0)
+        ->and($this->scorer->score('mutual_fund', 'Example Money Market Fund')['score'])->toBe(17.0);
+});
+
+it('does not find "liquid" or "overnight" inside a longer word', function () {
+    expect($this->scorer->score('mutual_fund', 'Example Liquidity Builder Fund')['score'])->toBe(45.0)
+        ->and($this->scorer->score('mutual_fund', 'Example Overnighter Fund')['score'])->toBe(45.0);     // was 17
+});
+
+it('matches a cap-size or multi-asset keyword written as one word', function (string $type, string $name, float $score) {
+    expect($this->scorer->score($type, $name)['score'])->toBe($score)
+        ->and($this->scorer->nameAdjustsScore($type, $name))->toBeTrue();
+})->with([
+    'midcap' => ['mutual_fund', 'Example Midcap Fund', 57.0],
+    'midcaps' => ['mutual_fund', 'Example Midcaps Opportunities Fund', 57.0],
+    'midcap etf' => ['etf', 'Example Midcap 150 ETF', 47.0],
+    'smallcap' => ['mutual_fund', 'Example Smallcap Fund', 67.0],
+    'smallcap etf' => ['etf', 'Example Smallcap 250 ETF', 57.0],
+    'largecap' => ['mutual_fund', 'Example Largecap Fund', 40.0],
+    'flexicap' => ['mutual_fund', 'Example Flexicap Fund', 50.0],
+    'microcap' => ['mutual_fund', 'Example Microcap Fund', 67.0],
+    'multiasset' => ['mutual_fund', 'Example Multiasset Fund', 35.0],
+]);
+
+it('still matches the spaced and hyphenated forms exactly as before', function (string $name, float $score) {
+    expect($this->scorer->score('mutual_fund', $name)['score'])->toBe($score);
+})->with([
+    ['Example Mid Cap Fund', 57.0], ['Example Mid-Cap Fund', 57.0],
+    ['Example Small Cap Fund', 67.0], ['Example Small-Cap Fund', 67.0],
+    ['Example Large Cap Fund', 40.0], ['Example Flexi Cap Fund', 50.0],
+    ['Example Micro Cap Fund', 67.0], ['Example Multi Asset Fund', 35.0], ['Example Multi-Asset Fund', 35.0],
+    ['Example Large & Mid Cap Fund', 57.0],
+    ['Example Nifty LargeMidcap 250 Index Fund', 40.0],      // "index fund" is found first, as before
+]);
+
+it('does not find a cap-size keyword inside a longer word', function (string $name) {
+    expect($this->scorer->score('mutual_fund', $name)['score'])->toBe(45.0)
+        ->and($this->scorer->nameAdjustsScore('mutual_fund', $name))->toBeFalse();
+})->with([
+    'Example Amidcap Fund',          // "midcap" does not start a word
+    'Example Smallcapital Fund',     // "smallcap" does not end a word
+    'Example Midcapital Fund',
+]);
+
+it('adds no keyword group and no score value', function () {
+    $adjustments = (new ReflectionClassConstant(AssetRiskScorer::class, 'KEYWORD_ADJUSTMENTS'))->getValue();
+
+    expect(array_column($adjustments, 'delta'))->toBe([-28, -22, -15, -10, -5, 5, 12, 22]);
+});
