@@ -804,7 +804,7 @@ class PortfolioParser
 
         foreach (self::ASSET_TYPE_MAP as $canonical => $aliases) {
             foreach ($aliases as $alias) {
-                if (str_contains($lower, $alias)) {
+                if ($this->hasWord($lower, $alias)) {
                     return $canonical;
                 }
             }
@@ -823,6 +823,27 @@ class PortfolioParser
         $this->unknownAssetTypes[$lower] = ($this->unknownAssetTypes[$lower] ?? 0) + 1;
 
         return 'stock'; // safe default
+    }
+
+    /**
+     * True when $alias appears in $text as a word of its own, or as its plural.
+     *
+     * A plain substring test fired inside unrelated words: "mf" in "Comfort"
+     * made a company a mutual fund, "bond" in "Bondada" a bond, "etf" in
+     * "Netflix" an ETF. A word here ends where letters and digits end, so
+     * "mutual_fund", "g-sec" and "fixed deposit" all still match as written.
+     * The plural is allowed so a Type column saying "Bonds" or "Equities"
+     * keeps working.
+     */
+    private function hasWord(string $text, string $alias): bool
+    {
+        $forms = [preg_quote($alias, '/').'(?:s|es)?'];
+
+        if (str_ends_with($alias, 'y')) {
+            $forms[] = preg_quote(substr($alias, 0, -1), '/').'ies';
+        }
+
+        return preg_match('/(?<![a-z0-9])(?:'.implode('|', $forms).')(?![a-z0-9])/', $text) === 1;
     }
 
     /**

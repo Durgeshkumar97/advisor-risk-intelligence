@@ -1112,3 +1112,70 @@ it('applies the same rule to a Type column: a fund word wins over "equity"', fun
         ->and(typeFromColumn('Equity'))->toBe('stock')
         ->and(typeFromColumn('Debt'))->toBe('bond');
 });
+
+// ---------------------------------------------------------------------------
+// Aliases match whole words
+//
+// The alias map used to match anywhere inside the text, so a short alias
+// fired inside an unrelated word: "mf" in "Comfort" made a company a mutual
+// fund, "bond" in "Bondada" made one a bond, "etf" in "Netflix" an ETF.
+// ---------------------------------------------------------------------------
+
+it('does not find an alias inside a longer word of a company name', function (string $name, string $alias, string $wasTypedAs) {
+    // $alias sits inside a word of $name and used to type it as $wasTypedAs.
+    expect(typeFromName($name))->toBe('stock');
+})->with([
+    'mf' => ['Example Comfort Industries', 'mf', 'mutual_fund'],
+    'fund' => ['Example Fundamental Research Ltd', 'fund', 'mutual_fund'],
+    'etf' => ['Example Netflix Inc', 'etf', 'etf'],
+    'bond' => ['Example Bondada Engineering', 'bond', 'bond'],
+    'ncd' => ['Example Ncdex Markets', 'ncd', 'bond'],
+    'gilt' => ['Example Giltex Ltd', 'gilt', 'bond'],
+    'fd' => ['Example Fdc Ltd', 'fd', 'bond'],
+    'ppf' => ['Example Ppfas Asset Management', 'ppf', 'bond'],
+    'nsc' => ['Example Transcorp Ltd', 'nsc', 'bond'],
+    'debt' => ['Example Debtech Ltd', 'debt', 'bond'],
+    'gold' => ['Example Goldman Industries', 'gold', 'commodity'],
+    'gold, at the end of a word' => ['Example Marigold Exports', 'gold', 'commodity'],
+    'silver' => ['Example Silverline Technologies', 'silver', 'commodity'],
+    'crypto' => ['Example Cryptography Systems', 'crypto', 'crypto'],
+    'cash' => ['Example Cashew Exports', 'cash', 'cash'],
+    'liquid' => ['Example Liquidators Ltd', 'liquid', 'cash'],
+]);
+
+it('still finds an alias that stands as a word of its own', function (string $name, string $type) {
+    expect(typeFromName($name))->toBe($type);
+})->with([
+    ['Example Gold Mines Ltd', 'commodity'],
+    ['Example Silver Bars', 'commodity'],
+    ['Example Bitcoin Trust', 'crypto'],
+    ['Example FD Plus', 'bond'],
+    ['Example Gilt Edge Ltd', 'bond'],
+    ['Example 8.5% NCD 2030', 'bond'],
+    ['Example G-Sec 2033', 'bond'],
+    ['Example T-Bill 91 Day', 'bond'],
+    ['Example International Ltd', 'foreign_stock'],
+]);
+
+it('still types a fund as a fund when its name carries a short alias as a word', function (string $name) {
+    expect(typeFromName($name))->toBe('mutual_fund');
+})->with([
+    'Example Gold Fund', 'Example Bond Fund', 'Example Debt Fund', 'Example Gilt Fund', 'Example Liquid Fund',
+    'Example Cash Management Fund', 'Example FD Plus Fund', 'Example Comfort Savings Fund', 'Example Crypto Fund',
+]);
+
+it('matches short aliases and plurals in a Type column as whole words', function (string $value, string $type) {
+    expect(typeFromColumn($value))->toBe($type);
+})->with([
+    ['EQ', 'stock'], ['MF', 'mutual_fund'], ['FD', 'bond'], ['NCD', 'bond'], ['ETF', 'etf'],
+    ['Stocks', 'stock'], ['Shares', 'stock'], ['Equities', 'stock'], ['Mutual Funds', 'mutual_fund'], ['ETFs', 'etf'],
+    ['Bonds', 'bond'], ['Debentures', 'bond'], ['NCDs', 'bond'], ['Commodities', 'commodity'],
+    ['Gold', 'commodity'], ['Liquid', 'cash'], ['Crypto', 'crypto'], ['International', 'foreign_stock'],
+]);
+
+it('does not warn about a plural it now recognises', function () {
+    $result = $this->parser->parse(csvFile('typed.csv', "name,type,current_value\nExample Holding,Commodities,1000\n"));
+
+    expect($result['rows'][0]['asset_type'])->toBe('commodity')      // was stock, with an "unrecognised" warning
+        ->and($result['warnings'])->toBeEmpty();
+});
