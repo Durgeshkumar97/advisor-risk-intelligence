@@ -99,7 +99,7 @@ class PortfolioRiskCalculator
     |
     | Set RISK_MARKET_MULTIPLIER in .env to override.
     | Range: 0.85 (calm market) → 1.25 (high-volatility market).
-    | Default: 1.05 (slightly elevated — typical Indian market)
+    | Default: 1.0 (neutral — see config/risk.php)
     |
     */
 
@@ -115,7 +115,7 @@ class PortfolioRiskCalculator
      */
     private function resolveMarketMultiplier(?float $override): float
     {
-        $m = $override ?? (float) config('risk.market_multiplier', 1.05);
+        $m = $override ?? (float) config('risk.market_multiplier', 1.0);
 
         return max(0.80, min(1.30, $m));
     }
@@ -439,7 +439,9 @@ class PortfolioRiskCalculator
      * as investment advice, which RiskSignal does not provide and is not
      * registered to provide (see resources/views/legal/terms.blade.php). Keep
      * every branch observational: state the condition, never prescribe an
-     * action. No "should", "consider", "recommend", "review", or "discuss".
+     * action. No "should", "consider", "recommend", "review", or "discuss" —
+     * and no verdict on the portfolio either: no "balanced", "acceptable",
+     * "healthy" or "appropriate".
      */
     private function buildNextAction(
         float $finalScore,
@@ -455,8 +457,8 @@ class PortfolioRiskCalculator
             return 'Holdings are concentrated in a small number of positions, and overall risk is elevated.';
         }
 
-        if ($finalScore > 75) {
-            return 'Overall risk sits in the elevated band relative to the portfolio\'s composition and exposure.';
+        if ($finalScore > self::ELEVATED_OVERALL_RISK_ABOVE) {
+            return sprintf('Overall risk score is above %d of 100.', self::ELEVATED_OVERALL_RISK_ABOVE);
         }
 
         if (in_array('EQUITY_HEAVY', $riskFlags)) {
@@ -471,11 +473,25 @@ class PortfolioRiskCalculator
             return 'Holdings show moderate concentration across a limited number of positions.';
         }
 
-        if ($finalScore < (float) config('risk.low_threshold', 30)) {
-            return 'Overall risk sits in the low band, and the current allocation appears balanced.';
-        }
+        // Nothing above applies: state the band, and only the band. It is the
+        // band the risk-level tile shows — the same function decides both — so
+        // the sentence and the tile cannot disagree. Saying a band is
+        // "balanced" or "acceptable" would be a judgement the score does not
+        // make: a low score can sit beside a concentration flag.
+        $low = $this->formatThreshold(config('risk.low_threshold', 30));
+        $high = $this->formatThreshold(config('risk.high_threshold', 70));
 
-        return 'Overall risk sits within acceptable risk parameters.';
+        return match ($this->level($finalScore)) {
+            'LOW' => sprintf('Overall risk score is in the low band (below %s).', $low),
+            'MEDIUM' => sprintf('Overall risk score is in the medium band (%s to below %s).', $low, $high),
+            default => sprintf('Overall risk score is in the high band (%s or above).', $high),
+        };
+    }
+
+    /** 30 stays "30"; 32.5 stays "32.5". */
+    private function formatThreshold(mixed $threshold): string
+    {
+        return rtrim(rtrim(number_format((float) $threshold, 2, '.', ''), '0'), '.');
     }
 
     private function stdDev(array $scores): float

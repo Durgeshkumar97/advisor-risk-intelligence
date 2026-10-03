@@ -347,7 +347,7 @@ it('next_action prioritises significant drawdown above all other signals', funct
     expect(calc()->calculate($assets)['next_action'])->toContain('unrealised losses');
 });
 
-it('next_action suggests staying the course for a very low-risk portfolio', function () {
+it('next_action states the low band, and nothing about the allocation, for a very low-risk portfolio', function () {
     // All bonds, no drawdown, equal weights
     $assets = collect(array_fill(0, 10, null))->map(
         fn () => makeAsset(['asset_type' => 'bond', 'current_value' => 100, 'invested_value' => 100, 'risk_score' => 15])
@@ -355,10 +355,10 @@ it('next_action suggests staying the course for a very low-risk portfolio', func
 
     config(['risk.low_threshold' => 30]);
 
-    expect(calc()->calculate($assets)['next_action'])->toContain('low');
+    expect(calc()->calculate($assets)['next_action'])->toBe('Overall risk score is in the low band (below 30).');
 });
 
-it('next_action returns the default message when no special condition is triggered', function () {
+it('next_action states the medium band when no special condition is triggered', function () {
     // Mixed moderate portfolio: 4 MFs + 2 bonds, equal weights, no drawdown
     // → score between 30–75, equity ratio ~67%, no flags
     $assets = collect([
@@ -372,7 +372,7 @@ it('next_action returns the default message when no special condition is trigger
 
     config(['risk.low_threshold' => 30, 'risk.high_threshold' => 70]);
 
-    expect(calc()->calculate($assets)['next_action'])->toContain('acceptable risk parameters');
+    expect(calc()->calculate($assets)['next_action'])->toBe('Overall risk score is in the medium band (30 to below 70).');
 });
 
 // ---------------------------------------------------------------------------
@@ -622,4 +622,105 @@ it('raises ELEVATED_OVERALL_RISK above a score of 75 and not at 75', function ()
         ->and($above['score'])->toBe(76.5)
         ->and($above['risk_flags'])->toContain('ELEVATED_OVERALL_RISK')
         ->and(PortfolioRiskCalculator::ELEVATED_OVERALL_RISK_ABOVE)->toBe(75);
+});
+
+// ---------------------------------------------------------------------------
+// The calculator's own fallback multiplier (used only if the config key is
+// missing) is neutral, the same as config/risk.php's default.
+// ---------------------------------------------------------------------------
+
+it('falls back to a neutral multiplier of 1.0 when the config key is missing', function () {
+    $risk = config('risk');
+    unset($risk['market_multiplier']);
+    config(['risk' => $risk]);
+
+    // One stock scored 100, 30% below cost: 75 before any multiplier.
+    $result = calc()->calculate(collect([
+        makeAsset(['current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100]),
+    ]));
+
+    expect($result['meta']['market_multiplier'])->toBe(1.0)
+        ->and($result['score'])->toBe(75.0);
+});
+
+// ---------------------------------------------------------------------------
+// Observation sentences state the band; they do not judge it.
+// ---------------------------------------------------------------------------
+
+/** buildNextAction() for a given score and flags, without building a portfolio to reach it. */
+function observationFor(float $score, array $flags = []): string
+{
+    $method = new ReflectionMethod(PortfolioRiskCalculator::class, 'buildNextAction');
+    $method->setAccessible(true);
+
+    return $method->invoke(calc(), $score, $flags);
+}
+
+it('states the band from the same thresholds the risk level uses', function () {
+    config(['risk.low_threshold' => 25, 'risk.high_threshold' => 60]);
+
+    expect(observationFor(24.99))->toBe('Overall risk score is in the low band (below 25).')
+        ->and(observationFor(25.0))->toBe('Overall risk score is in the medium band (25 to below 60).')
+        ->and(observationFor(59.99))->toBe('Overall risk score is in the medium band (25 to below 60).')
+        ->and(observationFor(60.0))->toBe('Overall risk score is in the high band (60 or above).');
+
+    // The sentence names the band the level tile shows, at every score.
+    foreach ([0.0, 24.99, 25.0, 42.0, 59.99, 60.0, 72.0, 75.0] as $score) {
+        expect(strtolower(calc()->level($score)))->toBe(explode(' ', explode('in the ', observationFor($score))[1])[0]);
+    }
+});
+
+it('gives a score of 72 the high-band sentence, never "acceptable"', function () {
+    // 70–75 is HIGH by level but was below the old "elevated" cut-off of 75,
+    // so it fell through to "within acceptable risk parameters".
+    expect(observationFor(72.0))->toBe('Overall risk score is in the high band (70 or above).')
+        ->and(calc()->level(72.0))->toBe('HIGH');
+
+    // A real portfolio that lands in the gap: nine crypto holdings and a bond,
+    // equal weights, 6.9% below cost, under an EXTREME market snapshot (×1.30).
+    $assets = collect(array_fill(0, 9, null))
+        ->map(fn () => makeAsset(['asset_type' => 'crypto', 'current_value' => 931, 'invested_value' => 1000, 'risk_score' => 100]))
+        ->push(makeAsset(['asset_type' => 'bond', 'current_value' => 931, 'invested_value' => 1000, 'risk_score' => 15]));
+
+    $result = calc()->calculate($assets, 1.30);
+
+    expect($result['score'])->toBeGreaterThanOrEqual(70.0)->toBeLessThanOrEqual(75.0)
+        ->and($result['risk_flags'])->toBe([])
+        ->and($result['meta']['risk_level'])->toBe('HIGH')
+        ->and($result['next_action'])->toBe('Overall risk score is in the high band (70 or above).')
+        ->and($result['next_action'])->not->toContain('acceptable');
+});
+
+it('says a score above 75 is above 75, reading the number from the flag threshold', function () {
+    expect(observationFor(75.01))->toBe('Overall risk score is above '.PortfolioRiskCalculator::ELEVATED_OVERALL_RISK_ABOVE.' of 100.')
+        ->and(observationFor(75.01))->toBe('Overall risk score is above 75 of 100.')
+        ->and(observationFor(75.0))->toBe('Overall risk score is in the high band (70 or above).');
+});
+
+it('does not call a concentrated low-score portfolio balanced', function () {
+    // Two bonds, 95% / 5%: HIGH_CONCENTRATION and LOW_DIVERSIFICATION, score under 30.
+    $result = calc()->calculate(collect([
+        makeAsset(['asset_type' => 'bond', 'current_value' => 95000, 'invested_value' => 95000, 'risk_score' => 15]),
+        makeAsset(['asset_type' => 'bond', 'current_value' => 5000, 'invested_value' => 5000, 'risk_score' => 15]),
+    ]));
+
+    expect($result['risk_flags'])->toContain('HIGH_CONCENTRATION')->toContain('LOW_DIVERSIFICATION')
+        ->and($result['next_action'])->toBe('Overall risk score is in the low band (below 30).');
+});
+
+it('has no observation sentence that judges the portfolio or tells the reader what to do', function () {
+    $method = new ReflectionMethod(PortfolioRiskCalculator::class, 'buildNextAction');
+    $lines = array_slice(file($method->getFileName()), $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1);
+
+    // Every sentence the method can return: a quoted string that ends in a full stop.
+    preg_match_all("/'((?:[^'\\\\]|\\\\.)*\\.)'/", implode('', $lines), $matches);
+    $sentences = $matches[1];
+
+    expect(count($sentences))->toBe(9);
+
+    foreach ($sentences as $sentence) {
+        foreach (['balanced', 'acceptable', 'healthy', 'appropriate', 'should', 'consider', 'recommend', 'review', 'discuss', 'reduce', 'increase', 'rebalance'] as $word) {
+            expect(stripos($sentence, $word))->toBeFalse("\"{$word}\" in: {$sentence}");
+        }
+    }
 });
