@@ -33,6 +33,11 @@ use Tests\TestCase;
  * 1.05 → 1, and — because 29.35 is under the LOW threshold of 30 — risk_level
  * MEDIUM → LOW with the matching next_action sentence. Every factor score is
  * as recorded.
+ *
+ * And one change of wording, also Oct 2026: the low-band next_action sentence
+ * went from "Overall risk sits in the low band, and the current allocation
+ * appears balanced." to "Overall risk score is in the low band (below 30)."
+ * No number moved.
  */
 class RupeeRegressionTest extends TestCase
 {
@@ -40,7 +45,7 @@ class RupeeRegressionTest extends TestCase
 
     private const ROWS_BEFORE = '[{"name":"Example Bluechip Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST01","quantity":"1234.5670","buy_price":"40.50","current_price":"44.55","invested_value":"50000.00","current_value":"55000.00","profit_loss":"5000.00","risk_score":"40.00","risk_level":"MEDIUM","meta":{"source_file_id":1,"invested_value_source":"file"}},{"name":"Example Midcap Opportunities Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST02","quantity":"812.3450","buy_price":"73.86","current_price":"78.78","invested_value":"60000.00","current_value":"64000.00","profit_loss":"4000.00","risk_score":"45.00","risk_level":"MEDIUM","meta":{"source_file_id":1,"invested_value_source":"file"}},{"name":"Example Liquid Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST03","quantity":"12.5000","buy_price":"3200.00","current_price":"3480.00","invested_value":"40000.00","current_value":"43500.00","profit_loss":"3500.00","risk_score":"17.00","risk_level":"LOW","meta":{"source_file_id":1,"invested_value_source":"file"}}]';
 
-    private const SCORE_BEFORE = '{"score":"29.35","volatility":"14.93","drawdown":"0.00","meta":{"composition_score":35.81,"concentration_score":1.2,"equity_ratio_score":73.23,"drawdown_score":0,"equity_ratio_pct":73.2,"hhi":0.3413,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":150000,"total_current":162500,"market_multiplier":1,"risk_flags":["LOW_DIVERSIFICATION"],"risk_level":"LOW","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Overall risk sits in the low band, and the current allocation appears balanced."}}';
+    private const SCORE_BEFORE = '{"score":"29.35","volatility":"14.93","drawdown":"0.00","meta":{"composition_score":35.81,"concentration_score":1.2,"equity_ratio_score":73.23,"drawdown_score":0,"equity_ratio_pct":73.2,"hhi":0.3413,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":150000,"total_current":162500,"market_multiplier":1,"risk_flags":["LOW_DIVERSIFICATION"],"risk_level":"LOW","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Overall risk score is in the low band (below 30)."}}';
 
     /**
      * The rendered report. Unlike the rows and score above, this is NOT the
@@ -52,8 +57,9 @@ class RupeeRegressionTest extends TestCase
      *   ad248915…87ae  asset types printed as labels
      *   c31fb733…32ec  each score says where it came from, plus the "Risk scores:" line
      *   d66b1ac7…a957  neutral market multiplier: score 31 → 29, level MEDIUM → LOW, observation sentence
+     *   be7e2530…c33a  observation states the band only: "…in the low band (below 30)."
      */
-    private const REPORT_SHA256 = 'd66b1ac766292327f39f47f7a190bf44dfe5d88fccbef887bc1a2efc8101a957';
+    private const REPORT_SHA256 = 'be7e2530056f5ba8a9ef84c2c59eeef799a14aa032758f6c60f2ec916d53c33a';
 
     protected function setUp(): void
     {
