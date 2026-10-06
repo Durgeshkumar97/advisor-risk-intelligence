@@ -21,4 +21,8 @@ View Dashboard
 
 Thanks,<br>
 {{ config('app.name') }} Team
+
+@component('mail::subcopy')
+@include('reports._disclaimer')
+@endcomponent
 @endcomponent

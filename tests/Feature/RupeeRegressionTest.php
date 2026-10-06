@@ -66,8 +66,9 @@ class RupeeRegressionTest extends TestCase
      *   d66b1ac7…a957  neutral market multiplier: score 31 → 29, level MEDIUM → LOW, observation sentence
      *   be7e2530…c33a  observation states the band only: "…in the low band (below 30)."
      *   bf9b9249…53f6  mid-cap keyword now matches 'Midcap' as one word; the fixture's 39% midcap fund scores 57, not 45
+     *   46eee952…8628  disclaimer replaced: what the report is and is not; no "educational"; SEBI IA and RA
      */
-    private const REPORT_SHA256 = 'bf9b9249da7adbce1740b00fb614ca146d87459d8f4af97fd55b4031324a53f6';
+    private const REPORT_SHA256 = '46eee9529015eead7337f8e23e148ffc34ecf9b15c0732482dcfee06d04c8628';
 
     protected function setUp(): void
     {
