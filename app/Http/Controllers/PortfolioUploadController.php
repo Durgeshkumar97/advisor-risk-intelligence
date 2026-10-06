@@ -152,20 +152,67 @@ class PortfolioUploadController extends Controller
                 ->withInput();
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | WHOSE FILE IS IT
+        |--------------------------------------------------------------------------
+        |
+        | A single file names an existing portfolio or a new client (the request
+        | has already insisted on exactly one). A typed name that is the same
+        | as an existing portfolio's — ignoring case and spacing — means that
+        | portfolio; a second portfolio for the same client is never created
+        | here. A ZIP names its own clients, so a selection made alongside one
+        | is not used, and the advisor is told.
+        |
+        */
+
+        $portfolioId = $request->getPortfolioId();
+        $createdPortfolio = null;
+        $notes = [];
+
+        if ($request->isZip()) {
+            if ($portfolioId !== null) {
+                $notes[] = 'The selected portfolio was not used: a ZIP creates one portfolio per client folder.';
+            }
+
+            if ($request->getClientName() !== null) {
+                $notes[] = 'The client name was not used: a ZIP names its clients from its folders.';
+            }
+        } elseif ($request->getClientName() !== null) {
+            $existing = $this->portfolioNamed($user->id, $request->getClientName());
+
+            if ($existing !== null) {
+                $portfolioId = $existing->id;
+                $notes[] = "Added to existing portfolio '{$existing->name}'.";
+            } else {
+                $createdPortfolio = Portfolio::create([
+                    'user_id' => $user->id,
+                    'name' => $request->getClientName(),
+                ]);
+                $portfolioId = $createdPortfolio->id;
+            }
+        }
+
         try {
             $portfolioFile = $this->uploadService->handleUpload(
                 userId: $user->id,
                 file: $request->getFile(),
-                portfolioId: $request->getPortfolioId(),
+                portfolioId: $portfolioId,
             );
+
+            // The file is stored: from here the new portfolio has a file in it
+            // and stays, whatever happens to the processing job.
+            $createdPortfolio = null;
 
             ProcessPortfolioFile::dispatch($portfolioFile);
 
             return redirect()
                 ->route('portfolio.upload')
-                ->with('success', 'Portfolio uploaded successfully. Processing has started.');
+                ->with('success', implode(' ', ['Portfolio uploaded successfully. Processing has started.', ...$notes]));
 
         } catch (PortfolioUploadException $e) {
+            $createdPortfolio?->delete();
+
             Log::warning('Portfolio upload business error.', [
                 'message' => $e->getMessage(),
                 'user_id' => $user->id,
@@ -176,6 +223,9 @@ class PortfolioUploadController extends Controller
                 ->withInput();
 
         } catch (\Throwable $e) {
+            // Do not leave an empty portfolio behind for a file that was never stored.
+            $createdPortfolio?->delete();
+
             Log::error('Portfolio upload failed unexpectedly.', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -186,6 +236,21 @@ class PortfolioUploadController extends Controller
                 ->withErrors(['file' => 'Upload failed. Please try again.'])
                 ->withInput();
         }
+    }
+
+    /**
+     * The user's portfolio with this name, comparing names without regard to
+     * case or spacing. If several share the name, the most recently updated.
+     */
+    private function portfolioNamed(int $userId, string $name): ?Portfolio
+    {
+        $key = Portfolio::nameKey($name);
+
+        return Portfolio::where('user_id', $userId)
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->get()
+            ->first(fn (Portfolio $portfolio) => Portfolio::nameKey((string) $portfolio->name) === $key);
     }
 
     /*

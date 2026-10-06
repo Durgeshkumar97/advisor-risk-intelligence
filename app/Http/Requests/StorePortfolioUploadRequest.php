@@ -41,6 +41,18 @@ class StorePortfolioUploadRequest extends FormRequest
                 'portfolio_id' => null,
             ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | NEW CLIENT NAME — trimmed, inner whitespace collapsed; blank is "none"
+        |--------------------------------------------------------------------------
+        */
+
+        $clientName = is_string($this->client_name) ? Portfolio::cleanName($this->client_name) : null;
+
+        $this->merge([
+            'client_name' => $clientName === '' ? null : $clientName,
+        ]);
     }
 
     /*
@@ -68,6 +80,21 @@ class StorePortfolioUploadRequest extends FormRequest
                 'min:1',
 
                 'exists:portfolios,id',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | NEW CLIENT NAME (instead of a portfolio, for a single file)
+            |--------------------------------------------------------------------------
+            */
+
+            'client_name' => [
+
+                'nullable',
+
+                'string',
+
+                'max:255',
             ],
 
             /*
@@ -120,6 +147,40 @@ class StorePortfolioUploadRequest extends FormRequest
 
             $portfolioId =
                 $this->input('portfolio_id');
+
+            /*
+            |--------------------------------------------------------------------------
+            | A SINGLE FILE MUST SAY WHOSE IT IS
+            |--------------------------------------------------------------------------
+            |
+            | Exactly one of: an existing portfolio, or a new client name. With
+            | neither, the file used to be accepted and then fail in the queue,
+            | because holdings cannot be stored without a portfolio. A ZIP names
+            | its own clients from its folders and needs neither.
+            |
+            */
+
+            if (! $this->isZip()) {
+
+                $hasPortfolio = (bool) $portfolioId;
+                $hasClientName = $this->getClientName() !== null;
+
+                if (! $hasPortfolio && ! $hasClientName) {
+
+                    $validator->errors()->add(
+                        'portfolio_id',
+                        'Choose a portfolio or enter a new client name.'
+                    );
+                }
+
+                if ($hasPortfolio && $hasClientName) {
+
+                    $validator->errors()->add(
+                        'client_name',
+                        'Choose a portfolio or enter a new client name, not both.'
+                    );
+                }
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -191,6 +252,22 @@ class StorePortfolioUploadRequest extends FormRequest
         return $this->input('portfolio_id')
             ? (int) $this->input('portfolio_id')
             : null;
+    }
+
+    /** The new client name typed on the form, cleaned; null when none was given. */
+    public function getClientName(): ?string
+    {
+        $name = $this->input('client_name');
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
+    public function isZip(): bool
+    {
+        $file = $this->file('file');
+
+        return $file instanceof UploadedFile
+            && strtolower($file->getClientOriginalExtension()) === 'zip';
     }
 
     public function getFile(): UploadedFile

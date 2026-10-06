@@ -17,6 +17,23 @@ class Portfolio extends Model
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * A name as typed: trimmed, runs of whitespace collapsed to one space.
+     */
+    public static function cleanName(string $name): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $name));
+    }
+
+    /**
+     * The form of a name used to decide whether two names are the same
+     * client: cleaned as above and compared without regard to case.
+     */
+    public static function nameKey(string $name): string
+    {
+        return mb_strtolower(self::cleanName($name));
+    }
+
     protected $fillable = [
 
         'user_id',
