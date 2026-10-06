@@ -136,6 +136,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);
+
+        // A job reports its own failure and then rethrows so the queue records
+        // and retries it; the queue worker reports what it catches too. This
+        // keeps that to one report per exception.
+        $exceptions->dontReportDuplicates();
     })
 
     ->create();

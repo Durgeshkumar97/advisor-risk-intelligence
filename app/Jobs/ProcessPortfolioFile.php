@@ -411,11 +411,14 @@ class ProcessPortfolioFile implements ShouldQueue
                 Storage::disk(self::DISK)->delete($reportPath);
             }
 
+            // The advisor is told only that processing failed. What was thrown
+            // names tables, columns and paths; it goes to the log and to the
+            // exception handler (Sentry) below, never into the file's record.
             $file->update([
                 'status' => PortfolioFile::STATUS_FAILED,
                 'meta' => array_merge($file->meta ?? [], [
                     'failed_at' => now()->toIso8601String(),
-                    'error_message' => $e->getMessage(),
+                    'error_message' => PortfolioFile::GENERIC_FAILURE_MESSAGE,
                 ]),
             ]);
 
@@ -431,6 +434,8 @@ class ProcessPortfolioFile implements ShouldQueue
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            report($e);
 
             throw $e;
         }

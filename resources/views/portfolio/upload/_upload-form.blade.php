@@ -38,14 +38,15 @@
         <div style="margin-bottom:1.25rem;">
 
             <label style="display:block;margin-bottom:.5rem;font-weight:600;font-size:.875rem;">
-                Select Portfolio
+                Portfolio
             </label>
 
             <select
                 name="portfolio_id"
                 class="form-select">
 
-                <option value="">Default Portfolio</option>
+                {{-- Not a choice: with this left as it is, a single file needs a client name below. --}}
+                <option value="">— Choose a portfolio —</option>
 
                 @foreach($portfolios as $portfolio)
                 <option
@@ -56,6 +57,22 @@
                 @endforeach
 
             </select>
+
+            <label style="display:block;margin:.9rem 0 .5rem;font-weight:600;font-size:.875rem;">
+                Or a new client name
+            </label>
+
+            <input
+                type="text"
+                name="client_name"
+                value="{{ old('client_name') }}"
+                maxlength="255"
+                class="form-input"
+                placeholder="e.g. Rajesh Kumar">
+
+            <div style="color:var(--ink-3);font-size:.8rem;margin-top:.5rem;line-height:1.5;">
+                For a single file, choose a portfolio or type a new client name. A ZIP needs neither: each client folder becomes its own portfolio.
+            </div>
 
         </div>
 

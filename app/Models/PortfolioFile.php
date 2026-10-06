@@ -122,6 +122,45 @@ class PortfolioFile extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | FAILURE MESSAGE — what the advisor is told
+    |--------------------------------------------------------------------------
+    |
+    | meta.error_message holds either a reason written for the advisor ("Could
+    | not find the column headers…") or, for an unexpected failure, this one
+    | fixed sentence. The text of an exception is never stored there: it names
+    | tables, columns, file paths and the database. It goes to the log and to
+    | the exception handler instead.
+    |
+    */
+
+    public const GENERIC_FAILURE_MESSAGE = 'Processing failed. Please check the file format or contact support.';
+
+    /**
+     * Marks of text that came from an exception rather than being written
+     * for an advisor. Only needed for rows that failed before exception text
+     * stopped being stored; nothing new is stored in this form.
+     */
+    private const EXCEPTION_TEXT = '/SQLSTATE|Connection:|SQL:|Stack trace|\.php\b|::|[A-Za-z]\\\\[A-Z]|Call to |Undefined |must be of type|Failed to open stream|No such file or directory|missing from storage|Allowed memory size|Maximum execution time|(?:^|[\s(])\/(?:home|var|tmp|usr)\//';
+
+    /**
+     * The failure reason to show the advisor, or null when there is none.
+     * Always use this to display a failure; never print meta.error_message.
+     */
+    public function failureMessage(): ?string
+    {
+        $message = $this->meta['error_message'] ?? null;
+
+        if (! is_string($message) || trim($message) === '') {
+            return null;
+        }
+
+        return preg_match(self::EXCEPTION_TEXT, $message) === 1
+            ? self::GENERIC_FAILURE_MESSAGE
+            : $message;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | QUERIES
     |--------------------------------------------------------------------------
     */

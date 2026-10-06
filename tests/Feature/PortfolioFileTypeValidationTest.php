@@ -54,7 +54,7 @@ describe('portfolio upload endpoint accepts realistic content, rejects disguised
             'my_portfolio.csv'
         );
 
-        $response = $this->actingAs($user)->post(route('portfolio.upload.store'), ['file' => $file]);
+        $response = $this->actingAs($user)->post(route('portfolio.upload.store'), ['file' => $file, 'client_name' => 'Test Client']);
 
         $response->assertSessionDoesntHaveErrors('file');
         $response->assertRedirect(route('portfolio.upload'));

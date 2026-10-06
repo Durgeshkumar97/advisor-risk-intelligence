@@ -129,14 +129,18 @@ class AssembleBundleZip implements ShouldQueue
             ]);
 
             if (! $assembled && $parent) {
+                // The plain sentence for the advisor; the exception itself is
+                // in the log above and reported below.
                 $parent->update([
                     'status' => PortfolioFile::STATUS_FAILED,
                     'meta' => array_merge($parent->meta ?? [], [
                         'failed_at' => now()->toIso8601String(),
-                        'error_message' => $e->getMessage(),
+                        'error_message' => PortfolioFile::GENERIC_FAILURE_MESSAGE,
                     ]),
                 ]);
             }
+
+            report($e);
 
             throw $e;
         } finally {
@@ -181,7 +185,7 @@ class AssembleBundleZip implements ShouldQueue
             $lines[] = 'FAILED DURING PROCESSING';
             $lines[] = '------------------------';
             foreach ($without as $client) {
-                $reason = $client['lead']->meta['error_message'] ?? 'Processing failed — no report generated';
+                $reason = $client['lead']->failureMessage() ?? 'Processing failed — no report generated';
                 $label = $isFolder($client) ? $client['name'] : $client['lead']->original_name;
                 $lines[] = '  '.$label.': '.$reason;
             }
