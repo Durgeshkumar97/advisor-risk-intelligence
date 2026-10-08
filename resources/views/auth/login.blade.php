@@ -104,9 +104,32 @@
         <div class="card-title">Welcome back</div>
         <div class="card-sub">Sign in to your RiskSignal account</div>
 
-        {{-- STATUS MESSAGE (e.g. password reset sent) --}}
+        {{--
+            FLASH MESSAGES
+
+            Redirects into this page flash under three different keys, and
+            only `status` used to be rendered — the other two were dropped:
+
+              status   password reset done (NewPasswordController)
+              success  "You already have a trial…" / "An account with this
+                       email already exists…" (IntakeController,
+                       RegisteredUserController)
+              error    "This login link is invalid or has expired…"
+                       (/auto-login in routes/web.php)
+
+            An advisor whose magic link had expired landed on a bare form
+            with no idea why.
+        --}}
         @if(session('status'))
             <div class="alert-status">{{ session('status') }}</div>
+        @endif
+
+        @if(session('success'))
+            <div class="alert-status">{{ session('success') }}</div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert-error">{{ session('error') }}</div>
         @endif
 
         {{-- VALIDATION ERRORS --}}
