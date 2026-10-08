@@ -56,6 +56,40 @@ class AdminSessionTimeoutTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_an_idle_admin_is_told_why_they_were_signed_out(): void
+    {
+        // The redirect above always carried the reason as an `error` flash,
+        // but admin/login.blade.php rendered no session message at all — so
+        // this follows the redirect and asserts on the page, not the session.
+        $this->actingAs($this->admin())
+            ->withSession(['admin_last_activity' => time() - (16 * 60)])
+            ->followingRedirects()
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertViewIs('admin.login')
+            ->assertSee('Your admin session expired after 15 minutes of inactivity. Please sign in again.');
+    }
+
+    public function test_the_admin_login_renders_every_flash_key_and_escapes_it(): void
+    {
+        // Same three keys as auth/login.blade.php.
+        foreach (['status', 'success', 'error'] as $key) {
+            $this->withSession([$key => "A {$key} message <b>not markup</b>"])
+                ->get(route('admin.login'))
+                ->assertOk()
+                ->assertSee("A {$key} message <b>not markup</b>")
+                ->assertDontSee("A {$key} message <b>not markup</b>", false);
+        }
+    }
+
+    public function test_the_admin_login_shows_no_message_on_a_plain_visit(): void
+    {
+        $this->get(route('admin.login'))
+            ->assertOk()
+            ->assertDontSee('class="notice"', false)
+            ->assertDontSee('class="error"', false);
+    }
+
     public function test_the_admin_timeout_does_not_apply_to_a_regular_advisor(): void
     {
         // A non-admin never passes through AdminOnly, so a stale

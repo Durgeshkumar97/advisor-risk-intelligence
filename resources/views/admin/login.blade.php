@@ -117,6 +117,16 @@
             font-size:14px;
         }
 
+        .notice{
+            background:rgba(34,197,94,.14);
+            border:1px solid rgba(34,197,94,.22);
+            color:#fff;
+            padding:13px 14px;
+            border-radius:12px;
+            margin-bottom:16px;
+            font-size:14px;
+        }
+
         .form-group{
             margin-bottom:14px;
         }
@@ -280,6 +290,28 @@
             Authorized personnel only.<br>
             All access attempts are monitored and logged.
         </div>
+
+        {{--
+            FLASH MESSAGES
+
+            The same three keys auth/login.blade.php renders. This view
+            rendered none of them, so the one message that is sent here was
+            never shown: AdminOnly redirects an idle admin to this page with
+            `error` = "Your admin session expired after N minutes of
+            inactivity. Please sign in again." — and they got a bare login
+            form instead.
+        --}}
+        @if (session('status'))
+            <div class="notice">{{ session('status') }}</div>
+        @endif
+
+        @if (session('success'))
+            <div class="notice">{{ session('success') }}</div>
+        @endif
+
+        @if (session('error'))
+            <div class="error">{{ session('error') }}</div>
+        @endif
 
         {{-- GLOBAL ERROR --}}
         @if ($errors->any())
