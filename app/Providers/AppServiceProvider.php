@@ -3,10 +3,13 @@
 namespace App\Providers;
 
 use Closure;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\ScheduledBackgroundTaskFinished;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -56,6 +59,27 @@ class AppServiceProvider extends ServiceProvider
 
             URL::forceScheme('https');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PASSWORD RESET SUBMISSION THROTTLE (POST /reset-password)
+        |--------------------------------------------------------------------------
+        |
+        | A named limiter, not `throttle:N,1`, so that it has a counter of its
+        | own. An unnamed throttle is keyed on the caller alone — IP for a
+        | guest — which means every `throttle:N,1` route in the app shares one
+        | counter per caller and only applies its own ceiling to it. A named
+        | limiter's key includes its name.
+        |
+        | 10 a minute leaves room for someone retyping a password the policy
+        | keeps rejecting, while still bounding token guessing and the
+        | breached-password lookup each attempt triggers.
+        |
+        */
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
 
         /*
         |--------------------------------------------------------------------------

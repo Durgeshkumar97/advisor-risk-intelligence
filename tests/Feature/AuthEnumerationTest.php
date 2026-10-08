@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Auth\NewPasswordController;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
@@ -116,5 +119,87 @@ describe('/login no longer distinguishes a deactivated account from a nonexisten
         expect($deactivatedMs)->toBeGreaterThan(100);
         expect($wrongPasswordMs)->toBeGreaterThan(100);
         expect($nonExistentMs)->toBeGreaterThan(100);
+    });
+});
+
+describe('/reset-password no longer enumerates which emails have an account', function () {
+
+    // Passes the password policy, so the only thing left to reject the
+    // request is the token.
+    $newPassword = 'Vq7!mzKp2#Lw9xTd';
+
+    $attempt = fn (string $email, string $token) => test()->post(route('password.store'), [
+        'token' => $token,
+        'email' => $email,
+        'password' => $newPassword,
+        'password_confirmation' => $newPassword,
+    ]);
+
+    it('returns byte-identical errors for a made-up token against an existing account and a non-existent email', function () use ($attempt) {
+        // Before the fix these were Laravel's per-status defaults: "This
+        // password reset token is invalid." for an account that exists and
+        // "We can't find a user with that email address." for one that
+        // doesn't — an oracle needing no token at all.
+        $existing = User::factory()->create();
+
+        $attempt($existing->email, 'not-a-real-token')->assertSessionHasErrors('email');
+        $messageForExisting = session('errors')->first('email');
+
+        $attempt('nobody-'.uniqid().'@example.com', 'not-a-real-token')->assertSessionHasErrors('email');
+        $messageForNonExistent = session('errors')->first('email');
+
+        expect($messageForExisting)->toBe($messageForNonExistent);
+        expect($messageForExisting)->toBe(NewPasswordController::FAILURE_MESSAGE);
+    });
+
+    it('leaves the password untouched when the token is made up', function () use ($attempt, $newPassword) {
+        $user = User::factory()->create(['password' => bcrypt('the-original-password')]);
+
+        $attempt($user->email, 'not-a-real-token');
+
+        expect(Hash::check('the-original-password', $user->fresh()->password))->toBeTrue();
+        expect(Hash::check($newPassword, $user->fresh()->password))->toBeFalse();
+    });
+
+    it('still resets the password when the token is real', function () use ($attempt, $newPassword) {
+        // The generic message must only replace the failure path.
+        $user = User::factory()->create();
+
+        $attempt($user->email, Password::createToken($user))
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('status', __(Password::PASSWORD_RESET));
+
+        expect(Hash::check($newPassword, $user->fresh()->password))->toBeTrue();
+    });
+});
+
+describe('/reset-password is throttled on a counter of its own', function () {
+
+    $attempt = fn () => test()->post(route('password.store'), [
+        'token' => 'not-a-real-token',
+        'email' => 'nobody@example.com',
+        'password' => 'Vq7!mzKp2#Lw9xTd',
+        'password_confirmation' => 'Vq7!mzKp2#Lw9xTd',
+    ]);
+
+    it('allows 10 submissions a minute and refuses the 11th', function () use ($attempt) {
+        for ($i = 0; $i < 10; $i++) {
+            $attempt()->assertStatus(302);
+        }
+
+        $attempt()->assertStatus(429);
+    });
+
+    it('is not used up by requests to other throttled routes', function () use ($attempt) {
+        // /forgot-password is `throttle:5,1`, and every unnamed throttle
+        // shares one counter per IP — so this exhausts that shared counter.
+        // A named limiter is keyed separately and must be unaffected.
+        for ($i = 0; $i < 5; $i++) {
+            $this->post(route('password.email'), ['email' => 'nobody@example.com'])->assertStatus(302);
+        }
+
+        $this->post(route('password.email'), ['email' => 'nobody@example.com'])->assertStatus(429);
+
+        $attempt()->assertStatus(302);
     });
 });

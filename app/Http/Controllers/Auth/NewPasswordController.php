@@ -17,6 +17,12 @@ use Illuminate\View\View;
 class NewPasswordController extends Controller
 {
     /**
+     * The one answer for every reset that did not go through, whatever the
+     * reason. See store().
+     */
+    public const FAILURE_MESSAGE = 'This password reset link is invalid or has expired. Please request a new one.';
+
+    /**
      * Display the password reset view.
      */
     public function create(Request $request): View
@@ -52,12 +58,16 @@ class NewPasswordController extends Controller
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
+        // A failed reset is deliberately NOT explained. Laravel's messages
+        // differ per status — INVALID_USER says "We can't find a user with
+        // that email address." and INVALID_TOKEN says "This password reset
+        // token is invalid." — so anyone posting a made-up token here could
+        // read off which emails have an account. That is the same leak
+        // PasswordResetLinkController closed on /forgot-password, and this
+        // form reopened it. Both cases now get one message.
         return $status == Password::PASSWORD_RESET
                     ? redirect()->route('login')->with('status', __($status))
                     : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+                        ->withErrors(['email' => self::FAILURE_MESSAGE]);
     }
 }
