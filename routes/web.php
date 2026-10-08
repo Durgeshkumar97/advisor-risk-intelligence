@@ -26,6 +26,30 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| ROUTE PARAMETER PATTERNS
+|--------------------------------------------------------------------------
+|
+| Every {id} in this app is an integer primary key, and the controller
+| methods that receive one are typed `int $id`. Without a constraint a URL
+| like /file/abc matched the route and then failed in PHP — a TypeError and
+| a 500 — before any lookup ran. The same went for an id too long to be an
+| int (/file/99999999999999999999).
+|
+| Declared once here, and before any route below is registered (a pattern
+| only applies to routes defined after it), so it covers every {id} route —
+| GET or otherwise, here and in auth.php — and any added later. A URL that
+| does not fit simply matches no route: a GET falls through to the 404 at
+| the bottom of this file, and any other method gets a 405, as it does for
+| every other URL the app does not have.
+|
+| 18 digits is the most that always fits a 64-bit integer.
+|
+*/
+
+Route::pattern('id', '[0-9]{1,18}');
+
+/*
+|--------------------------------------------------------------------------
 | PUBLIC PAGES
 |--------------------------------------------------------------------------
 */
