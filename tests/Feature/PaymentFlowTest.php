@@ -226,6 +226,171 @@ describe('CheckoutController::success()', function () {
     });
 });
 
+// ─── POST /payment/verify with no Razorpay secret configured ─────────────────
+
+/*
+ * /payment/verify trusts three strings from the browser because only Razorpay
+ * can produce the third: an HMAC of "order_id|payment_id" keyed on
+ * RAZORPAY_SECRET. The Razorpay SDK computes it with whatever secret the Api
+ * object was built with (Utility::verifyPaymentSignature → hash_hmac), and
+ * RazorpayService builds that object straight from config. With the secret
+ * unset the key is the empty string, so the "signature" is something anyone
+ * can compute — and a verified payment is fulfilled: marked paid, then a
+ * subscription created by ProcessSuccessfulPayment.
+ *
+ * The tests above this block all mock RazorpayService, so none of them ever
+ * ran the real signature check. These deliberately do not mock it.
+ *
+ * The forger needs an order_id that exists. That is not a secret: it is
+ * returned to the browser by /payment/create, so anyone who ever started a
+ * checkout holds one.
+ */
+
+/** The signature Razorpay would send for this order and payment, keyed on $secret. */
+function razorpayPaymentSignature(string $orderId, string $paymentId, string $secret): string
+{
+    return hash_hmac('sha256', $orderId.'|'.$paymentId, $secret);
+}
+
+describe('POST /payment/verify with no Razorpay secret configured', function () {
+
+    beforeEach(function () {
+        Queue::fake();
+        Exceptions::fake();
+        $this->plan = minimalActivePlan();
+    });
+
+    $missingSecrets = [
+        'unset' => [null],
+        'empty' => [''],
+        'blank' => ['   '],
+    ];
+
+    it('refuses a payment signed with the empty secret and writes nothing', function (?string $missing) {
+        config(['services.razorpay.secret' => $missing]);
+
+        $payment = pendingPayment($this->plan, orderId: 'order_nosecret_verify');
+        $before = $payment->fresh()->getAttributes();
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_forged_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => razorpayPaymentSignature($payment->order_id, 'pay_forged_001', (string) $missing),
+        ])
+            ->assertStatus(422)
+            ->assertExactJson(['success' => false, 'message' => 'Payment verification failed.']);
+
+        // Byte-for-byte the row it was: not paid, not processing, no payment_id.
+        expect($payment->fresh()->getAttributes())->toBe($before);
+        expect(Subscription::count())->toBe(0);
+        Queue::assertNothingPushed();
+    })->with($missingSecrets);
+
+    it('does not let a forged verify revive a payment that already failed', function (?string $missing) {
+        // The stale-payment sweep marks an abandoned checkout 'failed', and
+        // verify is allowed to overwrite 'failed' with 'paid' for a real late
+        // payment — so an old, abandoned order_id is exactly as usable to a
+        // forger as a fresh one.
+        config(['services.razorpay.secret' => $missing]);
+
+        $payment = pendingPayment($this->plan, orderId: 'order_nosecret_failed');
+        $payment->update(['status' => 'failed']);
+        $before = $payment->fresh()->getAttributes();
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_forged_002',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => razorpayPaymentSignature($payment->order_id, 'pay_forged_002', (string) $missing),
+        ])->assertStatus(422);
+
+        expect($payment->fresh()->getAttributes())->toBe($before);
+        Queue::assertNothingPushed();
+    })->with($missingSecrets);
+
+    it('reports the missing secret so it reaches the error tracker', function (?string $missing) {
+        // Fail closed means no browser-side payment can be verified, so
+        // someone has to be told — a log line would not be seen.
+        config(['services.razorpay.secret' => $missing]);
+
+        $payment = pendingPayment($this->plan, orderId: 'order_nosecret_report');
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_forged_003',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => razorpayPaymentSignature($payment->order_id, 'pay_forged_003', (string) $missing),
+        ])->assertStatus(422);
+
+        Exceptions::assertReported(
+            fn (\RuntimeException $e) => str_contains($e->getMessage(), 'RAZORPAY_SECRET')
+        );
+    })->with($missingSecrets);
+
+    it('answers exactly as it does for a bad signature, so the caller cannot tell the secret is missing', function () {
+        $payment = pendingPayment($this->plan, orderId: 'order_nosecret_same');
+
+        $forged = [
+            'razorpay_payment_id' => 'pay_forged_004',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'not-the-real-hmac',
+        ];
+
+        config(['services.razorpay.secret' => 'a-real-secret']);
+        $configured = $this->postJson(route('payment.verify'), $forged);
+
+        config(['services.razorpay.secret' => null]);
+        $unconfigured = $this->postJson(route('payment.verify'), $forged);
+
+        expect($unconfigured->getStatusCode())->toBe($configured->getStatusCode());
+        expect($unconfigured->getContent())->toBe($configured->getContent());
+    });
+});
+
+describe('POST /payment/verify through the real signature check', function () {
+
+    // The controls for the block above. Without them, "refused" could be
+    // passing because the real RazorpayService refuses everything.
+
+    beforeEach(function () {
+        Queue::fake();
+        Exceptions::fake();
+        $this->plan = minimalActivePlan();
+        config(['services.razorpay.secret' => 'a-real-secret']);
+    });
+
+    it('still verifies a payment correctly signed with the configured secret', function () {
+        $payment = pendingPayment($this->plan, orderId: 'order_real_sig_ok');
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_real_001',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => razorpayPaymentSignature($payment->order_id, 'pay_real_001', 'a-real-secret'),
+        ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_PROCESSING);
+        expect($payment->fresh()->payment_id)->toBe('pay_real_001');
+        Queue::assertPushedTimes(ProcessSuccessfulPayment::class, 1);
+        Exceptions::assertNothingReported();
+    });
+
+    it('refuses a signature made with the empty secret when a real one is configured, and reports nothing', function () {
+        // An ordinary forgery is expected traffic, not a misconfiguration; it
+        // must not page anyone.
+        $payment = pendingPayment($this->plan, orderId: 'order_real_sig_bad');
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_real_002',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => razorpayPaymentSignature($payment->order_id, 'pay_real_002', ''),
+        ])->assertStatus(422);
+
+        expect($payment->fresh()->status)->toBe(Payment::STATUS_PENDING);
+        Queue::assertNothingPushed();
+        Exceptions::assertNothingReported();
+    });
+});
+
 // ─── WebhookController::handle()  (POST /webhook/razorpay) ───────────────────
 
 describe('WebhookController::handle()', function () {
