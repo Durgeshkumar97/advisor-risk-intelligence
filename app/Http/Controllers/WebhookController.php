@@ -20,10 +20,11 @@ class WebhookController extends Controller
     | closes before the JS verify call completes.
     |
     | Safety guarantees:
-    |   1. HMAC signature verified before any processing.
-    |   2. Only payment.captured events acted on.
-    |   3. payment->processed_at used as idempotency lock (lockForUpdate).
-    |   4. Fulfilment delegated to ProcessSuccessfulPayment job.
+    |   1. No webhook secret configured → every request refused (fail closed).
+    |   2. HMAC signature verified before any processing.
+    |   3. Only payment.captured and payment.refunded events acted on.
+    |   4. payment->processed_at used as idempotency lock (lockForUpdate).
+    |   5. Fulfilment delegated to ProcessSuccessfulPayment job.
     |
     */
 
@@ -31,12 +32,41 @@ class WebhookController extends Controller
     {
         $payload = $request->getContent();
         $signature = $request->header('X-Razorpay-Signature');
+        $secret = (string) config('services.razorpay.webhook_secret');
 
-        $expected = hash_hmac(
-            'sha256',
-            $payload,
-            (string) config('services.razorpay.webhook_secret')
-        );
+        /*
+        |----------------------------------------------------------------------
+        | NO SECRET, NO WEBHOOKS
+        |----------------------------------------------------------------------
+        |
+        | The check below is only as good as the secret it is keyed on. With
+        | RAZORPAY_WEBHOOK_SECRET unset this used to hash with '' — and an
+        | HMAC keyed on the empty string is something anyone can compute, so
+        | a missing env var turned the signature check into no check at all:
+        | any caller could mark an order paid, or refund one and revoke a
+        | paying advisor's access.
+        |
+        | So a missing secret refuses everything, before the signature is
+        | even looked at and before the event type is read — captured,
+        | refunded and ignored events alike.
+        |
+        | The response is the same 400 a bad signature gets, so nothing
+        | outside can tell the secret is missing. Inside, it is report()ed
+        | rather than logged: every genuine Razorpay webhook is being turned
+        | away while this is true, and that has to reach whoever can fix it.
+        |
+        */
+
+        if (trim($secret) === '') {
+            report(new \RuntimeException(
+                'Razorpay webhook refused: RAZORPAY_WEBHOOK_SECRET is not set, so no webhook can be verified. '
+                .'Payments are not being fulfilled via webhook until it is configured.'
+            ));
+
+            return response()->json(['error' => 'invalid signature'], 400);
+        }
+
+        $expected = hash_hmac('sha256', $payload, $secret);
 
         if (! hash_equals($expected, (string) $signature)) {
             Log::warning('Razorpay webhook: invalid signature', ['ip' => $request->ip()]);
