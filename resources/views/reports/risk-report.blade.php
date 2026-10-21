@@ -148,7 +148,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 
 @if($portfolio?->clientRiskProfile)
 <div class="section-heading">Client Risk Tolerance Comparison</div>
-<div class="action-box">{{ $portfolio->clientRiskProfile->comparisonMessage((float) $riskScore->score, $level) }}</div>
+<div class="action-box">{{ $portfolio->clientRiskProfile->comparisonMessage((float) $riskScore->score) }}</div>
 @endif
 
 @if(!empty($riskScore->meta['market_context']))

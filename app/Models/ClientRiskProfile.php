@@ -78,18 +78,6 @@ class ClientRiskProfile extends Model
         4 => 100, // aggressive growth
     ];
 
-    // The gap (portfolio score - capacity score) within which the two are
-    // considered aligned rather than flagged as exceeding/under-using client
-    // tolerance. Reviewed against the rescaled maps above: capacity_score and
-    // the portfolio score now both span a genuine 0–100, so ±15 is the same
-    // 15% of full range on each side (previously capacity was compressed to
-    // ~14–89, making a 15-point gap asymmetric between the two scales). One
-    // questionnaire answer moves capacity_score by 6 points (4-option question)
-    // to 10 points (3-option), so ±15 ≈ 1.5–2.5 answers of leeway — still a
-    // sensible aligned band, left unchanged. Exactly ±15 is "well-aligned"
-    // (abs() <= 15).
-    private const ALIGNED_GAP_THRESHOLD = 15;
-
     /*
     |--------------------------------------------------------------------------
     | RELATIONS
@@ -156,29 +144,31 @@ class ClientRiskProfile extends Model
     |--------------------------------------------------------------------------
     |
     | Observational only — same compliance rule as
-    | PortfolioRiskCalculator::buildNextAction(): state the gap, never
-    | prescribe an action. No "should", "consider", "recommend", "review",
-    | or "discuss".
+    | PortfolioRiskCalculator::buildNextAction(): state the two scores and
+    | their difference, never prescribe an action. No "should", "consider",
+    | "recommend", "review", or "discuss" — and no verdict on whether the
+    | portfolio fits the client either: no "aligned", "suitable", "exceeds",
+    | "above" or "below" tolerance. Whether a difference matters is the
+    | advisor's call, so there is no threshold here and every difference is
+    | stated the same way.
+    |
+    | The difference is taken between the two printed (rounded) numbers, so
+    | the sentence always adds up as read: 69.6 against 45.4 prints as
+    | 70, 45 and +25, not +24.
     |
     */
 
-    public function comparisonMessage(float $portfolioScore, string $portfolioLevel): string
+    public function comparisonMessage(float $portfolioScore): string
     {
-        $capacityScore = (float) $this->capacity_score;
-        $capacityLevel = $this->level();
-        $gap = round($portfolioScore - $capacityScore, 2);
+        $portfolioDisplay = (int) round($portfolioScore);
+        $capacityDisplay = (int) round((float) $this->capacity_score);
+        $difference = $portfolioDisplay - $capacityDisplay;
 
-        $capacityDisplay = number_format($capacityScore, 0);
-        $portfolioDisplay = number_format($portfolioScore, 0);
-
-        if (abs($gap) <= self::ALIGNED_GAP_THRESHOLD) {
-            return "Portfolio risk ({$portfolioDisplay}, {$portfolioLevel}) is well-aligned with client risk tolerance ({$capacityDisplay}, {$capacityLevel}).";
-        }
-
-        if ($gap > self::ALIGNED_GAP_THRESHOLD) {
-            return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk sits ".number_format($gap, 0).' points above client tolerance.';
-        }
-
-        return "Client risk tolerance: {$capacityDisplay} ({$capacityLevel}). Portfolio risk: {$portfolioDisplay} ({$portfolioLevel}). Portfolio risk sits ".number_format(abs($gap), 0).' points below client tolerance.';
+        return sprintf(
+            'Portfolio risk score: %d. Client risk tolerance score: %d. Difference: %s points.',
+            $portfolioDisplay,
+            $capacityDisplay,
+            $difference > 0 ? '+'.$difference : (string) $difference,
+        );
     }
 }

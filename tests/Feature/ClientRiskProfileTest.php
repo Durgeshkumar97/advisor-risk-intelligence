@@ -161,7 +161,7 @@ describe('the PDF report renders the comparison — and is unchanged when no pro
         $html = renderReportHtml($portfolio, $riskScore, $file);
 
         expect($html)->toContain('Client Risk Tolerance Comparison');
-        expect($html)->toContain('sits 40 points above client tolerance'); // portfolio 78 - capacity 38
+        expect($html)->toContain('Portfolio risk score: 78. Client risk tolerance score: 38. Difference: +40 points.');
     });
 
     it('renders identically to before this feature existed when the portfolio has no client risk profile (purely additive regression check)', function () {
@@ -194,9 +194,8 @@ describe('the PDF report renders the comparison — and is unchanged when no pro
         $html = renderReportHtml($portfolio, $riskScore, $file);
 
         expect($html)->not->toContain('Client Risk Tolerance Comparison');
-        expect($html)->not->toContain('well-aligned');
-        expect($html)->not->toContain('exceeds client tolerance');
-        expect($html)->not->toContain('below client tolerance');
+        expect($html)->not->toContain('Client risk tolerance score');
+        expect($html)->not->toContain('Difference:');
         // The rest of the report still renders correctly (no error, real content).
         expect($html)->toContain('Risk Score');
         expect($html)->toContain('78');

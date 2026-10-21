@@ -100,88 +100,106 @@ it('labels capacity scores LOW/MEDIUM/HIGH using the same config thresholds as t
 });
 
 // ---------------------------------------------------------------------------
-// comparisonMessage() — the three variants + exact boundary cases
+// comparisonMessage() — two scores and their signed difference, nothing else
 // ---------------------------------------------------------------------------
 
-it('reports well-aligned when the gap is within +/-15 points', function () {
+it('states both scores and a positive difference when portfolio risk is higher', function () {
     $profile = makeProfile(45.0);
 
-    $message = $profile->comparisonMessage(55.0, 'MEDIUM'); // gap = +10
+    $message = $profile->comparisonMessage(55.0); // difference = +10
 
     expect($message)->toBe(
-        'Portfolio risk (55, MEDIUM) is well-aligned with client risk tolerance (45, MEDIUM).'
+        'Portfolio risk score: 55. Client risk tolerance score: 45. Difference: +10 points.'
     );
 });
 
-it('reports portfolio risk exceeding client tolerance when the gap is above +15, matching the exact example sentence from the design', function () {
+it('states a large positive difference the same way as a small one', function () {
     $profile = makeProfile(45.0);
 
-    $message = $profile->comparisonMessage(78.0, 'HIGH'); // gap = +33
+    $message = $profile->comparisonMessage(78.0); // difference = +33
 
     expect($message)->toBe(
-        'Client risk tolerance: 45 (MEDIUM). Portfolio risk: 78 (HIGH). Portfolio risk sits 33 points above client tolerance.'
+        'Portfolio risk score: 78. Client risk tolerance score: 45. Difference: +33 points.'
     );
 });
 
-it('reports portfolio risk below client tolerance when the gap is below -15', function () {
+it('states a negative difference with a minus sign when portfolio risk is lower', function () {
     $profile = makeProfile(80.0);
 
-    $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = -30
+    $message = $profile->comparisonMessage(50.0); // difference = -30
 
     expect($message)->toBe(
-        'Client risk tolerance: 80 (HIGH). Portfolio risk: 50 (MEDIUM). Portfolio risk sits 30 points below client tolerance.'
+        'Portfolio risk score: 50. Client risk tolerance score: 80. Difference: -30 points.'
     );
 });
 
-it('treats a positive gap of exactly 15 as still well-aligned (boundary inclusive)', function () {
+it('states a difference of exactly plus 15 as a number, with no aligned band', function () {
     $profile = makeProfile(50.0);
 
-    $message = $profile->comparisonMessage(65.0, 'MEDIUM'); // gap = exactly +15
+    $message = $profile->comparisonMessage(65.0);
 
-    expect($message)->toContain('is well-aligned with');
-    expect($message)->not->toContain('exceeds client tolerance');
+    expect($message)->toContain('Difference: +15 points.');
+    expect($message)->not->toContain('aligned');
 });
 
-it('treats a negative gap of exactly 15 as still well-aligned (boundary inclusive)', function () {
+it('states a difference of exactly minus 15 as a number, with no aligned band', function () {
     $profile = makeProfile(65.0);
 
-    $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = exactly -15
+    $message = $profile->comparisonMessage(50.0);
 
-    expect($message)->toContain('is well-aligned with');
-    expect($message)->not->toContain('below client tolerance');
+    expect($message)->toContain('Difference: -15 points.');
+    expect($message)->not->toContain('aligned');
 });
 
-it('treats a positive gap of 16 (one point past the boundary) as exceeding tolerance', function () {
+it('states a difference of plus 16 in the same sentence shape as plus 15', function () {
     $profile = makeProfile(50.0);
 
-    $message = $profile->comparisonMessage(66.0, 'MEDIUM'); // gap = +16
+    $message = $profile->comparisonMessage(66.0);
 
-    expect($message)->toContain('sits 16 points above client tolerance');
+    expect($message)->toBe(
+        'Portfolio risk score: 66. Client risk tolerance score: 50. Difference: +16 points.'
+    );
 });
 
-it('treats a negative gap of 16 (one point past the boundary) as below tolerance', function () {
+it('states a difference of minus 16 in the same sentence shape as minus 15', function () {
     $profile = makeProfile(66.0);
 
-    $message = $profile->comparisonMessage(50.0, 'MEDIUM'); // gap = -16
+    $message = $profile->comparisonMessage(50.0);
 
-    expect($message)->toContain('sits 16 points below client tolerance');
+    expect($message)->toBe(
+        'Portfolio risk score: 50. Client risk tolerance score: 66. Difference: -16 points.'
+    );
 });
 
-// ---------------------------------------------------------------------------
-// F7 — documented, inherited display quirk (NOT a bug). Pinned so a future
-// reviewer does not re-discover and re-litigate it.
-// ---------------------------------------------------------------------------
+it('states a zero difference without a sign', function () {
+    $profile = makeProfile(50.0);
 
-it('prints a portfolio score of 69.6 as "70 (MEDIUM)" — the number is rounded for display while the level comes from the unrounded score (<70 = MEDIUM). This is known, pre-existing behavior shared with the report summary table (risk-report.blade.php), not a new bug.', function () {
-    // The level string is supplied by the caller as $riskScore->level(), which
-    // reads the UNROUNDED score: 69.6 < 70 -> MEDIUM. The sentence then prints
-    // number_format(69.6, 0) = "70" next to it. So "70" can appear labelled
-    // MEDIUM even though 70 on its own reads as HIGH per config/risk.php.
-    $profile = makeProfile(60.0);
+    expect($profile->comparisonMessage(50.0))->toBe(
+        'Portfolio risk score: 50. Client risk tolerance score: 50. Difference: 0 points.'
+    );
+});
 
-    // gap = 69.6 - 60 = 9.6 -> within +/-15 -> the aligned sentence, which
-    // prints the portfolio number and level side by side.
-    $message = $profile->comparisonMessage(69.6, 'MEDIUM');
+it('prints a portfolio score of 69.6 as 70, and takes the difference between the printed numbers so the sentence adds up', function () {
+    expect(makeProfile(60.0)->comparisonMessage(69.6))
+        ->toContain('Portfolio risk score: 70.');
 
-    expect($message)->toContain('Portfolio risk (70, MEDIUM)');
+    // Unrounded: 69.6 - 45.4 = 24.2. Printed: 70 and 45, so +25 — what a
+    // reader gets by subtracting the two numbers in front of them.
+    expect(makeProfile(45.4)->comparisonMessage(69.6))->toBe(
+        'Portfolio risk score: 70. Client risk tolerance score: 45. Difference: +25 points.'
+    );
+});
+
+it('never passes a verdict on fit, whatever the difference', function () {
+    $verdicts = ['aligned', 'suitable', 'appropriate', 'exceeds', 'above', 'below', 'too ', 'should', 'consider', 'recommend', 'review', 'discuss'];
+
+    foreach ([0.0, 20.0, 45.0, 50.0, 80.0, 100.0] as $capacity) {
+        foreach ([0.0, 15.0, 50.0, 65.0, 85.0, 100.0] as $portfolio) {
+            $message = strtolower(makeProfile($capacity)->comparisonMessage($portfolio));
+
+            foreach ($verdicts as $word) {
+                expect($message)->not->toContain($word);
+            }
+        }
+    }
 });

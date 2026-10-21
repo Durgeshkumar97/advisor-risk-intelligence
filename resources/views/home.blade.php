@@ -211,8 +211,7 @@
                             font-style:italic;
                             word-break:break-word;
                         ">
-                            "Foreign investors have been selling — this is normal during uncertainty.
-                            Your long-term plan is intact. No action needed."
+                            "Foreign investors have been selling — this is normal during uncertainty."
                         </div>
                     </div>
 
@@ -470,7 +469,7 @@
                         </div>
 
                         <div style="font-size:.82rem;color:var(--ink-2);">
-                            Up from 5.1 last week. FII selling and currency risk are primary drivers. No immediate portfolio action recommended.
+                            Up from 5.1 last week. FII selling and currency risk are primary drivers.
                         </div>
                     </div>
                 </div>
@@ -600,8 +599,7 @@
                     line-height:1.6;
                 ">
                     <strong style="color:var(--gold);">Your response:</strong><br><br>
-                    “Foreign investors have been selling for 3 weeks — that's normal during uncertainty.
-                    Your long-term plan is intact. No action needed.”
+                    “Foreign investors have been selling for 3 weeks — that's normal during uncertainty.”
                 </p>
 
             </div>
