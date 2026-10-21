@@ -194,27 +194,6 @@
                         </div>
                     </div>
 
-                    <!-- SCRIPT -->
-                    <div style="
-                        background:var(--paper);
-                        border-left:3px solid var(--gold);
-                        padding:.8rem 1rem;
-                    ">
-                        <div class="eyebrow" style="margin-bottom:.35rem;">
-                            What to tell your client
-                        </div>
-
-                        <div style="
-                            font-size:.78rem;
-                            color:var(--ink-2);
-                            line-height:1.5;
-                            font-style:italic;
-                            word-break:break-word;
-                        ">
-                            "Foreign investors have been selling — this is normal during uncertainty."
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -567,43 +546,6 @@
             <div style="margin-top:1rem;">
                 <a href="#live-example" class="btn-secondary">See Live Example</a>
             </div>
-        </div>
-
-    </div>
-</section>
-
-<section>
-    <div class="container reveal reveal-pop" style="max-width:700px;margin:auto;text-align:center;">
-
-        <div class="eyebrow">How advisors actually use this</div>
-
-        <h2 style="margin-top:.5rem;">Real scenario</h2>
-
-        <div class="card" style="padding:1.5rem;margin-top:1.5rem;text-align:left;">
-
-            <p style="font-size:.9rem;font-weight:500;">
-                <strong>Client:</strong> “Market gir raha hai — exit karein?”
-            </p>
-
-            <div style="
-                margin-top:1rem;
-                padding:1rem;
-                border-left:3px solid var(--gold);
-                background:rgba(255,255,255,0.02);
-            ">
-
-                <p style="
-                    font-size:.95rem;
-                    font-weight:500;
-                    color:var(--ink);
-                    line-height:1.6;
-                ">
-                    <strong style="color:var(--gold);">Your response:</strong><br><br>
-                    “Foreign investors have been selling for 3 weeks — that's normal during uncertainty.”
-                </p>
-
-            </div>
-
         </div>
 
     </div>
