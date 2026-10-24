@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# AMFI publishes NAVAll.txt with CRLF line endings; the fixture must keep them.
+tests/Fixtures/amfi/NAVAll.txt -text

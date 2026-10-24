@@ -132,6 +132,25 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('portfolio:cleanup-temp-dirs')
             ->hourly();
 
+        /*
+        |--------------------------------------------------------------------------
+        | AMFI SCHEME MASTER REFRESH (daily at 06:30)
+        |--------------------------------------------------------------------------
+        |
+        | The app timezone is Asia/Kolkata and AMFI's NAV upload deadline is
+        | 11 PM the previous evening, so by 06:30 the file is complete. The slot
+        | is clear of the 02:00 / 03:00 jobs and ahead of risk:generate at 08:00.
+        | A failure reaches Sentry through report() inside the command and the
+        | scheduled-task failure listener. The 10-minute mutex (rather than the
+        | 24h default) is for the same SIGKILL reason documented on the queue
+        | worker above.
+        |--------------------------------------------------------------------------
+        */
+
+        $schedule->command('amfi:sync')
+            ->dailyAt('06:30')
+            ->withoutOverlapping(10);
+
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {

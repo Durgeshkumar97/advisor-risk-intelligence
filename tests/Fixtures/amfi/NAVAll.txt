@@ -1,0 +1,234 @@
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Plan;Option;Net Asset Value;Date
+ 
+Open Ended Schemes(Children’s Fund - Childrens' Fund)
+ 
+Axis Mutual Fund
+ 
+135762;INF846K01WO1;-;Axis Children's Fund;Direct Plan;Growth Option;28.6173;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Banking and PSU Fund)
+ 
+HDFC Mutual Fund
+ 
+128629;INF179KA1IZ7;-;HDFC Banking and PSU Debt Fund;Direct Plan;Growth Option;25.3147;23-Oct-2026
+128626;INF179KA1JA8;INF179KA1JB6;HDFC Banking and PSU Debt Fund;Direct Plan;IDCW Option;9.9334;23-Oct-2026
+ 
+Kotak Mahindra Mutual Fund
+ 
+123690;INF174K01FO3;-;Kotak Banking and PSU Debt Fund;Regular Plan;Growth;69.1692;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Corporate Bond Fund)
+ 
+HDFC Mutual Fund
+ 
+113070;INF179K01DC2;-;HDFC Corporate Bond Fund;Regular Plan;Growth Option;34.0294;23-Oct-2026
+118987;INF179K01XD8;-;HDFC Corporate Bond Fund;Direct Plan;Growth Option;34.8874;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Credit Risk Fund)
+ 
+ICICI Prudential Mutual Fund
+ 
+120711;INF109K01V00;-;ICICI Prudential Credit Risk Fund;Direct Plan;Growth;38.5431;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Dynamic Bond)
+ 
+Franklin Templeton Mutual Fund
+ 
+148308;INF090I01WD3;-;Franklin India Dynamic Accrual Fund (No. of segregated portfolios- 3);Direct Plan;Growth;0.0000;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Liquid Fund)
+ 
+HDFC Mutual Fund
+ 
+119091;INF179KB1HP9;-;HDFC Liquid Fund;Direct Plan;Growth Option;5610.7072;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Medium Duration Fund)
+ 
+Kotak Mahindra Mutual Fund
+ 
+128006;INF174K01VQ5;-;Kotak Medium Term Fund;Direct Plan;Growth;27.3433;23-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Overnight Fund)
+ 
+Bajaj Finserv Mutual Fund
+ 
+153437;INF0QA701AE3;-;Bajaj Finserv Overnight Fund;Direct Plan;Unclaimed less than 3 years IDCW Plan;1081.9828;25-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Flexi Cap Fund)
+ 
+PPFAS Mutual Fund
+ 
+122639;INF879O01027;-;Parag Parikh Flexi Cap Fund;Direct Plan;Growth;88.9695;23-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Large Cap Fund)
+ 
+ICICI Prudential Mutual Fund
+ 
+108467;INF109K01BN0;-;ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund);;;37.59;24-Apr-2020
+120585;INF109K014L5;INF109K015L2;ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund);Direct Plan;IDCW;56.36;23-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Mid Cap Fund)
+ 
+Axis Mutual Fund
+ 
+120505;INF846K01EH3;-;Axis Midcap Fund;Direct Plan;Growth Option;131.67;23-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Sectoral/ Thematic)
+ 
+ICICI Prudential Mutual Fund
+ 
+109445;INF109K01BU5;-;ICICI Prudential Banking & Financial Services Fund;Regular Plan;Growth;123.54;23-Oct-2026
+109446;INF109K01DY3;INF109K01BV3;ICICI Prudential Banking & Financial Services Fund;Regular Plan;IDCW;23.58;23-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Small Cap Fund)
+ 
+Nippon India Mutual Fund
+ 
+118778;INF204K01K15;-;Nippon India Small Cap Fund;Direct Plan;Growth Option;189.2104;23-Oct-2026
+113177;INF204K01HY3;-;Nippon India Small Cap Fund;Regular Plan;Growth Option;167.2953;23-Oct-2026
+ 
+Open Ended Schemes(Equity Schemes - Sectoral Fund)
+ 
+Bandhan Mutual Fund
+ 
+151816;INF194KB1GB2;-;BANDHAN FINANCIAL SERVICES FUND;Direct Plan;Growth;14.457;23-Oct-2026
+ 
+Open Ended Schemes(Equity Schemes - Small Cap Fund)
+ 
+Axis Mutual Fund
+ 
+125354;INF846K01K35;-;Axis Small Cap Fund;Direct Plan;Growth Option;124.67;23-Oct-2026
+ 
+Open Ended Schemes(Exchange Traded Funds (ETFs) - Other ETF)
+ 
+Groww Mutual Fund
+ 
+153940;INF666M01MV5;-;Groww Nifty Midcap 150 ETF;;;206.338;23-Oct-2026
+ 
+Open Ended Schemes(Hybrid Scheme - Arbitrage Fund)
+ 
+Kotak Mahindra Mutual Fund
+ 
+119770;INF174K01LE2;INF174K01LD4;Kotak Arbitrage Fund;Direct Plan;IDCW - Payout & Re-investment of Income Distribution cum capital withdrawal optio;11.2652;23-Oct-2026
+ 
+Open Ended Schemes(Hybrid Scheme - Dynamic Asset Allocation or Balanced Advantage)
+ 
+HDFC Mutual Fund
+ 
+100119;INF179K01830;-;HDFC Balanced Advantage Fund;Regular Plan;Growth Option;495.538;23-Oct-2026
+ 
+Open Ended Schemes(Hybrid Scheme - Equity Savings)
+ 
+Kotak Mahindra Mutual Fund
+ 
+131373;INF174K01D28;-;Kotak Equity Savings Fund;Direct Plan;Growth;29.7442;23-Oct-2026
+ 
+Open Ended Schemes(Hybrid Schemes - Aggressive Hybrid Fund)
+ 
+ICICI Prudential Mutual Fund
+ 
+136113;INF109KB1QK6;INF109KB1QJ8;ICICI Prudential Aggressive Hybrid Fund;Regular Plan;Annual IDCW;22.06;23-Oct-2026
+ 
+Open Ended Schemes(Income/Debt Oriented Schemes - Banking and PSU Debt Fund)
+ 
+Axis Mutual Fund
+ 
+120438;INF846K01CR6;-;Axis Banking and PSU Debt Fund;Direct Plan;Growth Option;2885.0385;23-Oct-2026
+ 
+Open Ended Schemes(Income/Debt Oriented Schemes - Corporate Bond Fund)
+ 
+Axis Mutual Fund
+ 
+141586;INF846K01ZN6;-;AXIS Corporate Bond Fund;Direct Plan;Daily IDCW Option;10.1800;23-Oct-2026
+ 
+Open Ended Schemes(Income/Debt Oriented Schemes - Credit Risk Fund)
+ 
+Axis Mutual Fund
+ 
+130314;INF846K01PJ5;-;Axis Credit Risk Fund;Direct Plan;Growth Option;26.3890;23-Oct-2026
+ 
+Open Ended Schemes(Income/Debt Oriented Schemes - Dynamic Term Fund)
+ 
+Axis Mutual Fund
+ 
+120451;INF846K01DI3;-;Axis Dynamic Term Fund;Direct Plan;Growth Option;34.5922;23-Oct-2026
+ 
+Open Ended Schemes(Income/Debt Oriented Schemes - Medium Term Fund)
+ 
+Axis Mutual Fund
+ 
+120475;INF846K01DT0;-;Axis Medium Term Fund;Direct Plan;Growth Option;33.1989;23-Oct-2026
+ 
+Open Ended Schemes(Index Funds - Debt Funds)
+ 
+Axis Mutual Fund
+ 
+151436;INF846K013O9;INF846K014O7;Axis Crisil IBX 50:50 Gilt Plus SDL September 2027 Index Fund;Direct Plan;IDCW Option;12.9861;23-Oct-2026
+ 
+Open Ended Schemes(Index Funds - Equity Funds)
+ 
+Groww Mutual Fund
+ 
+152431;INF666M01HY9;-;Groww Nifty Smallcap 250 Index Fund;Direct Plan;Growth;10.9425;23-Oct-2026
+ 
+Open Ended Schemes(Life Cycle Funds - Life Cycle Fund with Maturity of 10 Years)
+ 
+ICICI Prudential Mutual Fund
+ 
+154578;INF109K1A583;-;ICICI Prudential Life Cycle Fund 2036;;;9.5755;23-Oct-2026
+ 
+Open Ended Schemes(Other Scheme - FoF Domestic)
+ 
+SBI Mutual Fund
+ 
+119789;INF200K01RN3;INF200K01RO1;SBI GOLD FUND;Direct Plan;IDCW;42.6837;23-Oct-2026
+115677;INF200K01HB9;INF200K01HC7;SBI GOLD FUND;Regular Plan;IDCW;40.7593;23-Oct-2026
+ 
+Open Ended Schemes(Other Scheme - Gold ETF)
+ 
+Nippon India Mutual Fund
+ 
+140088;INF204KB17I5;-;Nippon India ETF Gold BeES;Direct Plan;;116.0136;23-Oct-2026
+ 
+Open Ended Schemes(Other Scheme - Index Funds)
+ 
+Motilal Oswal Mutual Fund
+ 
+147622;INF247L01916;-;Motilal Oswal Nifty Midcap 150 Index Fund;Direct Plan;Growth;37.3905;23-Oct-2026
+147621;INF247L01908;-;Motilal Oswal Nifty Midcap 150 Index Fund;Regular Plan;Growth;35.4859;23-Oct-2026
+ 
+UTI Mutual Fund
+ 
+120717;INF789F01WY2;INF789F01WZ9;UTI Nifty 50 Index Fund;Direct Plan;IDCW;80.1956;23-Oct-2026
+120716;INF789F01XA0;-;UTI Nifty 50 Index Fund;Direct Plan;Growth;159.177;23-Oct-2026
+ 
+Open Ended Schemes(Other Scheme - Other  ETFs)
+ 
+Angel One Mutual Fund
+ 
+153531;INF1J2R01064;-;ANGEL ONE NIFTY 50 ETF;Direct Plan;;9.3478;23-Oct-2026
+ 
+Edelweiss Mutual Fund
+ 
+147849;INF754K01KO2;-;Bharat Bond ETF - April 2030;;;1598.2171;23-Oct-2026
+ 
+Nippon India Mutual Fund
+ 
+140086;INF732E01037;-;Nippon India ETF Nifty 1D Rate Liquid BeES;Direct Plan;;1000.0000;25-Oct-2026
+ 
+Open Ended Schemes(Solution Oriented Schemes ** - Retirement Fund)
+ 
+Axis Mutual Fund
+ 
+147825;INF846K01S86;-;Axis Retirement Fund - Aggressive Plan;Direct Plan;Growth Option;19.20;23-Oct-2026
+ 
+Close Ended Schemes(Income)
+ 
+HDFC Mutual Fund
+ 
+147236;INF179KC1932;-;HDFC FMP 1100D April 2019 (1);;;12.3999;11-May-2022
+ 
+Nippon India Mutual Fund
+ 
+131348;INF204KA1UU2;-;Reliance Fixed Horizon Fund XXVII- Series 7;;;12.9698;28-Sep-2017
+131537;INF204KA1UU2;-;Reliance Fixed Horizon Fund XXVII- Series 8;;;12.9193;23-Oct-2017
