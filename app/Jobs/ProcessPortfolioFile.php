@@ -8,6 +8,7 @@ use App\Models\Portfolio;
 use App\Models\PortfolioAsset;
 use App\Models\PortfolioFile;
 use App\Models\RiskScore;
+use App\Services\Amfi\SchemeMatcher;
 use App\Services\RiskEngine\AssetRiskScorer;
 use App\Services\RiskEngine\HoldingsMerger;
 use App\Services\RiskEngine\PortfolioParser;
@@ -78,7 +79,8 @@ class ProcessPortfolioFile implements ShouldQueue
         AssetRiskScorer $assetScorer,
         PortfolioRiskCalculator $calculator,
         StockRiskService $stockRiskService,
-        HoldingsMerger $merger
+        HoldingsMerger $merger,
+        SchemeMatcher $schemeMatcher
     ): void {
         $file = $this->portfolioFile->fresh();
 
@@ -174,6 +176,15 @@ class ProcessPortfolioFile implements ShouldQueue
             // Batch-fetch stock classifications OUTSIDE the transaction
             $stockRiskMap = $stockRiskService->classifyBatch($stockSymbols);
 
+            // Match fund holdings to AMFI schemes OUTSIDE the transaction —
+            // read-only, and the first fuzzy lookup loads the scheme master.
+            $schemeMatches = [];
+            foreach ($holdings as $i => $row) {
+                if (SchemeMatcher::applies($row)) {
+                    $schemeMatches[$i] = $schemeMatcher->match($row['isin'] ?? null, (string) $row['name']);
+                }
+            }
+
             // Fetch latest market risk snapshot OUTSIDE the transaction —
             // read-only DB call, same pattern as StockRiskService above.
             // If no snapshot exists yet (market-risk:sync not run), falls
@@ -197,7 +208,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings, $parseResult,
-                $stockRiskMap, $marketSnapshot, &$riskScore, &$reportPath
+                $stockRiskMap, $marketSnapshot, $schemeMatches, &$riskScore, &$reportPath
             ) {
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
                 if (! $lockedFile || $lockedFile->status === PortfolioFile::STATUS_PROCESSED) {
@@ -210,8 +221,9 @@ class ProcessPortfolioFile implements ShouldQueue
 
                 $assetModels = collect();
 
-                foreach ($holdings as $row) {
+                foreach ($holdings as $i => $row) {
                     $isStock = ($row['asset_type'] ?? null) === 'stock';
+                    $schemeMatch = $schemeMatches[$i] ?? null;
                     $symbol = $isStock ? trim((string) ($row['symbol'] ?? '')) : '';
                     $stockRisk = ($isStock && $symbol !== '') ? ($stockRiskMap[$symbol] ?? null) : null;
 
@@ -274,6 +286,9 @@ class ProcessPortfolioFile implements ShouldQueue
                         'risk_score' => $assetScore,
                         'risk_level' => $assetScorer->level($assetScore),
                         'meta' => $meta,
+                        'scheme_code' => $schemeMatch?->isUsable() ? $schemeMatch->scheme->scheme_code : null,
+                        'match_method' => $schemeMatch?->method,
+                        'match_confidence' => $schemeMatch?->confidence,
                     ]);
 
                     $assetModels->push($asset);

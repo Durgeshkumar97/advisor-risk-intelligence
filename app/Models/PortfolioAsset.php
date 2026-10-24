@@ -45,6 +45,12 @@ class PortfolioAsset extends Model
 
         'meta',
 
+        'scheme_code',
+
+        'match_method',
+
+        'match_confidence',
+
     ];
 
     /*
@@ -70,6 +76,8 @@ class PortfolioAsset extends Model
         'risk_score' => 'decimal:2',
 
         'meta' => 'array',
+
+        'match_confidence' => 'decimal:3',
 
     ];
 
