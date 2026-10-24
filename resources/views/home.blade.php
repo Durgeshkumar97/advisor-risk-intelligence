@@ -163,7 +163,7 @@
                                 flex:1;
                                 min-width:0;
                             ">
-                                Value is moderately concentrated (concentration index above 30 of 100)
+                                The largest holding is 42% of portfolio value, across 6 holdings (holding concentration index above 30 of 100)
                             </span>
                         </div>
 
@@ -433,7 +433,7 @@
                     </div>
 
                     <div style="padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
-                        <div style="font-size:.875rem;font-weight:500;">Value is moderately concentrated (concentration index above 30 of 100)</div>
+                        <div style="font-size:.875rem;font-weight:500;">The largest holding is 42% of portfolio value, across 6 holdings (holding concentration index above 30 of 100)</div>
                     </div>
 
                     <div style="padding:.8rem 0;">

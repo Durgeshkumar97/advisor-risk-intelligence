@@ -45,6 +45,18 @@ use Tests\TestCase;
  * score goes 29.35 → 30.77 (composition 35.81 → 40.54, volatility
  * 14.93 → 20.07), which is back over the LOW threshold of 30: risk_level
  * LOW → MEDIUM, with the medium-band next_action sentence.
+ *
+ * And one change to the concentration factor, Oct 2026 (audit D2-01): it is
+ * now 100 × (0.5 × HHI + 0.5 × largest share), not a 1/n-normalised HHI.
+ * Holdings 55,000 / 64,000 / 43,500 of 1,62,500: HHI = 9013.25 / 26406.25 =
+ * .3413, largest share = 64,000 / 1,62,500 = .3938, so concentration
+ * 1.2 → 100 × (.17066 + .19692) = 36.76 and the score 30.77 → 39.66
+ * (+35.56 × 0.25 = +8.89). That crosses 30, so MODERATE_CONCENTRATION is
+ * raised and the next_action sentence follows it; meta gains top_holding_pct.
+ * That sentence, and the flag row, state the largest holding's share (39.4%)
+ * rather than calling the portfolio "concentrated".
+ * The report differs only in the score (31 → 40), that sentence and one added
+ * flag row. Rows and every other factor score are as recorded.
  */
 class RupeeRegressionTest extends TestCase
 {
@@ -52,7 +64,7 @@ class RupeeRegressionTest extends TestCase
 
     private const ROWS_BEFORE = '[{"name":"Example Bluechip Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST01","quantity":"1234.5670","buy_price":"40.50","current_price":"44.55","invested_value":"50000.00","current_value":"55000.00","profit_loss":"5000.00","risk_score":"40.00","risk_level":"MEDIUM","meta":{"source_file_id":1,"invested_value_source":"file","classification":{"basis":"name","category":"large_cap","asset_class":"equity","equity_share":1,"amfi_category":null}}},{"name":"Example Midcap Opportunities Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST02","quantity":"812.3450","buy_price":"73.86","current_price":"78.78","invested_value":"60000.00","current_value":"64000.00","profit_loss":"4000.00","risk_score":"57.00","risk_level":"MEDIUM","meta":{"source_file_id":1,"invested_value_source":"file","classification":{"basis":"name","category":"mid_cap","asset_class":"equity","equity_share":1,"amfi_category":null}}},{"name":"Example Liquid Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST03","quantity":"12.5000","buy_price":"3200.00","current_price":"3480.00","invested_value":"40000.00","current_value":"43500.00","profit_loss":"3500.00","risk_score":"17.00","risk_level":"LOW","meta":{"source_file_id":1,"invested_value_source":"file","classification":{"basis":"name","category":"liquid","asset_class":"debt","equity_share":0,"amfi_category":null}}}]';
 
-    private const SCORE_BEFORE = '{"score":"30.77","volatility":"20.07","drawdown":"0.00","meta":{"composition_score":40.54,"concentration_score":1.2,"equity_ratio_score":73.23,"drawdown_score":0,"equity_ratio_pct":73.2,"hhi":0.3413,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":150000,"total_current":162500,"market_multiplier":1,"risk_flags":["LOW_DIVERSIFICATION"],"risk_level":"MEDIUM","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Overall risk score is in the medium band (30 to below 70)."}}';
+    private const SCORE_BEFORE = '{"score":"39.66","volatility":"20.07","drawdown":"0.00","meta":{"composition_score":40.54,"concentration_score":36.76,"equity_ratio_score":73.23,"drawdown_score":0,"equity_ratio_pct":73.2,"hhi":0.3413,"top_holding_pct":39.4,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":150000,"total_current":162500,"market_multiplier":1,"risk_flags":["MODERATE_CONCENTRATION","LOW_DIVERSIFICATION"],"risk_level":"MEDIUM","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"The largest holding is 39.4% of portfolio value."}}';
 
     /**
      * The rendered report. Unlike the rows and score above, this is NOT the
@@ -69,8 +81,10 @@ class RupeeRegressionTest extends TestCase
      *   46eee952…8628  disclaimer replaced: what the report is and is not; no "educational"; SEBI IA and RA
      *   546e6ffd…88c3  footer: "Contains client portfolio data — handle as confidential." (no "named recipient")
      *   be2704b0…bd85  fund holdings carry a classification; sub-label "classified by name" (was "by name"), summary line "classified by the fund's name" (was "estimated from")
+     *   8eaf5050…609e concentration = 100 × (0.5 × HHI + 0.5 × largest share): score 31 → 40, observation sentence, one added "moderately concentrated" flag row
+     *   91cf5527…7132  concentration stated as the holding-level fact: flag row and observation say "The largest holding is 39.4% of portfolio value"
      */
-    private const REPORT_SHA256 = 'be2704b03f4bcec49642269e69372f607b1d0ba53a144726fb3f321c7ebdbd85';
+    private const REPORT_SHA256 = '91cf55274966cb56c90721d367cb456f0b2963d457a965e5098ff6ed70e57132';
 
     protected function setUp(): void
     {

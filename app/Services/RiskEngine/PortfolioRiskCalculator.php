@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
  * ═══════
  *   Final Score = (
  *       composition_score   × 0.30   ← weighted avg of per-asset scores
- *     + concentration_score × 0.25   ← Herfindahl-Hirschman Index
+ *     + concentration_score × 0.25   ← 100 × (0.5 × HHI + 0.5 × largest holding's share)
  *     + equity_ratio_score  × 0.25   ← % of portfolio in equity (funds: equity_share
  *                                      from FundClassifier; others: asset-type rule)
  *     + drawdown_score      × 0.20   ← unrealised loss as a risk signal
@@ -56,7 +56,7 @@ class PortfolioRiskCalculator
     |
     */
 
-    /** Concentration score (normalised HHI, 0–100) above which HIGH_CONCENTRATION is raised. */
+    /** Concentration score (0–100; HHI blended with the largest holding) above which HIGH_CONCENTRATION is raised. */
     public const HIGH_CONCENTRATION_ABOVE = 60;
 
     /** Concentration score above which MODERATE_CONCENTRATION is raised. */
@@ -197,25 +197,42 @@ class PortfolioRiskCalculator
 
         /*
         |----------------------------------------------------------------------
-        | FACTOR 2 — CONCENTRATION RISK (Herfindahl-Hirschman Index)
-        | HHI = Σ(share²)  where share = asset_value / total_value
-        | HHI range: 1/n (perfect equal split) → 1.0 (all in one asset)
-        | We map: HHI = 0.0 → score 0 | HHI = 1.0 → score 100
+        | FACTOR 2 — CONCENTRATION RISK (HHI blended with the largest holding)
+        |
+        |   share               = current_value / total_current_value
+        |   HHI                 = Σ share²
+        |   top_share           = the largest single share
+        |   concentration_score = 100 × (0.5 × HHI + 0.5 × top_share)
+        |
+        | Why not a normalised HHI: the old (HHI − 1/n) / (1 − 1/n) scored a
+        | single holding (n = 1) and every equal-weight portfolio as 0, so a
+        | 100%-one-fund portfolio looked unconcentrated (audit finding D2-01).
+        |
+        | Properties:
+        |   - one holding        → 100 (HHI = 1 and top_share = 1)
+        |   - n equal holdings   → 100 / n (HHI = top_share = 1/n, so the score
+        |                          is plain HHI; the "equal weights = 0"
+        |                          artefact is gone)
+        |   - the blend differs from raw HHI only when one holding dominates
+        |     and a long tail dilutes HHI. E.g. 50% in one holding + fifty 1%
+        |     holdings: HHI alone = 25.5 (no flag), blend = 37.75
+        |     (MODERATE_CONCENTRATION).
+        |
+        | Concentration is measured over holdings as listed: a diversified fund
+        | counts as ONE holding (no look-through to what it owns).
         |----------------------------------------------------------------------
         */
 
         $hhi = 0.0;
+        $topShare = 0.0;
         foreach ($assets as $asset) {
             $share = (float) $asset->current_value / $totalCurrentValue;
             $hhi += $share * $share;
+            $topShare = max($topShare, $share);
         }
 
-        // Normalise: perfect diversification baseline ≈ 1/n
         $n = $assets->count();
-        $perfectHhi = ($n > 0) ? (1.0 / $n) : 0;
-        $hhiNorm = max(0.0, $hhi - $perfectHhi);          // remove "expected" HHI
-        $hhiRange = max(0.001, 1.0 - $perfectHhi);         // max possible excess HHI
-        $concentrationScore = min(100.0, ($hhiNorm / $hhiRange) * 100.0);
+        $concentrationScore = min(100.0, 100.0 * (0.5 * $hhi + 0.5 * $topShare));
 
         /*
         |----------------------------------------------------------------------
@@ -344,7 +361,8 @@ class PortfolioRiskCalculator
 
         $nextAction = $this->buildNextAction(
             finalScore: $finalScore,
-            riskFlags: $riskFlags
+            riskFlags: $riskFlags,
+            topShare: $topShare
         );
 
         /*
@@ -366,6 +384,7 @@ class PortfolioRiskCalculator
                 'drawdown_score' => round($drawdownScore, 2),
                 'equity_ratio_pct' => round($equityRatio * 100, 1),
                 'hhi' => round($hhi, 4),
+                'top_holding_pct' => round($topShare * 100, 1),
                 'asset_count' => $n,
                 'dominant_asset_type' => $dominantType,
                 'total_invested' => round($totalInvestedValue, 2),
@@ -457,8 +476,13 @@ class PortfolioRiskCalculator
      */
     private function buildNextAction(
         float $finalScore,
-        array $riskFlags
+        array $riskFlags,
+        float $topShare
     ): string {
+        // Concentration is stated as the holding-level fact it measures (see
+        // ReportHeadline::flagLine): a fund is one holding, whatever it owns.
+        $largest = sprintf('The largest holding is %s%% of portfolio value', $this->formatThreshold(round($topShare * 100, 1)));
+
         // Priority: the most material condition is the one worth stating
 
         if (in_array('SIGNIFICANT_DRAWDOWN', $riskFlags)) {
@@ -466,7 +490,7 @@ class PortfolioRiskCalculator
         }
 
         if (in_array('HIGH_CONCENTRATION', $riskFlags) && $finalScore > 65) {
-            return 'Holdings are concentrated in a small number of positions, and overall risk is elevated.';
+            return $largest.', and the overall risk score is above 65 of 100.';
         }
 
         if ($finalScore > self::ELEVATED_OVERALL_RISK_ABOVE) {
@@ -474,7 +498,7 @@ class PortfolioRiskCalculator
         }
 
         if (in_array('EQUITY_HEAVY', $riskFlags)) {
-            return 'Equity allocation is very high, with limited debt or hybrid exposure.';
+            return sprintf('Equity makes up more than %s%% of the portfolio.', $this->formatThreshold(self::EQUITY_HEAVY_ABOVE * 100));
         }
 
         if (in_array('MODERATE_DRAWDOWN', $riskFlags)) {
@@ -482,7 +506,7 @@ class PortfolioRiskCalculator
         }
 
         if (in_array('MODERATE_CONCENTRATION', $riskFlags)) {
-            return 'Holdings show moderate concentration across a limited number of positions.';
+            return $largest.'.';
         }
 
         // Nothing above applies: state the band, and only the band. It is the

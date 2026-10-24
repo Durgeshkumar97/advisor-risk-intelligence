@@ -45,10 +45,18 @@ class UsdAcceptanceTest extends TestCase
      * One deliberate change since: the default market multiplier went from 1.05 to
      * 1.0 in Oct 2026, so the score is 44.40 (was 46.62) and market_multiplier is 1.
      * Rows, factor scores, flags and risk level are as recorded.
+     *
+     * One more since: concentration is now 100 × (0.5 × HHI + 0.5 × largest
+     * share) (audit D2-01). Holdings 62,000 / 31,500 / 3,100 of 96,600: HHI =
+     * 4845.86 / 9331.56 = .5193, largest share = 62,000 / 96,600 = .6418, so
+     * concentration 27.89 → 100 × (.25965 + .32091) = 58.06 and the score
+     * 44.40 → 51.94 (+30.17 × 0.25 = +7.54). MODERATE_CONCENTRATION is added
+     * to the flags; meta gains top_holding_pct. Next_action is unchanged (the
+     * equity-heavy sentence still takes precedence).
      */
     private const RUPEE_CLIENT_ROWS_BEFORE = '[{"name":"Example ELSS Tax Saver Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST11","quantity":"200.0000","buy_price":"300.00","current_price":"310.00","invested_value":"60000.00","current_value":"62000.00","profit_loss":"2000.00","risk_score":"45.00","risk_level":"MEDIUM","meta":{"source_file_id":2,"invested_value_source":"file","sources":[{"source_file":"groww-holdings.xlsx","cost_known":true,"as_of":null},{"source_file":"other-broker.csv","cost_known":true,"as_of":null}],"currency":"INR","value_basis":"market","cost_known":true,"as_of":null,"classification":{"basis":"name","category":"elss","asset_class":"equity","equity_share":1,"amfi_category":null}}},{"name":"Example Tax Advantage Fund Direct Growth","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST12","quantity":"300.0000","buy_price":"100.00","current_price":"105.00","invested_value":"30000.00","current_value":"31500.00","profit_loss":"1500.00","risk_score":"45.00","risk_level":"MEDIUM","meta":{"source_file_id":2,"invested_value_source":"file","sources":[{"source_file":"groww-holdings.xlsx","cost_known":true,"as_of":null}],"currency":"INR","value_basis":"market","cost_known":true,"as_of":null,"classification":{"basis":"name","category":"elss","asset_class":"equity","equity_share":1,"amfi_category":null}}},{"name":"Example Liquid Fund","asset_type":"mutual_fund","symbol":null,"isin":"INF000TEST13","quantity":"3.0000","buy_price":"1000.00","current_price":"1033.33","invested_value":"3000.00","current_value":"3100.00","profit_loss":"100.00","risk_score":"17.00","risk_level":"LOW","meta":{"source_file_id":2,"invested_value_source":"file","sources":[{"source_file":"other-broker.csv","cost_known":true,"as_of":null}],"currency":"INR","value_basis":"market","cost_known":true,"as_of":null,"classification":{"basis":"name","category":"liquid","asset_class":"debt","equity_share":0,"amfi_category":null}}}]';
 
-    private const RUPEE_CLIENT_SCORE_BEFORE = '{"score":"44.40","volatility":"16.17","drawdown":"0.00","meta":{"composition_score":44.1,"concentration_score":27.89,"equity_ratio_score":96.79,"drawdown_score":0,"equity_ratio_pct":96.8,"hhi":0.5193,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":93000,"total_current":96600,"market_multiplier":1,"risk_flags":["EQUITY_HEAVY","LOW_DIVERSIFICATION"],"risk_level":"MEDIUM","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Equity allocation is very high, with limited debt or hybrid exposure."}}';
+    private const RUPEE_CLIENT_SCORE_BEFORE = '{"score":"51.94","volatility":"16.17","drawdown":"0.00","meta":{"composition_score":44.1,"concentration_score":58.06,"equity_ratio_score":96.79,"drawdown_score":0,"equity_ratio_pct":96.8,"hhi":0.5193,"top_holding_pct":64.2,"asset_count":3,"dominant_asset_type":"mutual_fund","total_invested":93000,"total_current":96600,"market_multiplier":1,"risk_flags":["MODERATE_CONCENTRATION","EQUITY_HEAVY","LOW_DIVERSIFICATION"],"risk_level":"MEDIUM","stock_risk_fallback_count":0,"calculator_version":"portfolio-risk-calculator-v1","trigger":"file_upload","next_action":"Equity makes up more than 90% of the portfolio."}}';
 
     private User $user;
 
@@ -157,7 +165,7 @@ class UsdAcceptanceTest extends TestCase
         $this->assertSame('5.91', $riskScore->drawdown);
         $this->assertEquals(162000, $riskScore->meta['total_invested']);
         $this->assertEquals(681790.87, $riskScore->meta['total_current']);
-        $this->assertSame('50.24', $riskScore->score);                    // 47.22 if the US stocks were counted as unmoved money
+        $this->assertSame('52.14', $riskScore->score);                    // was 50.24: concentration 3.25 → 10.85 (19 holdings, HHI .0834, largest .1337: 100 × (.0417 + .0668)), +7.6 × 0.25 = +1.90
         $this->assertSame([null], $us->pluck('profit_loss')->unique()->values()->all());
 
         // Built from both files, and the report says how it was valued.

@@ -19,8 +19,9 @@ use Tests\TestCase;
 class ReportFlagWordingTest extends TestCase
 {
     private const WORDING = [
-        'HIGH_CONCENTRATION' => 'Value is concentrated in a few holdings (concentration index above 60 of 100)',
-        'MODERATE_CONCENTRATION' => 'Value is moderately concentrated (concentration index above 30 of 100)',
+        // As printed for flagsSection()'s one holding worth 100% of the portfolio.
+        'HIGH_CONCENTRATION' => 'The largest holding is 100% of portfolio value, across 1 holding (holding concentration index above 60 of 100)',
+        'MODERATE_CONCENTRATION' => 'The largest holding is 100% of portfolio value, across 1 holding (holding concentration index above 30 of 100)',
         'EQUITY_HEAVY' => 'Equity makes up more than 90% of the portfolio',
         'UNDERWEIGHTED_EQUITY' => 'Equity makes up less than 10% of the portfolio',
         'SIGNIFICANT_DRAWDOWN' => 'Holdings with a known cost are more than 15% below what was paid',
@@ -33,6 +34,10 @@ class ReportFlagWordingTest extends TestCase
 
     /** Words that would turn a description into advice. */
     private const PRESCRIPTIVE = ['should', 'consider', 'recommend', 'reduce', 'increase', 'rebalance', 'action'];
+
+    /** Words that measure a level against a right or wrong one, or read a holding count as underlying risk. */
+    private const NORMATIVE = ['underweight', 'overweight', 'too ', 'insufficient', 'excess', 'adequate', 'ideal', 'target',
+        'very ', 'limited', 'concentrated'];
 
     /** Every flag constant that appears in the calculator's source. */
     private function flagsTheCalculatorCanEmit(): array
@@ -65,7 +70,33 @@ class ReportFlagWordingTest extends TestCase
         $this->assertEqualsCanonicalizing(array_keys(self::WORDING), $emitted);
 
         foreach ($emitted as $flag) {
-            $this->assertSame(self::WORDING[$flag], ReportHeadline::flagLine($flag));
+            $this->assertSame(self::WORDING[$flag], ReportHeadline::flagLine($flag, 100.0, 1));
+        }
+    }
+
+    public function test_concentration_is_stated_as_the_largest_holding_not_as_underlying_risk(): void
+    {
+        // A portfolio that is one Nifty 50 index fund: one holding, 100% of value.
+        $this->assertSame(
+            'The largest holding is 100% of portfolio value, across 1 holding (holding concentration index above 60 of 100)',
+            ReportHeadline::flagLine('HIGH_CONCENTRATION', 100.0, 1),
+        );
+        $this->assertSame(
+            'The largest holding is 42.5% of portfolio value, across 6 holdings (holding concentration index above 30 of 100)',
+            ReportHeadline::flagLine('MODERATE_CONCENTRATION', 42.5, 6),
+        );
+        // No holdings to read the share from: the index alone.
+        $this->assertSame('Holding concentration index is above 60 of 100', ReportHeadline::flagLine('HIGH_CONCENTRATION'));
+    }
+
+    public function test_no_flag_wording_names_a_right_or_wrong_level(): void
+    {
+        $text = implode("\n", array_map(fn ($flag) => ReportHeadline::flagLine($flag, 55.0, 3), array_keys(self::WORDING)))
+            ."\n".implode("\n", array_map([ReportHeadline::class, 'flagLine'], array_keys(self::WORDING)))
+            ."\n".$this->flagsSection(array_keys(self::WORDING));
+
+        foreach (self::NORMATIVE as $word) {
+            $this->assertStringNotContainsStringIgnoringCase($word, $text);
         }
     }
 

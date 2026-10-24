@@ -105,8 +105,11 @@ it('sets HIGH_CONCENTRATION flag when one asset dominates the portfolio', functi
     expect(calc()->calculate($assets)['risk_flags'])->toContain('HIGH_CONCENTRATION');
 });
 
-it('sets MODERATE_CONCENTRATION flag for an uneven but not extreme split', function () {
-    // 5 assets: 700 / 75 / 75 / 75 / 75 → concentration score ≈ 39%
+it('sets HIGH_CONCENTRATION when one 70% holding sits among four small ones', function () {
+    // 5 assets: 700 / 75 / 75 / 75 / 75 (shares .7 / .075 ×4).
+    // HHI = .49 + 4 × .005625 = .5125; top share = .7;
+    // concentration = 100 × (0.5 × .5125 + 0.5 × .7) = 60.625 → above 60.
+    // (The old normalised HHI gave ≈ 39 here, i.e. MODERATE.)
     $assets = collect([
         makeAsset(['current_value' => 700, 'invested_value' => 700, 'risk_score' => 65]),
         makeAsset(['current_value' => 75, 'invested_value' => 75, 'risk_score' => 65]),
@@ -117,8 +120,25 @@ it('sets MODERATE_CONCENTRATION flag for an uneven but not extreme split', funct
 
     $flags = calc()->calculate($assets)['risk_flags'];
 
-    expect($flags)->toContain('MODERATE_CONCENTRATION')
-        ->and($flags)->not->toContain('HIGH_CONCENTRATION');
+    expect($flags)->toContain('HIGH_CONCENTRATION')
+        ->and($flags)->not->toContain('MODERATE_CONCENTRATION');
+});
+
+it('sets MODERATE_CONCENTRATION for an uneven but not extreme split', function () {
+    // 4 assets: 400 / 200 / 200 / 200 → HHI = .16 + 3 × .04 = .28; top = .4;
+    // concentration = 100 × (0.5 × .28 + 0.5 × .4) = 34 → between 30 and 60.
+    $assets = collect([
+        makeAsset(['current_value' => 400, 'invested_value' => 400, 'risk_score' => 65]),
+        makeAsset(['current_value' => 200, 'invested_value' => 200, 'risk_score' => 65]),
+        makeAsset(['current_value' => 200, 'invested_value' => 200, 'risk_score' => 65]),
+        makeAsset(['current_value' => 200, 'invested_value' => 200, 'risk_score' => 65]),
+    ]);
+
+    $result = calc()->calculate($assets);
+
+    expect($result['meta']['concentration_score'])->toBe(34.0)
+        ->and($result['risk_flags'])->toContain('MODERATE_CONCENTRATION')
+        ->and($result['risk_flags'])->not->toContain('HIGH_CONCENTRATION');
 });
 
 it('does not set concentration flags for a perfectly equal portfolio', function () {
@@ -467,6 +487,8 @@ it('measures unrealised loss only over holdings whose cost is known', function (
     // Before this change B's null cost summed as 0, so B's 50,000 offset A's
     // loss (+20,000 overall), drawdown read 0 and the score was 44.50.
     // Measured over A alone: 37.5% loss → drawdown factor 100 → score 64.50.
+    // Two equal holdings now carry concentration 50 (HHI = top share = .5):
+    // +50 × 0.25 = +12.5, so the scores above become 57.00 and 77.00.
     $assets = collect([
         makeAsset(['current_value' => 50000, 'invested_value' => 80000, 'risk_score' => 65]),
         makeAsset(['current_value' => 50000, 'invested_value' => null, 'risk_score' => 65]),
@@ -476,7 +498,7 @@ it('measures unrealised loss only over holdings whose cost is known', function (
 
     expect($result['drawdown'])->toBe(37.5)
         ->and($result['meta']['drawdown_score'])->toBe(100.0)
-        ->and($result['score'])->toBe(64.5)
+        ->and($result['score'])->toBe(77.0)
         ->and($result['risk_flags'])->toContain('SIGNIFICANT_DRAWDOWN');
 });
 
@@ -491,6 +513,8 @@ it('leaves a holding valued at cost out of the unrealised-loss measure, while st
     // Counting B would read as "1,00,000 that has not moved": the loss
     // becomes 15,000 on 2,00,000 = 7.5%, drawdown factor 25, score 49.66.
     // Measured over A alone: 15% → drawdown factor 50 → score 54.66.
+    // Concentration is now 100 × (0.5 × .5033 + 0.5 × .5405) = 52.19, which adds
+    // (52.19 − .66) × 0.25 = +12.88 to each: 67.55 and 62.55.
     $assets = collect([
         makeAsset(['current_value' => 85000, 'invested_value' => 100000, 'risk_score' => 65]),
         makeAsset(['asset_type' => 'foreign_stock', 'current_value' => 100000, 'invested_value' => 100000, 'risk_score' => 65, 'meta' => ['value_basis' => 'cost']]),
@@ -501,7 +525,7 @@ it('leaves a holding valued at cost out of the unrealised-loss measure, while st
     expect($result['drawdown'])->toBe(15.0)
         ->and($result['meta']['drawdown_score'])->toBe(50.0)
         ->and($result['meta']['total_invested'])->toBe(100000.0)      // the measured subset: A only
-        ->and($result['score'])->toBe(54.66)
+        ->and($result['score'])->toBe(67.55)
         // B still counts for allocation: the portfolio is 1,85,000, all equity.
         ->and($result['meta']['total_current'])->toBe(185000.0)
         ->and($result['meta']['equity_ratio_pct'])->toBe(100.0)
@@ -522,13 +546,25 @@ it('measures a market-valued holding exactly as before, whatever else its meta s
 // change to any of them is a failing test, not a silent change of behaviour.
 // ---------------------------------------------------------------------------
 
-/** Two stocks split $share / (1 − $share); concentration score = (2·share − 1)² × 100. */
+/** Two stocks split $share / (1 − $share); concentration = 100 × (0.5 × (s² + (1−s)²) + 0.5 × s). */
 function twoStockSplit(float $share): array
 {
     return calc()->calculate(collect([
         makeAsset(['current_value' => $share * 100000, 'invested_value' => $share * 100000, 'risk_score' => 65]),
         makeAsset(['current_value' => (1 - $share) * 100000, 'invested_value' => (1 - $share) * 100000, 'risk_score' => 65]),
     ]), 1.0);
+}
+
+/** A stock holding $share of the value plus nine equal holdings sharing the rest. */
+function topPlusNine(float $share): array
+{
+    $rest = (1 - $share) / 9 * 100000;
+    $holdings = [makeAsset(['current_value' => $share * 100000, 'invested_value' => $share * 100000, 'risk_score' => 65])];
+    for ($i = 0; $i < 9; $i++) {
+        $holdings[] = makeAsset(['current_value' => $rest, 'invested_value' => $rest, 'risk_score' => 65]);
+    }
+
+    return calc()->calculate(collect($holdings), 1.0);
 }
 
 /** One stock and one bond; the stock is $equityShare of the value. */
@@ -550,19 +586,24 @@ function bondsWorth(float $currentTotal): array
 }
 
 it('raises HIGH_CONCENTRATION above a concentration score of 60 and not below', function () {
-    $above = twoStockSplit(0.89);     // (0.78)² × 100 = 60.84
-    $below = twoStockSplit(0.88);     // (0.76)² × 100 = 57.76
+    // s = .66: HHI = .4356 + .1156 = .5512; 100 × (.2756 + .33) = 60.56
+    // s = .65: HHI = .4225 + .1225 = .5450; 100 × (.2725 + .325) = 59.75
+    $above = twoStockSplit(0.66);
+    $below = twoStockSplit(0.65);
 
-    expect($above['meta']['concentration_score'])->toBe(60.84)
+    expect($above['meta']['concentration_score'])->toBe(60.56)
         ->and($above['risk_flags'])->toContain('HIGH_CONCENTRATION')
-        ->and($below['meta']['concentration_score'])->toBe(57.76)
+        ->and($below['meta']['concentration_score'])->toBe(59.75)
         ->and($below['risk_flags'])->toContain('MODERATE_CONCENTRATION')->not->toContain('HIGH_CONCENTRATION')
         ->and(PortfolioRiskCalculator::HIGH_CONCENTRATION_ABOVE)->toBe(60);
 });
 
 it('raises MODERATE_CONCENTRATION above a concentration score of 30 and not below', function () {
-    $above = twoStockSplit(0.78);     // (0.56)² × 100 = 31.36
-    $below = twoStockSplit(0.77);     // (0.54)² × 100 = 29.16
+    // Top holding s, nine others of (1−s)/9 each: HHI = s² + (1−s)²/9.
+    // s = .41: HHI = .206778; 100 × (.103389 + .205) = 30.84
+    // s = .39: HHI = .193444; 100 × (.096722 + .195) = 29.17
+    $above = topPlusNine(0.41);
+    $below = topPlusNine(0.39);
 
     expect($above['risk_flags'])->toContain('MODERATE_CONCENTRATION')
         ->and($below['risk_flags'])->not->toContain('MODERATE_CONCENTRATION')
@@ -611,8 +652,9 @@ it('raises LOW_DIVERSIFICATION for 3 holdings and not for 4, OVER_DIVERSIFICATIO
 });
 
 it('raises ELEVATED_OVERALL_RISK above a score of 75 and not at 75', function () {
-    // One stock scored 100, 30% below cost: (100×0.30 + 0 + 100×0.25 + 100×0.20) = 75 before the multiplier.
-    $asset = fn () => collect([makeAsset(['current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100])]);
+    // One bond scored 100, 30% below cost, all in one holding:
+    // (100×0.30 + 100×0.25 concentration + 0×0.25 equity + 100×0.20) = 75 before the multiplier.
+    $asset = fn () => collect([makeAsset(['asset_type' => 'bond', 'current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100])]);
 
     $at = calc()->calculate($asset(), 1.0);
     $above = calc()->calculate($asset(), 1.02);
@@ -634,9 +676,9 @@ it('falls back to a neutral multiplier of 1.0 when the config key is missing', f
     unset($risk['market_multiplier']);
     config(['risk' => $risk]);
 
-    // One stock scored 100, 30% below cost: 75 before any multiplier.
+    // One bond scored 100, 30% below cost (concentration 100): 75 before any multiplier.
     $result = calc()->calculate(collect([
-        makeAsset(['current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100]),
+        makeAsset(['asset_type' => 'bond', 'current_value' => 70000, 'invested_value' => 100000, 'risk_score' => 100]),
     ]));
 
     expect($result['meta']['market_multiplier'])->toBe(1.0)
@@ -647,13 +689,13 @@ it('falls back to a neutral multiplier of 1.0 when the config key is missing', f
 // Observation sentences state the band; they do not judge it.
 // ---------------------------------------------------------------------------
 
-/** buildNextAction() for a given score and flags, without building a portfolio to reach it. */
-function observationFor(float $score, array $flags = []): string
+/** buildNextAction() for a given score, flags and largest-holding share, without building a portfolio to reach it. */
+function observationFor(float $score, array $flags = [], float $topShare = 0.5): string
 {
     $method = new ReflectionMethod(PortfolioRiskCalculator::class, 'buildNextAction');
     $method->setAccessible(true);
 
-    return $method->invoke(calc(), $score, $flags);
+    return $method->invoke(calc(), $score, $flags, $topShare);
 }
 
 it('states the band from the same thresholds the risk level uses', function () {
@@ -719,8 +761,66 @@ it('has no observation sentence that judges the portfolio or tells the reader wh
     expect(count($sentences))->toBe(9);
 
     foreach ($sentences as $sentence) {
-        foreach (['balanced', 'acceptable', 'healthy', 'appropriate', 'should', 'consider', 'recommend', 'review', 'discuss', 'reduce', 'increase', 'rebalance'] as $word) {
+        foreach (['balanced', 'acceptable', 'healthy', 'appropriate', 'should', 'consider', 'recommend', 'review', 'discuss', 'reduce', 'increase', 'rebalance',
+            // a level named as right or wrong, or a holding count read as underlying risk
+            'underweight', 'too ', 'insufficient', 'very ', 'limited', 'concentrated', 'elevated'] as $word) {
             expect(stripos($sentence, $word))->toBeFalse("\"{$word}\" in: {$sentence}");
         }
     }
+});
+
+// ---------------------------------------------------------------------------
+// Concentration = 100 × (0.5 × HHI + 0.5 × largest share)
+// ---------------------------------------------------------------------------
+
+/** $n holdings of equal value. */
+function equalHoldings(int $n): array
+{
+    return calc()->calculate(collect(array_map(
+        fn () => makeAsset(['current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 65]),
+        range(1, $n),
+    )), 1.0);
+}
+
+it('states concentration observations as the largest holding\'s share', function () {
+    expect(observationFor(70, ['HIGH_CONCENTRATION'], 1.0))
+        ->toBe('The largest holding is 100% of portfolio value, and the overall risk score is above 65 of 100.')
+        ->and(observationFor(40, ['MODERATE_CONCENTRATION'], 0.425))
+        ->toBe('The largest holding is 42.5% of portfolio value.')
+        ->and(observationFor(50, ['EQUITY_HEAVY']))
+        ->toBe('Equity makes up more than 90% of the portfolio.');
+});
+
+it('scores a single holding as fully concentrated', function () {
+    $result = equalHoldings(1);
+
+    expect($result['meta']['concentration_score'])->toBe(100.0)
+        ->and($result['risk_flags'])->toContain('HIGH_CONCENTRATION')
+        ->and($result['meta']['top_holding_pct'])->toBe(100.0);
+});
+
+it('scores n equal holdings as 100 / n', function () {
+    expect(equalHoldings(2)['meta']['concentration_score'])->toBe(50.0)
+        ->and(equalHoldings(2)['risk_flags'])->toContain('MODERATE_CONCENTRATION')
+        ->and(equalHoldings(4)['meta']['concentration_score'])->toBe(25.0)
+        ->and(equalHoldings(4)['risk_flags'])->not->toContain('MODERATE_CONCENTRATION')
+        ->and(equalHoldings(4)['risk_flags'])->not->toContain('HIGH_CONCENTRATION')
+        ->and(equalHoldings(10)['meta']['concentration_score'])->toBe(10.0)
+        ->and(equalHoldings(10)['meta']['top_holding_pct'])->toBe(10.0);
+});
+
+it('flags one dominant holding that a long tail would hide from HHI alone', function () {
+    // 50,000 in one holding + fifty of 1,000: HHI = .25 + 50 × .0001 = .255
+    // (25.5 alone, below 30); blend = 100 × (.1275 + .25) = 37.75.
+    $assets = collect([makeAsset(['current_value' => 50000, 'invested_value' => 50000, 'risk_score' => 65])]);
+    for ($i = 0; $i < 50; $i++) {
+        $assets->push(makeAsset(['current_value' => 1000, 'invested_value' => 1000, 'risk_score' => 65]));
+    }
+
+    $result = calc()->calculate($assets, 1.0);
+
+    expect($result['meta']['concentration_score'])->toBe(37.75)
+        ->and($result['meta']['hhi'])->toBe(0.255)
+        ->and($result['meta']['top_holding_pct'])->toBe(50.0)
+        ->and($result['risk_flags'])->toContain('MODERATE_CONCENTRATION');
 });

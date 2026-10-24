@@ -83,14 +83,36 @@ class ReportHeadline
      * threshold, so the sentence cannot drift from the rule that raised the
      * flag. A flag this does not know is shown as its name in ordinary words,
      * never as a blank.
+     *
+     * No sentence names a level as right or wrong ("underweighted", "too
+     * low"): it says where the portfolio is against the line, and stops.
+     *
+     * The concentration flags state the holding-level fact — the largest
+     * holding's share and the number of holdings — because that is all the
+     * concentration index measures. "Value is concentrated" would read to an
+     * advisor as a claim about what the holdings own: a portfolio that is
+     * one Nifty 50 index fund is one holding here, not fifty stocks' risk.
+     * Without the share (a caller that has no holdings) the line falls back
+     * to the index alone.
+     *
+     * @param  float|null  $largestPct  the largest holding's share of value, 0–100
      */
-    public static function flagLine(string $flag): string
+    public static function flagLine(string $flag, ?float $largestPct = null, ?int $holdings = null): string
     {
         $pct = fn (float $ratio): string => rtrim(rtrim(number_format($ratio * 100, 1), '0'), '.');
 
+        $concentration = fn (int $above): string => $largestPct === null
+            ? sprintf('Holding concentration index is above %d of 100', $above)
+            : sprintf(
+                'The largest holding is %s%% of portfolio value%s (holding concentration index above %d of 100)',
+                $pct($largestPct / 100),
+                $holdings === null ? '' : sprintf(', across %d %s', $holdings, $holdings === 1 ? 'holding' : 'holdings'),
+                $above,
+            );
+
         return match ($flag) {
-            'HIGH_CONCENTRATION' => sprintf('Value is concentrated in a few holdings (concentration index above %d of 100)', Calculator::HIGH_CONCENTRATION_ABOVE),
-            'MODERATE_CONCENTRATION' => sprintf('Value is moderately concentrated (concentration index above %d of 100)', Calculator::MODERATE_CONCENTRATION_ABOVE),
+            'HIGH_CONCENTRATION' => $concentration(Calculator::HIGH_CONCENTRATION_ABOVE),
+            'MODERATE_CONCENTRATION' => $concentration(Calculator::MODERATE_CONCENTRATION_ABOVE),
             'EQUITY_HEAVY' => sprintf('Equity makes up more than %s%% of the portfolio', $pct(Calculator::EQUITY_HEAVY_ABOVE)),
             'UNDERWEIGHTED_EQUITY' => sprintf('Equity makes up less than %s%% of the portfolio', $pct(Calculator::UNDERWEIGHTED_EQUITY_BELOW)),
             'SIGNIFICANT_DRAWDOWN' => sprintf('Holdings with a known cost are more than %d%% below what was paid', Calculator::SIGNIFICANT_DRAWDOWN_ABOVE),
