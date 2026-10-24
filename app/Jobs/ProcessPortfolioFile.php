@@ -10,6 +10,7 @@ use App\Models\PortfolioFile;
 use App\Models\RiskScore;
 use App\Services\Amfi\SchemeMatcher;
 use App\Services\RiskEngine\AssetRiskScorer;
+use App\Services\RiskEngine\FundClassifier;
 use App\Services\RiskEngine\HoldingsMerger;
 use App\Services\RiskEngine\PortfolioParser;
 use App\Services\RiskEngine\PortfolioRiskCalculator;
@@ -80,7 +81,8 @@ class ProcessPortfolioFile implements ShouldQueue
         PortfolioRiskCalculator $calculator,
         StockRiskService $stockRiskService,
         HoldingsMerger $merger,
-        SchemeMatcher $schemeMatcher
+        SchemeMatcher $schemeMatcher,
+        FundClassifier $classifier
     ): void {
         $file = $this->portfolioFile->fresh();
 
@@ -208,7 +210,7 @@ class ProcessPortfolioFile implements ShouldQueue
 
             DB::transaction(function () use (
                 $file, $holdings, $portfolioId, $assetScorer, $calculator, $extension, $parseErrors, $parseWarnings, $parseResult,
-                $stockRiskMap, $marketSnapshot, $schemeMatches, &$riskScore, &$reportPath
+                $stockRiskMap, $marketSnapshot, $schemeMatches, $classifier, &$riskScore, &$reportPath
             ) {
                 $lockedFile = PortfolioFile::lockForUpdate()->find($file->id);
                 if (! $lockedFile || $lockedFile->status === PortfolioFile::STATUS_PROCESSED) {
@@ -222,13 +224,48 @@ class ProcessPortfolioFile implements ShouldQueue
                 $assetModels = collect();
 
                 foreach ($holdings as $i => $row) {
-                    $isStock = ($row['asset_type'] ?? null) === 'stock';
                     $schemeMatch = $schemeMatches[$i] ?? null;
+                    $usableMatch = $schemeMatch?->isUsable() ? $schemeMatch : null;
+
+                    // An INF ISIN typed as stock/commodity is a fund once AMFI
+                    // recognises it: an ETF if the category or name says so.
+                    if ($usableMatch && ! in_array($row['asset_type'] ?? null, ['mutual_fund', 'etf'], true)) {
+                        $scheme = $usableMatch->scheme;
+                        $isEtf = stripos($scheme->broad_category.' '.$scheme->sub_category.' '.$scheme->scheme_name, 'ETF') !== false
+                            || stripos((string) $scheme->scheme_name, 'BeES') !== false;
+                        $row['asset_type'] = $isEtf ? 'etf' : 'mutual_fund';
+                    }
+
+                    $isStock = ($row['asset_type'] ?? null) === 'stock';
                     $symbol = $isStock ? trim((string) ($row['symbol'] ?? '')) : '';
                     $stockRisk = ($isStock && $symbol !== '') ? ($stockRiskMap[$symbol] ?? null) : null;
 
                     $scored = $assetScorer->score($row['asset_type'], $row['name'], $stockRisk);
                     $assetScore = $scored['score'];
+
+                    // Funds: AMFI's category (or, failing a usable match, the
+                    // name) decides the class; an AMFI match also sets the score.
+                    $classification = null;
+                    if ($usableMatch) {
+                        $c = $classifier->classifyScheme($usableMatch->scheme);
+                        $assetScore = $c['score'];
+                        $classification = [
+                            'basis' => $usableMatch->isProbable() ? 'amfi_probable' : 'amfi',
+                            'category' => $c['category'],
+                            'asset_class' => $c['asset_class'],
+                            'equity_share' => $c['equity_share'],
+                            'amfi_category' => trim($usableMatch->scheme->broad_category.($usableMatch->scheme->sub_category ? ' - '.$usableMatch->scheme->sub_category : '')),
+                        ];
+                    } elseif (in_array($row['asset_type'] ?? null, ['mutual_fund', 'etf'], true)) {
+                        $c = $classifier->classifyName((string) $row['name']);
+                        $classification = [
+                            'basis' => 'name',
+                            'category' => $c['category'],
+                            'asset_class' => $c['asset_class'],
+                            'equity_share' => $c['equity_share'],
+                            'amfi_category' => null,
+                        ];
+                    }
 
                     $meta = [
                         'source_file_id' => $file->id,
@@ -258,6 +295,10 @@ class ProcessPortfolioFile implements ShouldQueue
                             'fx_source' => $row['fx']['source'],
                             'original' => $row['original'],
                         ]);
+                    }
+
+                    if ($classification) {
+                        $meta['classification'] = $classification;
                     }
 
                     if ($isStock) {

@@ -16,7 +16,8 @@ use Illuminate\Support\Collection;
  *   Final Score = (
  *       composition_score   × 0.30   ← weighted avg of per-asset scores
  *     + concentration_score × 0.25   ← Herfindahl-Hirschman Index
- *     + equity_ratio_score  × 0.25   ← % of portfolio in equity-class assets
+ *     + equity_ratio_score  × 0.25   ← % of portfolio in equity (funds: equity_share
+ *                                      from FundClassifier; others: asset-type rule)
  *     + drawdown_score      × 0.20   ← unrealised loss as a risk signal
  *   ) × market_multiplier
  *
@@ -223,14 +224,25 @@ class PortfolioRiskCalculator
         |----------------------------------------------------------------------
         */
 
-        // Only count equity-type assets whose risk_score is >= 25.
-        // This excludes liquid / money-market / overnight funds that are
+        // A fund classified by FundClassifier (meta.classification) counts
+        // equity_share × its value: 1 for an equity fund, 0 for debt, gold or
+        // arbitrage, SEBI's range midpoint for other hybrids.
+        // Anything without a classification — holdings stored before it
+        // existed, and stocks, bonds, cash, crypto — keeps the old rule: an
+        // equity-type asset whose risk_score is >= 25 counts in full. That
+        // excludes liquid / money-market / overnight funds that are
         // technically of type mutual_fund but behave as defensive instruments.
-        $equityValue = (float) $assets
-            ->filter(fn ($a) => in_array($a->asset_type, self::EQUITY_TYPES, true)
-                && (float) $a->risk_score >= 25
-            )
-            ->sum('current_value');
+        $equityValue = (float) $assets->sum(function ($a) {
+            $share = $a->meta['classification']['equity_share'] ?? null;
+
+            if ($share !== null) {
+                return (float) $share * (float) $a->current_value;
+            }
+
+            return in_array($a->asset_type, self::EQUITY_TYPES, true) && (float) $a->risk_score >= 25
+                ? (float) $a->current_value
+                : 0.0;
+        });
 
         $equityRatio = $equityValue / $totalCurrentValue;      // 0.0–1.0
         $equityRatioScore = $equityRatio * 100.0;

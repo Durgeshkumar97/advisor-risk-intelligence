@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Exceptions\AmfiSyncFailed;
+use App\Exceptions\UnknownAmfiCategory;
 use App\Models\AmfiSyncRun;
 use App\Models\MfScheme;
 use App\Services\Amfi\NavAllParser;
+use App\Services\RiskEngine\FundClassifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +39,7 @@ class SyncAmfiSchemes extends Command
 
     private ?CarbonImmutable $fileDate = null;
 
-    public function handle(NavAllParser $parser): int
+    public function handle(NavAllParser $parser, FundClassifier $classifier): int
     {
         $source = (string) ($this->option('source') ?: config('amfi.source'));
 
@@ -90,9 +92,41 @@ class SyncAmfiSchemes extends Command
             'file_date' => $this->fileDate,
         ]);
 
+        $this->reportUnknownCategories($rows, $classifier);
+
         $this->info("AMFI scheme master synced: {$this->rowsParsed} schemes, NAV date {$this->fileDate->toDateString()}.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A category header config/fund_categories.php does not list is scored as
+     * 'other' (the old generic fund score) — reported once per category per
+     * run so it gets added to the config. Never fails the sync.
+     */
+    private function reportUnknownCategories(array $rows, FundClassifier $classifier): void
+    {
+        $unknown = [];
+
+        foreach ($rows as $row) {
+            $key = FundClassifier::categoryKey($row['scheme_type'], $row['broad_category'], $row['sub_category']);
+
+            if (isset($unknown[$key]) || $classifier->isKnownCategory($key)) {
+                continue;
+            }
+
+            $label = match ($row['scheme_type']) {
+                'close' => 'Close Ended',
+                'interval' => 'Interval Fund',
+                default => 'Open Ended',
+            };
+            $unknown[$key] = $label.' Schemes('.$row['broad_category'].($row['sub_category'] !== null ? ' - '.$row['sub_category'] : '').')';
+        }
+
+        foreach ($unknown as $header) {
+            $this->warn("Unknown AMFI category: {$header}");
+            report(new UnknownAmfiCategory("Unknown AMFI category \"{$header}\": holdings in it are scored as 'other' until it is added to config/fund_categories.php."));
+        }
     }
 
     /** The file's contents, held in memory only. */

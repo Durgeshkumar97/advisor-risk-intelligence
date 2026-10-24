@@ -178,7 +178,7 @@ class UsdReportTest extends TestCase
 
         // The box now appears on every report that has a score not taken from
         // market data, and for this one it holds that line and nothing else.
-        $this->assertSame("Risk scores: 1 estimated from the fund's name.", $this->box($html));
+        $this->assertSame("Risk scores: 1 classified by the fund's name.", $this->box($html));
     }
 
     public function test_a_report_whose_scores_are_all_from_market_data_has_no_box_and_no_heading_at_all(): void

@@ -4,6 +4,7 @@ namespace App\Services\Amfi;
 
 use App\DTOs\SchemeMatch;
 use App\Models\MfScheme;
+use App\Services\RiskEngine\FundClassifier;
 use Illuminate\Support\Carbon;
 
 /**
@@ -31,8 +32,14 @@ use Illuminate\Support\Carbon;
  * "next" ("Nifty 50" vs "Nifty Next 50"), a cap size, a debt duration, gold,
  * a sector. Two names that share every other word but differ there are
  * different funds, and a high overlap score would otherwise say they are
- * the same. A best match with a runner-up in a different category within
+ * the same. A best match with a runner-up in a different class within
  * AMBIGUITY_MARGIN is no match: the name does not settle which it is.
+ *
+ * "Category" here is the class FundClassifier gives the scheme, not AMFI's
+ * header text: AMFI lists one category under two labels while AMCs move to
+ * SEBI's 2026 names ("Debt Scheme - Banking and PSU Fund" and "Income/Debt
+ * Oriented Schemes - Banking and PSU Debt Fund"), and two schemes under those
+ * two labels are not a disagreement about what the holding is.
  *
  * THRESHOLDS  (calibrated on perturbed real AMFI names — see Part B notes)
  * ══════════
@@ -83,7 +90,10 @@ class SchemeMatcher
 
     private float $unseenIdf = 1.0;
 
-    public function __construct(private SchemeNameNormalizer $normalizer) {}
+    public function __construct(
+        private SchemeNameNormalizer $normalizer,
+        private FundClassifier $classifier,
+    ) {}
 
     /**
      * Whether a parsed holding is a fund to look up: typed as a mutual fund or
@@ -140,7 +150,7 @@ class SchemeMatcher
         $live = $candidates->filter(fn (MfScheme $s) => $this->isActive($s->nav_date?->toDateString()));
         $pool = $live->isNotEmpty() ? $live : $candidates;
 
-        $categories = $pool->map(fn (MfScheme $s) => self::categoryKey($s->scheme_type, $s->broad_category, $s->sub_category))->unique();
+        $categories = $pool->map(fn (MfScheme $s) => $this->classifier->classifyScheme($s)['category'])->unique();
 
         return new SchemeMatch(
             $pool->first(),
@@ -273,11 +283,6 @@ class SchemeMatcher
             || in_array($word, self::DISCRIMINATORS, true);
     }
 
-    public static function categoryKey(?string $type, ?string $broad, ?string $sub): string
-    {
-        return $type.'|'.$broad.'|'.$sub;
-    }
-
     private function isActive(?string $navDate): bool
     {
         $this->activeSince ??= Carbon::parse(MfScheme::max('nav_date') ?? now())
@@ -301,11 +306,12 @@ class SchemeMatcher
         $documentFrequency = [];
 
         MfScheme::query()
-            ->select(['scheme_code', 'normalized_name', 'former_name_normalized', 'scheme_type', 'broad_category', 'sub_category', 'nav_date'])
+            ->select(['scheme_code', 'scheme_name', 'normalized_name', 'former_name_normalized', 'scheme_type', 'broad_category', 'sub_category', 'nav_date'])
             ->orderBy('scheme_code')
             ->chunk(2000, function ($schemes) use (&$documentFrequency) {
                 foreach ($schemes as $s) {
                     $navDate = $s->nav_date?->toDateString();
+                    $category = $this->classifier->classifyScheme($s)['category'];
 
                     foreach (array_unique(array_filter([$s->normalized_name, $s->former_name_normalized])) as $name) {
                         $tokens = explode(' ', $name);
@@ -314,7 +320,7 @@ class SchemeMatcher
                         }
                         $this->blocks[$tokens[0]][] = [
                             'tokens' => $tokens,
-                            'category' => self::categoryKey($s->scheme_type, $s->broad_category, $s->sub_category),
+                            'category' => $category,
                             'code' => (string) $s->scheme_code,
                             'active' => $this->isActive($navDate),
                             'nav_date' => $navDate,

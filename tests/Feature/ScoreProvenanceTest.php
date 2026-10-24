@@ -99,9 +99,9 @@ class ScoreProvenanceTest extends TestCase
             $this->asset('Example Nifty 50 ETF', 'etf', [], 30),
         ]);
 
-        $this->assertSame('67 by name', $this->scoreCell($html, 'Example Small Cap Fund'));
+        $this->assertSame('67 classified by name', $this->scoreCell($html, 'Example Small Cap Fund'));
         $this->assertSame('45 by type', $this->scoreCell($html, 'Example Fund'));
-        $this->assertSame('30 by name', $this->scoreCell($html, 'Example Nifty 50 ETF'));
+        $this->assertSame('30 classified by name', $this->scoreCell($html, 'Example Nifty 50 ETF'));
     }
 
     // ─── 3. everything else ──────────────────────────────────────────────
@@ -129,7 +129,7 @@ class ScoreProvenanceTest extends TestCase
             $this->fallbackStock(), $this->asset('Example Fund', 'mutual_fund'), $this->asset('Example Gilt Bond', 'bond'),
         ];
 
-        $line = "Risk scores: 2 from market data, 1 estimated from the fund's name, 3 by asset category.";
+        $line = "Risk scores: 2 from market data, 1 classified by the fund's name, 3 by asset category.";
 
         $this->assertSame($line, ReportProvenance::for(new Collection($assets))['scores']);
         $this->assertStringContainsString($line, $this->builtBox($this->html($assets)));
@@ -141,9 +141,9 @@ class ScoreProvenanceTest extends TestCase
         $onlyCategory = ReportProvenance::for(new Collection([$this->asset('Example Gilt Bond', 'bond'), $this->fallbackStock()]));
         $dataAndName = ReportProvenance::for(new Collection([$this->liveStock(), $this->asset('Example Small Cap Fund', 'mutual_fund')]));
 
-        $this->assertSame("Risk scores: 1 estimated from the fund's name, 1 by asset category.", $noData['scores']);
+        $this->assertSame("Risk scores: 1 classified by the fund's name, 1 by asset category.", $noData['scores']);
         $this->assertSame('Risk scores: 2 by asset category.', $onlyCategory['scores']);
-        $this->assertSame("Risk scores: 1 from market data, 1 estimated from the fund's name.", $dataAndName['scores']);
+        $this->assertSame("Risk scores: 1 from market data, 1 classified by the fund's name.", $dataAndName['scores']);
     }
 
     public function test_the_summary_line_is_absent_when_every_score_is_data_backed(): void
@@ -181,7 +181,7 @@ class ScoreProvenanceTest extends TestCase
 
                 $this->assertSame($nameChangedTheScore, $scorer->nameAdjustsScore($type, $name), "{$type}: {$name}");
                 $this->assertSame(
-                    $nameChangedTheScore ? 'by name' : 'by type',
+                    $nameChangedTheScore ? 'classified by name' : 'by type',
                     ReportProvenance::scoreBasisLabel($this->asset($name, $type)),
                     "{$type}: {$name}",
                 );

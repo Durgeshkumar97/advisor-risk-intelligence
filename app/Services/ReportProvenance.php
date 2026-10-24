@@ -27,6 +27,12 @@ class ReportProvenance
     /** Scored from a risk_service classification of that stock. */
     public const SCORE_FROM_DATA = 'data';
 
+    /** A fund's score from its matched AMFI scheme's category. */
+    public const SCORE_FROM_AMFI = 'amfi';
+
+    /** As SCORE_FROM_AMFI, but the scheme match was probable rather than certain. */
+    public const SCORE_FROM_AMFI_PROBABLE = 'amfi_probable';
+
     /** A fund's category default, moved by a keyword in its name. */
     public const SCORE_FROM_NAME = 'name';
 
@@ -35,7 +41,9 @@ class ReportProvenance
 
     private const SCORE_BASIS_LABELS = [
         self::SCORE_FROM_DATA => 'data',
-        self::SCORE_FROM_NAME => 'by name',
+        self::SCORE_FROM_AMFI => 'AMFI category',
+        self::SCORE_FROM_AMFI_PROBABLE => 'AMFI category (probable)',
+        self::SCORE_FROM_NAME => 'classified by name',
         self::SCORE_FROM_CATEGORY => 'by type',
     ];
 
@@ -104,6 +112,12 @@ class ReportProvenance
             return self::SCORE_FROM_DATA;
         }
 
+        // Funds processed with AMFI classification say how they were scored.
+        $basis = $asset->meta['classification']['basis'] ?? null;
+        if (in_array($basis, [self::SCORE_FROM_AMFI, self::SCORE_FROM_AMFI_PROBABLE, self::SCORE_FROM_NAME], true)) {
+            return $basis;
+        }
+
         return (new AssetRiskScorer)->nameAdjustsScore((string) $asset->asset_type, (string) $asset->name)
             ? self::SCORE_FROM_NAME
             : self::SCORE_FROM_CATEGORY;
@@ -116,25 +130,29 @@ class ReportProvenance
     }
 
     /**
-     * "Risk scores: 2 from market data, 1 estimated from the fund's name, 3 by
-     * asset category." A count of zero is left out; the whole line is left
-     * out when every score is from market data.
+     * "Risk scores: 2 from market data, 1 from the fund's AMFI category, 1
+     * classified by the fund's name, 3 by asset category." A count of zero is
+     * left out; the whole line is left out when every score is from market data.
      */
     private static function scoresLine(Collection $assets): ?string
     {
         $counts = $assets->countBy(fn ($asset) => self::scoreBasis($asset));
 
         $data = (int) ($counts[self::SCORE_FROM_DATA] ?? 0);
+        $amfi = (int) ($counts[self::SCORE_FROM_AMFI] ?? 0);
+        $probable = (int) ($counts[self::SCORE_FROM_AMFI_PROBABLE] ?? 0);
         $name = (int) ($counts[self::SCORE_FROM_NAME] ?? 0);
         $category = (int) ($counts[self::SCORE_FROM_CATEGORY] ?? 0);
 
-        if ($name + $category === 0) {
+        if ($amfi + $probable + $name + $category === 0) {
             return null;
         }
 
         $parts = array_filter([
             $data > 0 ? $data.' from market data' : null,
-            $name > 0 ? $name." estimated from the fund's name" : null,
+            $amfi > 0 ? $amfi." from the fund's AMFI category" : null,
+            $probable > 0 ? $probable.' from a probable AMFI match' : null,
+            $name > 0 ? $name." classified by the fund's name" : null,
             $category > 0 ? $category.' by asset category' : null,
         ]);
 
