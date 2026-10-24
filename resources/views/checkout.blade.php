@@ -15,7 +15,7 @@
         </h1>
 
         <p class="checkout-sub">
-            Join advisors using daily risk intelligence to retain trust and grow AUM.
+            Portfolio risk reports for your clients, from the files you upload.
             Checkout takes less than 30 seconds.
         </p>
 
@@ -151,13 +151,13 @@
             </div>
 
             <div class="mini-item">
-                💬 Priority Support
+                💬 Email Support
             </div>
 
         </div>
 
         <div class="trust-box">
-            Cancel anytime. No hidden fees. <br>
+            30-day plan · No auto-debit. No hidden fees. <br>
             Your data stays private and secure.
         </div>
 

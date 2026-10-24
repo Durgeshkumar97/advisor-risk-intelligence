@@ -19,7 +19,7 @@
         </h1>
 
         <p style="color:var(--ink-3);font-size:.9rem;line-height:1.5;">
-            Securely upload portfolio files for AI-powered risk analysis.
+            Securely upload portfolio files for rules-based risk scoring.
             &nbsp;·&nbsp;
             <strong>{{ $monthlyClientCount }} / {{ $monthlyClientLimit }}</strong> clients this month &nbsp;·&nbsp; resets {{ $monthlyResetDate }}
         </p>

@@ -67,8 +67,9 @@ class RupeeRegressionTest extends TestCase
      *   be7e2530…c33a  observation states the band only: "…in the low band (below 30)."
      *   bf9b9249…53f6  mid-cap keyword now matches 'Midcap' as one word; the fixture's 39% midcap fund scores 57, not 45
      *   46eee952…8628  disclaimer replaced: what the report is and is not; no "educational"; SEBI IA and RA
+     *   546e6ffd…88c3  footer: "Contains client portfolio data — handle as confidential." (no "named recipient")
      */
-    private const REPORT_SHA256 = '46eee9529015eead7337f8e23e148ffc34ecf9b15c0732482dcfee06d04c8628';
+    private const REPORT_SHA256 = '546e6ffdb4e50ad6bdcd201f17a489624b7f5424dfcf392647ceca05aec988c3';
 
     protected function setUp(): void
     {

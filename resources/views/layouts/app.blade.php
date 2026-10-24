@@ -21,7 +21,7 @@
 
     <meta
         name="description"
-        content="AI-powered portfolio risk intelligence platform for independent financial advisors.">
+        content="Rules-based portfolio risk reports for independent financial advisors.">
 
     {{-- FONT PRELOAD --}}
     <link

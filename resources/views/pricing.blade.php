@@ -18,8 +18,11 @@
         </h1>
 
         <p style="color:var(--ink-3);font-size:1rem;line-height:1.6;">
-            All plans include daily risk signals delivered by email,
-            and a 7-day free trial. No credit card required to start.
+            Every plan: a risk report PDF emailed after each upload.
+            @if($trialDays)
+                Start with a {{ $trialDays }}-day free trial.
+            @endif
+            No credit card required to start.
         </p>
 
     </div>
@@ -56,13 +59,12 @@
                 color:var(--ink-2);
             ">
                 <li>✅ &nbsp;50 clients / month</li>
-                <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;Daily email signal each morning</li>
-                <li>✅ &nbsp;Client conversation script</li>
-                <li>✅ &nbsp;7-day free trial</li>
-                <li style="opacity:.4;">✗ &nbsp;Branded PDF reports</li>
-                <li style="opacity:.4;">✗ &nbsp;Priority support</li>
-                <li style="opacity:.4;">✗ &nbsp;Multi-advisor access</li>
+                <li>✅ &nbsp;Risk report PDF after each upload</li>
+                <li>✅ &nbsp;Daily 8 AM email: latest upload's score</li>
+                <li>✅ &nbsp;Email support</li>
+                @if($trialDays)
+                <li>✅ &nbsp;{{ $trialDays }}-day free trial</li>
+                @endif
             </ul>
 
             <a
@@ -83,25 +85,6 @@
             border:2px solid #fbbf24;
         ">
 
-            {{-- POPULAR BADGE --}}
-            <div style="
-                position:absolute;
-                top:-13px;
-                left:50%;
-                transform:translateX(-50%);
-                background:#fbbf24;
-                color:#0b132b;
-                font-size:.72rem;
-                font-weight:800;
-                letter-spacing:.08em;
-                text-transform:uppercase;
-                padding:.25rem .85rem;
-                border-radius:999px;
-                white-space:nowrap;
-            ">
-                Most Popular
-            </div>
-
             <div class="eyebrow" style="margin-bottom:.5rem;">Pro</div>
 
             <div style="margin-bottom:1.5rem;">
@@ -120,13 +103,12 @@
                 color:var(--ink-2);
             ">
                 <li>✅ &nbsp;Up to 250 clients / month</li>
-                <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;Daily email signal each morning</li>
-                <li>✅ &nbsp;Client conversation script</li>
-                <li>✅ &nbsp;Branded PDF reports</li>
-                <li>✅ &nbsp;Priority support (2-hour response)</li>
-                <li>✅ &nbsp;7-day free trial</li>
-                <li style="opacity:.4;">✗ &nbsp;Multi-advisor access</li>
+                <li>✅ &nbsp;Risk report PDF after each upload</li>
+                <li>✅ &nbsp;Daily 8 AM email: latest upload's score</li>
+                <li>✅ &nbsp;Email support</li>
+                @if($trialDays)
+                <li>✅ &nbsp;{{ $trialDays }}-day free trial</li>
+                @endif
             </ul>
 
             <a
@@ -161,13 +143,12 @@
                 color:var(--ink-2);
             ">
                 <li>✅ &nbsp;Up to 1,000 clients / month</li>
-                <li>✅ &nbsp;Daily risk signals</li>
-                <li>✅ &nbsp;Daily email signal each morning</li>
-                <li>✅ &nbsp;Client conversation script</li>
-                <li>✅ &nbsp;Branded PDF reports</li>
-                <li>✅ &nbsp;Priority support (2-hour response)</li>
-                <li>✅ &nbsp;Multi-advisor access</li>
-                <li>✅ &nbsp;14-day free trial</li>
+                <li>✅ &nbsp;Risk report PDF after each upload</li>
+                <li>✅ &nbsp;Daily 8 AM email: latest upload's score</li>
+                <li>✅ &nbsp;Email support</li>
+                @if($trialDays)
+                <li>✅ &nbsp;{{ $trialDays }}-day free trial</li>
+                @endif
             </ul>
 
             <a
@@ -189,7 +170,7 @@
         font-size:.875rem;
         line-height:2;
     ">
-        <p>🔒 &nbsp;Secure payment via Razorpay &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees</p>
+        <p>🔒 &nbsp;Secure payment via Razorpay &nbsp;·&nbsp; 30-day plan · No auto-debit &nbsp;·&nbsp; No hidden fees</p>
         <p>Questions? Email <a href="mailto:support@risksignal.in" style="color:inherit;text-decoration:underline;">support@risksignal.in</a></p>
     </div>
 

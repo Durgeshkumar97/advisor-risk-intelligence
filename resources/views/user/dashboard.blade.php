@@ -51,7 +51,7 @@
             display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
         ">
             <span style="color:#fca5a5;font-weight:600;font-size:.9rem;">
-                ⚠️ Your subscription has expired. Renew to continue receiving daily risk signals.
+                ⚠️ Your subscription has expired. Renew to keep receiving risk reports and the daily 8 AM email with your latest upload's score.
             </span>
             <a href="{{ route('pricing') }}" class="btn-primary" style="padding:.55rem 1.1rem;font-size:.85rem;white-space:nowrap;">
                 Renew Now →
@@ -121,8 +121,8 @@
         </h1>
 
         <p class="dashboard-subtitle">
-            Monitor portfolio risk, market exposure, and client panic
-            signals from one unified command center.
+            Risk scores and reports for your clients' portfolios,
+            from the files you upload.
         </p>
 
     </div>
@@ -398,8 +398,8 @@
             <div style="font-size:2.5rem;margin-bottom:.75rem;">📁</div>
             <div style="font-weight:600;margin-bottom:.35rem;">No portfolio files yet</div>
             <div style="font-size:.875rem;margin-bottom:1.25rem;line-height:1.6;">
-                Upload a CSV, XLSX, or PDF portfolio file to start receiving<br>
-                AI-powered risk analysis and daily advisor signals.
+                Upload a CSV, Excel or ZIP portfolio file<br>
+                to get a risk report by email.
             </div>
             <a
                 href="{{ route('portfolio.upload') }}"

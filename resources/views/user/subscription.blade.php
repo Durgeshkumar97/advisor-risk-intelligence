@@ -37,7 +37,7 @@
     @if($isExpired && !$isInGrace)
 
         <div class="alert alert-error" style="margin-bottom:1.5rem;">
-            ⚠️ Your subscription has expired. Renew now to continue receiving daily risk signals.
+            ⚠️ Your subscription has expired. Renew now to keep receiving risk reports and the daily 8 AM email with your latest upload's score.
         </div>
 
     @elseif($isInGrace)
@@ -182,11 +182,9 @@
         </div>
 
         <ul style="list-style:none;padding:0;margin:0;font-size:.9rem;line-height:2.2;">
-            <li>{{ ($plan->daily_reports ?? false) ? '✅' : '✗' }} &nbsp;Daily risk reports</li>
-            <li>{{ ($plan->client_script ?? false) ? '✅' : '✗' }} &nbsp;Client conversation script</li>
-            <li>{{ ($plan->branded_pdf ?? false) ? '✅' : '✗' }} &nbsp;Branded PDF reports</li>
-            <li>{{ ($plan->priority_support ?? false) ? '✅' : '✗' }} &nbsp;Priority support</li>
-            <li>{{ ($plan->multi_advisor ?? false) ? '✅' : '✗' }} &nbsp;Multi-advisor access</li>
+            <li>✅ &nbsp;Risk report after each upload</li>
+            <li>✅ &nbsp;Daily 8 AM email: latest upload's score</li>
+            <li>✅ &nbsp;Email support</li>
         </ul>
 
     </div>

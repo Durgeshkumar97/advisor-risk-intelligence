@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Plan;
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\ScheduledBackgroundTaskFinished;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\NotPwnedVerifier;
 use Illuminate\Validation\Rules\Password;
@@ -79,6 +81,23 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('password-reset', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | FREE-TRIAL LENGTH ON THE PRICING CARDS
+        |--------------------------------------------------------------------------
+        |
+        | Every trial runs on the Starter plan (StoreIfaTrialLeadAction), so
+        | every card shows Starter's trial_days — a Pro or Team card showing
+        | its own value would promise a trial nobody receives. Null when the
+        | plan row is missing, and the views then leave the trial line out
+        | rather than print a number that isn't in the database.
+        |
+        */
+
+        View::composer(['home', 'pricing'], function ($view): void {
+            $view->with('trialDays', Plan::where('slug', 'starter')->value('trial_days'));
         });
 
         /*

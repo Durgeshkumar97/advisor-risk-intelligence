@@ -85,8 +85,11 @@ class CheckSubscription
         */
 
         if ($subscription->status === 'trial' && $subscription->trial_ends_at?->isPast()) {
+            $trialDays = $subscription->plan?->trial_days;
+            $trial = $trialDays ? "{$trialDays}-day trial" : 'free trial';
+
             return redirect()->route('subscription.index')
-                ->with('error', 'Your 14-day trial has expired. Choose a plan to continue.');
+                ->with('error', "Your {$trial} has expired. Choose a plan to continue.");
         }
 
         /*

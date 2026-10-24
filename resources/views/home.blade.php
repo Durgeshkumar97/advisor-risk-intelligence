@@ -12,14 +12,14 @@
         <div class="reveal reveal-left" style="max-width:520px;">
 
             <div class="eyebrow" style="margin-bottom:0.8rem;">
-                risk intelligence · Independent financial advisors
+                Portfolio risk reports · For independent financial advisors
             </div>
 
             <h1 style="line-height:1.1; font-size:clamp(2.0rem,4vw,2.8rem); margin-bottom:0.25rem;">
                 When markets fall, clients panic.<br>
-                RiskSignal helps advisors retain trust and AUM.<br>
+                RiskSignal gives you a clear, rules-based read of each client's portfolio risk.<br>
                 <em style="color:var(--gold);">
-                    Daily Email risk summary + ready client script in plain English. Delivered before client calls.
+                    Upload a holdings file — get a risk report PDF by email.
                 </em>
             </h1>
 
@@ -29,9 +29,9 @@
                 color:var(--ink-2);
                 line-height:1.6;
             ">
-                Risk signal for IFAs managing ₹5L–₹25L portfolios.
-                One page. Three risks. One client script.
-                Delivered straight to your inbox.
+                For IFAs managing ₹5L–₹25L client portfolios.
+                A risk report PDF with a 0–100 risk score, the flags behind it, and every holding —
+                emailed to you after each upload.
             </p>
 
             <!-- CTA -->
@@ -43,7 +43,7 @@
                 align-items:center;
             ">
                 <a href="#free-trial" class="btn-primary">
-                    Get Report Now →
+                    Start free trial →
                 </a>
 
                 <a href="#sample-report" class="btn-outline">
@@ -81,7 +81,7 @@
                         font-size:1rem;
                         line-height:1.3;
                     ">
-                        Risk Intelligence
+                        Portfolio Risk Report
                     </span>
 
                     <span class="pill pill-gold"
@@ -89,7 +89,7 @@
                             font-size:.6rem;
                             white-space:nowrap;
                         ">
-                        DAY 12 · 2026
+                        ILLUSTRATIVE SAMPLE
                     </span>
                 </div>
 
@@ -112,7 +112,7 @@
                             color:var(--amber);
                             line-height:1;
                         ">
-                            6.4
+                            58<span style="font-size:.5em;color:var(--ink-3);">/100</span>
                         </span>
 
                         <div>
@@ -122,14 +122,7 @@
                                 color:var(--amber);
                                 text-transform:uppercase;
                             ">
-                                Moderate-High
-                            </div>
-
-                            <div style="
-                                font-size:.7rem;
-                                color:var(--ink-3);
-                            ">
-                                ↑ from 5.1 yesterday
+                                Medium
                             </div>
                         </div>
                     </div>
@@ -154,9 +147,8 @@
                                 flex:1;
                                 min-width:0;
                             ">
-                                FII outflows — 3rd week
+                                Equity makes up more than 90% of the portfolio
                             </span>
-                            <span class="pill pill-high">HIGH</span>
                         </div>
 
                         <div style="
@@ -171,9 +163,8 @@
                                 flex:1;
                                 min-width:0;
                             ">
-                                Rupee above 83.5 — import exposure
+                                Value is moderately concentrated (concentration index above 30 of 100)
                             </span>
-                            <span class="pill pill-high">HIGH</span>
                         </div>
 
                         <div style="
@@ -188,9 +179,8 @@
                                 flex:1;
                                 min-width:0;
                             ">
-                                Mid-cap valuations elevated
+                                Holdings with a known cost are more than 7% below what was paid
                             </span>
-                            <span class="pill pill-med">MED</span>
                         </div>
                     </div>
 
@@ -213,7 +203,7 @@
             </div>
 
             <h2 style="margin-bottom:.55rem;">
-                Built for professionals who manage client trust
+                Built for professionals who manage client portfolios
             </h2>
 
             <p style="
@@ -223,7 +213,7 @@
                 color:var(--ink-3);
                 line-height:1.6;
             ">
-                Designed for advisors who need calm, credible communication during volatile markets.
+                Designed for advisors who want a consistent risk read on each client's holdings.
             </p>
 
         </div>
@@ -252,29 +242,6 @@
     </div>
 </section>
 
-{{-- ── PROBLEM STATEMENT ─────────────────────────────── --}}
-<section style="display:flex; justify-content:center; text-align:center;">
-
-    <div style="max-width:700px; width:100%; margin:0 auto; padding:0 1rem;">
-
-        <h2>Clients leave during market falls</h2>
-
-        <div style="margin-top:1.5rem; font-size:.9rem; text-align:center;">
-            Not because of portfolios. Because of communication.
-        </div>
-
-        <div style="margin-top:1.5rem;font-size:.9rem;">
-            Panic → wrong advice → redemption → AUM loss
-        </div>
-
-        <div style="margin-top:.6rem;font-size:.9rem;">
-            Calm response → trust → retained AUM
-        </div>
-
-    </div>
-
-</section>
-
 {{-- ── FOUNDER TRUST ────────────────────────────────── --}}
 <section style="text-align:center; display:flex; justify-content:center;">
 
@@ -282,14 +249,14 @@
         style="max-width:680px; margin:0 auto; text-align:center; display:flex; flex-direction:column; align-items:center;">
 
         <div class="eyebrow" style="margin-bottom:1rem; text-align:center;">
-            Built by an IFA, for IFAs
+            Who built this
         </div>
 
         <h2 style="text-align:center;">Why I built this</h2>
 
         <p style="margin-top:1rem;font-size:1rem;line-height:1.6;text-align:center;">
-            As an advisor, I’ve seen clients lost during market falls... not because portfolios were wrong,
-            but because they didn’t know what to say when panic hit.
+            I’m a data scientist. RiskSignal turns a client’s holdings file into a risk report PDF:
+            a 0–100 score from fixed rules, plus flags on concentration, equity share and losses against cost.
         </p>
 
         <p style="margin-top:.6rem;font-size:1rem;line-height:1.6;text-align:center;">
@@ -297,7 +264,7 @@
         </p>
 
         <p style="margin-top:.6rem;font-size:1rem;font-weight:500;text-align:center;">
-            RiskSignal gives you exactly what to say — when it matters most.
+            What you tell your clients stays your call — the report only describes the portfolio.
         </p>
 
         <div class="reveal reveal-pop reveal-delay-2"
@@ -337,7 +304,7 @@
                     Durgesh Kumar
                 </div>
                 <div style="font-size:.75rem;color:var(--ink-3); text-align:center;">
-                    Founder · Independent Financial Advisor
+                    Founder · Data scientist
                 </div>
             </div>
 
@@ -353,10 +320,10 @@
     <div class="reveal reveal-pop reveal-delay-1" style="text-align:center;padding:1.25rem;">
         <div style="font-family:var(--serif);font-size:2.4rem;color:var(--paper-3);margin-bottom:.5rem;">1</div>
 
-        <h3 style="margin-bottom:.4rem;">Subscribe</h3>
+        <h3 style="margin-bottom:.4rem;">Sign up</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);line-height:1.5;">
-            Sign up and upload your portfolio. Done in 60 seconds.
+            Start a free trial and upload a client's holdings file (CSV, Excel or ZIP).
         </p>
     </div>
 
@@ -364,10 +331,10 @@
     <div class="reveal reveal-pop reveal-delay-2" style="text-align:center;padding:1.25rem;">
         <div style="font-family:var(--serif);font-size:2.4rem;color:var(--paper-3);margin-bottom:.5rem;">2</div>
 
-        <h3 style="margin-bottom:.4rem;">Risk engine</h3>
+        <h3 style="margin-bottom:.4rem;">Rules-based scoring</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);margin-bottom:.6rem;">
-            Analyzes your portfolio and market signals
+            Scores the holdings in your file with fixed rules — no live market feed.
         </p>
     </div>
 
@@ -378,7 +345,7 @@
         <h3 style="margin-bottom:.4rem;">Email delivery</h3>
 
         <p style="font-size:.82rem;color:var(--ink-3);line-height:1.5;">
-            Risk report + client script in your inbox. Ready to use instantly.
+            The risk report PDF is emailed to you once your file is processed.
         </p>
     </div>
 </section>
@@ -392,15 +359,15 @@
         <!-- TOP (CENTERED MARKETING) -->
         <div style="margin-bottom:2rem; text-align:center;">
             <div class="eyebrow" style="margin-bottom:.8rem;">
-                See the real thing
+                Illustrative sample
             </div>
 
             <h2>
-                Sample report — Week 12, 2026
+                What a report looks like
             </h2>
 
             <div style="margin-top:.6rem;font-size:.875rem;">
-                Mid-cap equity portfolios · Plain English edition
+                Invented portfolio · not a real client
             </div>
         </div>
 
@@ -417,18 +384,17 @@
                     </span>
 
                     <div style="text-align:right;font-family:var(--mono);font-size:.65rem;color:rgba(255,255,255,.4);line-height:1.7;">
-                        Day 12 · 2026<br>
-                        Mid-cap equity<br>
-                        Prepared for: IFA Subscriber
+                        Illustrative sample<br>
+                        Portfolio: Sample client
                     </div>
                 </div>
 
                 <div style="font-family:var(--serif);font-size:1.6rem;line-height:1.2;">
-                    Risk Intelligence Report
+                    Portfolio Risk Report
                 </div>
 
                 <div style="font-size:.825rem;color:rgba(255,255,255,.5);margin-top:.3rem;">
-                    Mid-cap equity · Plain English edition
+                    Scored from the holdings in an uploaded file
                 </div>
             </div>
 
@@ -436,19 +402,19 @@
             <div style="padding:1.75rem 2rem;">
 
                 <!-- SCORE -->
-                <div style="background:var(--amber-lt);border:1px solid rgba(176,94,0,.2);border-radius:var(--radius-md);padding:1.1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;">
+                <div style="background:var(--amber-lt);border:1px solid rgba(176,94,0,.2);border-radius:var(--radius-md);padding:1.1rem 1.4rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1.5rem;">
 
                     <div style="font-family:var(--serif);font-size:3rem;color:var(--amber);line-height:1;flex-shrink:0;">
-                        6.4
+                        58<span style="font-size:.4em;color:var(--ink-3);">/100</span>
                     </div>
 
-                    <div>
+                    <div style="flex:1 1 12rem;min-width:0;">
                         <div style="font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:.3rem;">
-                            Risk level this week: Moderate-High
+                            Risk level: Medium
                         </div>
 
                         <div style="font-size:.82rem;color:var(--ink-2);">
-                            Up from 5.1 last week. FII selling and currency risk are primary drivers.
+                            Score from asset mix, concentration, equity share and loss against cost.
                         </div>
                     </div>
                 </div>
@@ -458,77 +424,33 @@
 
                     <div class="eyebrow"
                         style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
-                        Risk flags this week
+                        Risk flags
                     </div>
 
                     <!-- ROW -->
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
-                        <div>
-                            <div style="font-size:.875rem;font-weight:500;">FII outflows — 3rd consecutive week</div>
-                            <div style="font-size:.8rem;color:var(--ink-3);">
-                                Foreign investors net sellers for 3 weeks.
-                            </div>
-                        </div>
-                        <span class="pill pill-high">HIGH</span>
+                    <div style="padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
+                        <div style="font-size:.875rem;font-weight:500;">Equity makes up more than 90% of the portfolio</div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
-                        <div>
-                            <div style="font-size:.875rem;font-weight:500;">Rupee above 83.5</div>
-                            <div style="font-size:.8rem;color:var(--ink-3);">
-                                Import-heavy stocks at risk.
-                            </div>
-                        </div>
-                        <span class="pill pill-high">HIGH</span>
+                    <div style="padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
+                        <div style="font-size:.875rem;font-weight:500;">Value is moderately concentrated (concentration index above 30 of 100)</div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:.8rem 0;border-bottom:1px solid var(--paper-2);">
-                        <div>
-                            <div style="font-size:.875rem;font-weight:500;">Mid-cap P/E elevated</div>
-                            <div style="font-size:.8rem;color:var(--ink-3);">
-                                Valuations are stretched.
-                            </div>
-                        </div>
-                        <span class="pill pill-med">MED</span>
+                    <div style="padding:.8rem 0;">
+                        <div style="font-size:.875rem;font-weight:500;">Holdings with a known cost are more than 7% below what was paid</div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:.8rem 0;">
-                        <div>
-                            <div style="font-size:.875rem;font-weight:500;">RBI rate decision</div>
-                            <div style="font-size:.8rem;color:var(--ink-3);">
-                                No change expected.
-                            </div>
-                        </div>
-                        <span class="pill pill-low">LOW</span>
-                    </div>
-
-                </div>
-
-                <!-- SCRIPT -->
-                <div>
-                    <div class="eyebrow"
-                        style="margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid var(--paper-3);">
-                        What to tell your client this week
-                    </div>
-
-                    <div style="background:var(--paper);border-left:3px solid var(--gold);padding:1.1rem 1.3rem;">
-                        <div class="eyebrow" style="margin-bottom:.5rem;">Client conversation script</div>
-
-                        <div style="font-size:.875rem;color:var(--ink-2);line-height:1.75;font-style:italic;">
-                            "Markets have seen some selling from foreign investors for three weeks..."
-                        </div>
-                    </div>
                 </div>
 
                 <!-- FOOTER -->
-                <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--paper-3);display:flex;justify-content:space-between;align-items:center;">
+                <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--paper-3);display:flex;flex-wrap:wrap;gap:.5rem 1rem;justify-content:space-between;align-items:center;">
 
-                    <span style="font-family:var(--serif);font-size:.9rem;color:var(--ink-3);">
+                    <span style="font-family:var(--serif);font-size:.9rem;color:var(--ink-3);white-space:nowrap;">
                         Risk<span style="color:var(--gold);">Signal</span>
                     </span>
 
                     <span style="font-family:var(--mono);font-size:.65rem;color:var(--ink-3);">
-                        Data: NSE, AMFI, RBI · Week 12, 2026
+                        Values from the uploaded file · Illustrative sample
                     </span>
                 </div>
 
@@ -537,14 +459,10 @@
 
         <!-- CTA (CENTERED) -->
         <div style="text-align:center; margin-top:2rem;">
-            <a href="#free-trial" class="btn-primary">Get Today’s Free Sample Report →</a>
+            <a href="#free-trial" class="btn-primary">Start free trial →</a>
 
             <div style="margin-top:.75rem;font-size:.75rem;color:var(--ink-3);">
-                Delivered straight to your inbox.
-            </div>
-
-            <div style="margin-top:1rem;">
-                <a href="#live-example" class="btn-secondary">See Live Example</a>
+                Upload a file — the report PDF is emailed to you.
             </div>
         </div>
 
@@ -554,7 +472,7 @@
 {{-- POSITIONING LINE --}}
 <section>
     <div class="container" style="text-align:center;margin:2rem auto 0;font-size:.9rem;color:var(--ink-2);max-width:600px;">
-        Built for client conversations — not analyst reports.
+        Plain-language risk reports — not analyst research.
     </div>
 </section>
 
@@ -564,9 +482,9 @@
 
         <div class="text-center" style="margin-bottom:3rem;">
             <div class="eyebrow">Simple, honest pricing</div>
-            <h2 style="margin-top:.4rem;">Flat monthly subscription</h2>
+            <h2 style="margin-top:.4rem;">30-day plans, paid upfront</h2>
             <div style="margin-top:.6rem;font-size:.9rem;color:var(--ink-3);">
-                Email delivery · Unlimited portfolio types · Monthly client limits by plan
+                Email delivery · CSV, Excel and ZIP uploads · Monthly client limits by plan
             </div>
             <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-2);">
                 No credit card required to start.
@@ -597,44 +515,28 @@
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily risk signals</span>
+                            <span>Risk report PDF after each upload</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily email signal each morning</span>
+                            <span>Daily 8 AM email: latest upload's score</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Client conversation script</span>
+                            <span>Email support</span>
                         </li>
+                        @if($trialDays)
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>14-day free trial</span>
+                            <span>{{ $trialDays }}-day free trial</span>
                         </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Branded PDF reports</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Priority support</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Multi-advisor access</span>
-                        </li>
+                        @endif
                     </ul>
                 </div>
 
@@ -654,30 +556,11 @@
                 flex-direction:column;
                 justify-content:space-between;
             ">
-                <div style="
-                    position:absolute;
-                    top:-12px;
-                    left:50%;
-                    transform:translateX(-50%);
-                    background:var(--paper);
-                    color:var(--gold);
-                    border:1px solid var(--gold);
-                    padding:4px 12px;
-                    font-size:.7rem;
-                    font-weight:600;
-                    letter-spacing:.05em;
-                    border-radius:6px;
-                    white-space:nowrap;
-                ">MOST POPULAR</div>
-
                 <div>
                     <div class="eyebrow" style="text-align:center;">Pro</div>
                     <div style="display:flex;align-items:baseline;gap:.4rem;margin:.5rem 0;justify-content:center;">
                         <h2 style="font-size:2.6rem;margin:0;">₹2,499</h2>
                         <span style="color:var(--ink-3);font-size:.9rem;">/ month</span>
-                    </div>
-                    <div style="text-align:center;font-size:.75rem;color:var(--ink-3);margin-bottom:.5rem;">
-                        <span style="text-decoration:line-through;">₹4,999</span>
                     </div>
 
                     <hr style="margin:1rem 0;opacity:.2;">
@@ -693,44 +576,28 @@
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily risk signals</span>
+                            <span>Risk report PDF after each upload</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily email signal each morning</span>
+                            <span>Daily 8 AM email: latest upload's score</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Client conversation script</span>
+                            <span>Email support</span>
                         </li>
+                        @if($trialDays)
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Branded PDF reports</span>
+                            <span>{{ $trialDays }}-day free trial</span>
                         </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Priority support (2-hour response)</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>14-day free trial</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;opacity:.4;">
-                            <span style="display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Multi-advisor access</span>
-                        </li>
+                        @endif
                     </ul>
                 </div>
 
@@ -763,44 +630,28 @@
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily risk signals</span>
+                            <span>Risk report PDF after each upload</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Daily email signal each morning</span>
+                            <span>Daily 8 AM email: latest upload's score</span>
                         </li>
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Client conversation script</span>
+                            <span>Email support</span>
                         </li>
+                        @if($trialDays)
                         <li style="display:flex;align-items:center;gap:.6rem;">
                             <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                                 </svg></span>
-                            <span>Branded PDF reports</span>
+                            <span>{{ $trialDays }}-day free trial</span>
                         </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Priority support (2-hour response)</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>Multi-advisor access</span>
-                        </li>
-                        <li style="display:flex;align-items:center;gap:.6rem;">
-                            <span style="color:var(--gold);display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1rem;height:1rem;flex-shrink:0;">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                                </svg></span>
-                            <span>14-day free trial</span>
-                        </li>
+                        @endif
                     </ul>
                 </div>
 
@@ -818,7 +669,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:.8rem;height:.8rem;display:inline-block;vertical-align:-1px;">
                 <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" />
             </svg>
-            Secure payment via Razorpay &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees
+            Secure payment via Razorpay &nbsp;·&nbsp; 30-day plan · No auto-debit &nbsp;·&nbsp; No hidden fees
         </div>
         <div style="text-align:center;margin-top:.5rem;font-size:.8rem;color:var(--ink-3);">
             Questions? Email <a href="mailto:support@risksignal.in" style="color:var(--gold);text-decoration:none;">support@risksignal.in</a>
@@ -838,15 +689,15 @@
             </div>
 
             <h2 style="margin-bottom:.5rem;">
-                Get Today’s Client Panic Report Free
+                Start your free trial
             </h2>
 
             <div style="font-size:.9rem;color:var(--ink-2);line-height:1.5;">
-                Get your first report by Email.
+                Upload a holdings file and the report PDF is emailed to you.
             </div>
 
             <div style="margin-top:.4rem;font-size:.8rem;color:var(--ink-3);">
-                No credit card · Takes 30 seconds
+                No credit card
             </div>
 
         </div>
@@ -959,7 +810,7 @@
                         font-size:.95rem;
                         font-weight:500;
                     ">
-                    Get Today’s Client Panic Report Free
+                    Start your free trial
                 </button>
 
                 <p style="
@@ -968,7 +819,7 @@
                     text-align:center;
                     margin-top:.4rem;
                 ">
-                    No login · No dashboard · Delivered by Email
+                    Report PDF emailed after each upload
                 </p>
 
             </div>

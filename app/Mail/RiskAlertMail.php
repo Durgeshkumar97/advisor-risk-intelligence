@@ -29,7 +29,7 @@ class RiskAlertMail extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject('Your Daily Risk Signal')
+        return $this->subject('Your daily risk score: latest upload')
             ->view('emails.risk-alert');
     }
 }

@@ -38,7 +38,7 @@
                 {{ $exception->getMessage() }}
             @else
                 We're performing routine maintenance to improve your experience.
-                <strong>Daily risk signals will resume as normal.</strong>
+                <strong>Report emails and the daily 8 AM email will resume as normal.</strong>
                 Expected downtime: under 15 minutes.
             @endif
         </p>

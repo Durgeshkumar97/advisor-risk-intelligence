@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="x-apple-disable-message-reformatting">
-    <title>Daily Risk Signal — RiskSignal</title>
+    <title>Daily Risk Score — RiskSignal</title>
     <!--[if mso]>
     <noscript>
         <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
@@ -193,7 +193,7 @@
                                 You're receiving this because you have an active RiskSignal subscription.
                                 <a href="{{ route('profile.edit') }}" style="color:#94a3b8;text-decoration:underline;">Unsubscribe</a>
                                 by turning off "Report &amp; daily emails" in your profile settings.<br>
-                                Questions? Reply to this email — we respond within 2 hours.
+                                Questions? Reply to this email.
                             </p>
                         </td>
                     </tr>

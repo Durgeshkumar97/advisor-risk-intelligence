@@ -389,7 +389,7 @@
 
         <p class="subtitle">
             One last step — choose how you'd like to receive your<br>
-            daily portfolio risk signals from RiskSignal.
+            risk reports and the daily 8 AM email with your latest upload's score.
         </p>
 
         <div class="card">
@@ -420,8 +420,8 @@
                                 <span class="option-badge badge-recommended">Recommended</span>
                             </div>
                             <div class="option-desc">
-                                Daily risk report delivered to <strong style="color:var(--text);">{{ Auth::user()->email }}</strong>
-                                every morning. Includes risk score, flags &amp; client script.
+                                Risk report PDF emailed to <strong style="color:var(--text);">{{ Auth::user()->email }}</strong>
+                                after each upload, plus an 8 AM email with your latest upload's score.
                             </div>
                         </div>
                         <div class="radio-circle"></div>
@@ -431,7 +431,7 @@
 
                 <div class="divider"></div>
 
-                <div class="section-label" style="margin-bottom:14px;">What you'll receive every day</div>
+                <div class="section-label" style="margin-bottom:14px;">What you'll receive</div>
 
                 <div class="expect-grid">
                     <div class="expect-item">
@@ -445,21 +445,21 @@
                         <div class="expect-icon">🚨</div>
                         <div class="expect-text">
                             <strong>Risk Flags</strong>
-                            Top 3 portfolio risk signals
+                            The risk flags behind the score
                         </div>
                     </div>
                     <div class="expect-item">
-                        <div class="expect-icon">💬</div>
+                        <div class="expect-icon">📄</div>
                         <div class="expect-text">
-                            <strong>Client Script</strong>
-                            Ready-to-send client message
+                            <strong>Report PDF</strong>
+                            Every holding, with its score
                         </div>
                     </div>
                     <div class="expect-item">
                         <div class="expect-icon">📅</div>
                         <div class="expect-text">
                             <strong>Daily at 8:00 AM</strong>
-                            Before markets open
+                            Your latest upload's score
                         </div>
                     </div>
                 </div>
@@ -475,7 +475,7 @@
         </div>
 
         <div class="footer-note">
-            Questions? Reply to your welcome email — we respond within 2 hours.
+            Questions? Reply to your welcome email.
         </div>
 
     </div>

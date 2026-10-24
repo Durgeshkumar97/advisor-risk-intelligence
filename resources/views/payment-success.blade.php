@@ -31,7 +31,7 @@
 
         <p style="color:var(--ink-3);font-size:1rem;line-height:1.6;">
             Your subscription is now active.<br>
-            Your first daily risk signal will arrive at <strong>4:30 PM</strong> today.
+            Upload a client's holdings file to get your first risk report by email.
         </p>
 
         {{-- CONFIRMATION CARD --}}
@@ -54,8 +54,7 @@
             ">
                 <li>📊 &nbsp;Your dashboard is ready — view your risk score anytime</li>
                 <li>📁 &nbsp;Upload your portfolio to personalise your reports</li>
-                <li>📧 &nbsp;Daily risk signal delivered by email each morning</li>
-                <li>📝 &nbsp;Each report includes a ready-to-use client conversation script</li>
+                <li>📧 &nbsp;An 8 AM email each day with your latest upload's score</li>
                 <li>📧 &nbsp;A confirmation email is on its way to your inbox</li>
             </ul>
 
@@ -84,7 +83,7 @@
             <a href="mailto:support@risksignal.in"
                style="color:inherit;text-decoration:underline;">
                 support@risksignal.in
-            </a> — we respond within 2 hours.
+            </a>.
         </p>
 
     </div>

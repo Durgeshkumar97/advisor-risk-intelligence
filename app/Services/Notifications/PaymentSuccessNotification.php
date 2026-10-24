@@ -30,10 +30,10 @@ class PaymentSuccessNotification extends Notification implements ShouldQueue
             ->greeting("Welcome aboard, {$notifiable->name}!")
             ->line("Your **{$planName}** subscription has been activated.")
             ->line("**Amount Paid:** ₹{$amount}")
-            ->line('You will start receiving your daily risk signal by email each morning.')
+            ->line("Upload a client's holdings file and the risk report PDF is emailed to you once it is processed.")
             ->action('Open Your Dashboard', $dashboardUrl)
-            ->line('Each report includes your portfolio risk score, top risk flags, and a ready-to-use client conversation script.')
-            ->line('If you face any issue, reply to this email — we respond within 2 hours.')
+            ->line('Each report includes the portfolio risk score (0–100), the risk flags behind it, and every holding.')
+            ->line('If you face any issue, reply to this email.')
             ->salutation('— Durgesh Kumar, Founder · RiskSignal');
     }
 }

@@ -28,7 +28,7 @@ class DailyRiskSignalMail extends Mailable
     public function build()
     {
         return $this
-            ->subject('Your Daily Risk Signal')
+            ->subject('Your daily risk score: latest upload')
             ->view('emails.daily-risk-signal');
     }
 }

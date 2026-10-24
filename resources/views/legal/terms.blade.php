@@ -37,9 +37,9 @@
                 <h2>2. Nature of Service</h2>
 
                 <p>
-                    RiskSignal provides AI-assisted portfolio analytics,
+                    RiskSignal provides rules-based portfolio analytics,
                     financial risk monitoring, advisor intelligence tools,
-                    and market analytics infrastructure.
+                    and risk reports generated from uploaded portfolio files.
                 </p>
 
                 <p>

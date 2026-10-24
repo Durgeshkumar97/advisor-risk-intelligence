@@ -26,7 +26,7 @@ class WelcomeSetPasswordNotification extends Notification implements ShouldQueue
             ->line('Your RiskSignal account is ready. Set a password so you can log back in anytime from any device.')
             ->action('Set My Password', $this->setPasswordUrl)
             ->line('This link expires in 24 hours. After that, use "Forgot password" on the login page.')
-            ->line('If you face any issue, reply to this email — we respond within 2 hours.')
+            ->line('If you face any issue, reply to this email.')
             ->salutation('— Durgesh Kumar, Founder · RiskSignal');
     }
 }

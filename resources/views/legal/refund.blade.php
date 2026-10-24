@@ -24,7 +24,7 @@
 
                 <p>
                     RiskSignal provides subscription-based digital analytics,
-                    AI-assisted reporting, portfolio intelligence,
+                    rules-based reporting, portfolio intelligence,
                     and financial risk monitoring services.
                 </p>
 
