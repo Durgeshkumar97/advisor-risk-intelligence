@@ -97,8 +97,12 @@ class AppServiceProvider extends ServiceProvider
         */
 
         View::composer(['home', 'pricing'], function ($view): void {
-            $view->with('trialDays', Plan::where('slug', 'starter')->value('trial_days'));
-        });
+                $view->with('trialDays', cache()->remember(
+                    'plan_starter_trial_days',
+                    3600,
+                    fn() =>
+                    Plan::where('slug', 'starter')->value('trial_days')
+                ));
 
         /*
         |--------------------------------------------------------------------------
