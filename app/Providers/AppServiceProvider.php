@@ -103,7 +103,7 @@ class AppServiceProvider extends ServiceProvider
                     fn() =>
                     Plan::where('slug', 'starter')->value('trial_days')
                 ));
-
+        });
         /*
         |--------------------------------------------------------------------------
         | REPORT FAILED BACKGROUND SCHEDULED COMMANDS
