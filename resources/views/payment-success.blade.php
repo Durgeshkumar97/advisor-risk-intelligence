@@ -24,6 +24,8 @@
             ✓
         </div>
 
+        @auth
+
         {{-- HEADING --}}
         <h1 style="margin-bottom:.75rem;">
             You're in. Welcome to RiskSignal.
@@ -71,6 +73,56 @@
             </a>
 
         </div>
+
+        @else
+
+        {{-- HEADING --}}
+        <h1 style="margin-bottom:.75rem;">
+            Payment received. Thank you.
+        </h1>
+
+        <p style="color:var(--ink-3);font-size:1rem;line-height:1.6;">
+            Your plan is being activated now. This usually takes a minute.
+        </p>
+
+        {{-- HOW TO GET IN --}}
+        <div class="card" style="
+            margin-top:2rem;
+            padding:1.75rem;
+            text-align:left;
+        ">
+
+            <div class="eyebrow" style="margin-bottom:.6rem;">
+                How to sign in
+            </div>
+
+            <ul style="
+                margin-top:.5rem;
+                font-size:.95rem;
+                line-height:1.8;
+                list-style:none;
+                padding:0;
+            ">
+                <li style="margin-bottom:.6rem;">📧 &nbsp;<strong>New to RiskSignal?</strong> Check your inbox for an email with a link to set your password.</li>
+                <li style="margin-bottom:.6rem;">🔑 &nbsp;<strong>Already have an account?</strong> Sign in as usual. The plan is added to your existing account.</li>
+                <li>🧾 &nbsp;A payment confirmation email is on its way.</li>
+            </ul>
+
+        </div>
+
+        {{-- PRIMARY CTA --}}
+        <div style="margin-top:2.5rem;">
+
+            <a
+                href="{{ route('login') }}"
+                class="btn-primary"
+                style="padding:1rem 2rem;font-size:1rem;">
+                Sign in →
+            </a>
+
+        </div>
+
+        @endauth
 
         {{-- TRUST NOTE --}}
         <p style="

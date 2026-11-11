@@ -11,7 +11,8 @@
     $isExpired       = $hasSubscription && $subscription->isExpired();
     $isInGrace       = $hasSubscription && $subscription->isInGracePeriod();
     $isExpiringSoon  = $hasSubscription && $subscription->isExpiringSoon(7);
-    $isCancelled     = $hasSubscription && $subscription->status === 'cancelled';
+    // Cancelled by the user but still inside its period; afterwards it reads as expired.
+    $isCancelled     = $hasSubscription && $subscription->isCancelled() && ! $isExpired;
     $hasRiskScore    = $riskScore !== null;
     $hasFiles        = $recentFiles->isNotEmpty();
 
@@ -66,7 +67,7 @@
             display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
         ">
             <span style="color:#fca5a5;font-weight:600;font-size:.9rem;">
-                ℹ️ Subscription cancelled — you retain access until {{ $subscription->ends_at?->format('d M Y') }}.
+                ℹ️ Subscription cancelled — you retain access until {{ $subscription->accessEndsAt()?->format('d M Y') }}.
             </span>
             <a href="{{ route('pricing') }}" style="
                 padding:.55rem 1.1rem;border-radius:9px;border:1px solid rgba(239,68,68,.3);
@@ -145,7 +146,13 @@
 
                 <div style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
 
-                    @if($isTrial)
+                    @if($isCancelled)
+                        <span style="
+                            display:inline-block;padding:.25rem .7rem;border-radius:999px;
+                            background:rgba(239,68,68,.15);color:#fca5a5;
+                            font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+                        ">Cancelled</span>
+                    @elseif($isTrial)
                         <span style="
                             display:inline-block;padding:.25rem .7rem;border-radius:999px;
                             background:rgba(99,102,241,.15);color:#a5b4fc;
@@ -157,12 +164,6 @@
                             background:rgba(16,185,129,.15);color:#34d399;
                             font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
                         ">Active</span>
-                    @elseif($isCancelled)
-                        <span style="
-                            display:inline-block;padding:.25rem .7rem;border-radius:999px;
-                            background:rgba(239,68,68,.15);color:#fca5a5;
-                            font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-                        ">Cancelled</span>
                     @else
                         <span style="
                             display:inline-block;padding:.25rem .7rem;border-radius:999px;
@@ -226,13 +227,11 @@
                 @endif
 
                 @if($stockRiskFallbackCount > 0)
-                {{-- Transparency note, not a warning: these holdings were
-                     scored with the standard category default because the
-                     enhanced classifier was unreachable at processing time. --}}
+                {{-- Transparency note, not a warning: these stocks got the flat
+                     stock score. ReportProvenance::stockFallbackNote() says
+                     whether no classifier is configured or the call failed. --}}
                 <div class="dashboard-meta" style="font-size:.72rem;margin-top:.5rem;line-height:1.5;opacity:.75;">
-                    Note: {{ $stockRiskFallbackCount }} {{ Str::plural('stock', $stockRiskFallbackCount) }}
-                    scored using standard risk assessment. Enhanced classification
-                    was unavailable at the time of processing.
+                    {{ \App\Services\ReportProvenance::stockFallbackNote($stockRiskFallbackCount) }}
                 </div>
                 @endif
 

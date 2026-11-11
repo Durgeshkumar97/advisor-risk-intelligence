@@ -29,7 +29,9 @@
         $isExpiringSoon = $subscription?->isExpiringSoon(7) ?? false;
         $isExpired = $subscription?->isExpired() ?? false;
         $isInGrace = $subscription?->isInGracePeriod() ?? false;
-        $isCancelled = $subscription?->status === 'cancelled';
+        // Cancelled by the user but still inside its paid/trial period. Once
+        // the period ends the plan reads as expired, like any other.
+        $isCancelled = ($subscription?->isCancelled() ?? false) && ! $isExpired;
         $isTrial = $subscription?->isTrial() ?? false;
         $isActive = $subscription?->isActive() ?? false;
     @endphp
@@ -49,7 +51,7 @@
     @elseif($isCancelled)
 
         <div class="alert alert-error" style="margin-bottom:1.5rem;">
-            ℹ️ Your subscription has been cancelled. You retain access until {{ $subscription->ends_at?->format('d M Y') }}.
+            ℹ️ Your subscription has been cancelled. You retain access until {{ $subscription->accessEndsAt()?->format('d M Y') }}.
         </div>
 
     @elseif($isExpiringSoon)
@@ -90,7 +92,7 @@
             </div>
 
             <div style="text-align:right;">
-                @if($isActive || $isTrial)
+                @if(($isActive || $isTrial) && ! $isCancelled)
                     <span style="
                         display:inline-block;
                         padding:.3rem .9rem;
@@ -151,9 +153,10 @@
 
             <div>
                 <div style="color:var(--ink-3);font-size:.8rem;margin-bottom:.2rem;">
-                    {{ $isCancelled ? 'Access until' : ($isExpired ? 'Expired on' : 'Renews on') }}
+                    {{-- One-off plans, no auto-debit: nothing "renews". --}}
+                    {{ $isExpired ? 'Expired on' : ($isTrial ? 'Trial ends' : 'Access until') }}
                 </div>
-                <div>{{ $subscription?->ends_at?->format('d M Y') ?? '—' }}</div>
+                <div>{{ $subscription?->accessEndsAt()?->format('d M Y') ?? '—' }}</div>
             </div>
 
             <div>
@@ -205,7 +208,7 @@
         @endif
 
         {{-- CANCEL (only if still active/trial) --}}
-        @if($isActive || $isTrial)
+        @if(($isActive || $isTrial) && ! $isCancelled)
 
             <form
                 method="POST"

@@ -233,6 +233,12 @@ class AssetRiskScorer
     |--------------------------------------------------------------------------
     */
 
+    /** The flat score an asset type gets when nothing more specific is known. */
+    public static function categoryDefault(string $assetType): int
+    {
+        return self::BASE_SCORES[$assetType] ?? self::BASE_SCORES['stock'];
+    }
+
     public function level(float $score): string
     {
         return RiskScore::levelFromScore($score);

@@ -109,7 +109,7 @@ Route::post('/payment/verify', [CheckoutController::class, 'success'])
     ->middleware('throttle:10,1')
     ->name('payment.verify');
 
-Route::view('/payment/success', 'payment-success')
+Route::get('/payment/success', [CheckoutController::class, 'received'])
     ->name('payment.success');
 
 /*

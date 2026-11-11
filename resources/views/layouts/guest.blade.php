@@ -20,9 +20,21 @@
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
 
         <div>
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-            </a>
+            {{-- The site's wordmark (see navigation.blade.php), on a dark tile so
+                 its white "Risk" stays legible on this page's light background. --}}
+            <a href="/" aria-label="RiskSignal home" style="
+                display:inline-block;
+                padding:.85rem 1.4rem;
+                border-radius:14px;
+                background:#0b1220;
+                font-size:2rem;
+                font-weight:800;
+                letter-spacing:-1px;
+                line-height:1;
+                color:#f8fafc;
+                text-decoration:none;
+                white-space:nowrap;
+            ">Risk<span style="color:#fbbf24;">Signal</span></a>
         </div>
 
         <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">

@@ -90,6 +90,12 @@ class StockRiskService
      *     unavailable: bool
      * }> Keyed by the trimmed symbol as passed.
      */
+    /** Whether a classifier URL is set at all — empty means not part of this install. */
+    public static function isConfigured(): bool
+    {
+        return trim((string) config('services.risk_service.url')) !== '';
+    }
+
     public function classifyBatch(array $symbols): array
     {
         $requested = collect($symbols)

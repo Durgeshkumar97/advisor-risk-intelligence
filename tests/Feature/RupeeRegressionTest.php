@@ -83,8 +83,9 @@ class RupeeRegressionTest extends TestCase
      *   be2704b0…bd85  fund holdings carry a classification; sub-label "classified by name" (was "by name"), summary line "classified by the fund's name" (was "estimated from")
      *   8eaf5050…609e concentration = 100 × (0.5 × HHI + 0.5 × largest share): score 31 → 40, observation sentence, one added "moderately concentrated" flag row
      *   91cf5527…7132  concentration stated as the holding-level fact: flag row and observation say "The largest holding is 39.4% of portfolio value"
+     *   1be80df5…fa68  holding names bold, not weight 600 (dompdf fell back to Times); quantities without trailing zeros, Indian grouping (1234.5670 → 1,234.567). Money is formatted the Indian way too, but this fixture's amounts are five digits and print the same
      */
-    private const REPORT_SHA256 = '91cf55274966cb56c90721d367cb456f0b2963d457a965e5098ff6ed70e57132';
+    private const REPORT_SHA256 = '1be80df527142e057cefccf07d5d2db3b943e9b47bcd1db1c9f5f0c6badbfa68';
 
     protected function setUp(): void
     {

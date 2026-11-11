@@ -33,8 +33,15 @@ class SubscriptionController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | CANCEL — soft cancel (marks status cancelled, access continues till ends_at)
+    | CANCEL — records the cancellation; access continues to the plan's end
     |--------------------------------------------------------------------------
+    |
+    | Plans are one-off purchases with no auto-debit, and the confirmation
+    | below promises access until the end date. So cancelling sets
+    | cancelled_at and leaves status alone: every gate, the daily email and
+    | subscriptions:expire keep treating the plan as what it is until it ends.
+    | Status 'cancelled' is reserved for the refund webhook, which revokes.
+    |
     */
 
     public function cancel(Request $request): \Illuminate\Http\RedirectResponse
@@ -43,6 +50,7 @@ class SubscriptionController extends Controller
 
         $subscription = Subscription::where('user_id', $user->id)
             ->whereIn('status', ['active', 'trial'])
+            ->whereNull('cancelled_at')
             ->latest()
             ->first();
 
@@ -52,14 +60,14 @@ class SubscriptionController extends Controller
         }
 
         try {
-            $subscription->update(['status' => 'cancelled']);
+            $subscription->update(['cancelled_at' => now()]);
 
             Log::info('Subscription cancelled by user.', [
                 'user_id' => $user->id,
                 'subscription_id' => $subscription->id,
             ]);
 
-            $endDate = ($subscription->ends_at ?? $subscription->trial_ends_at)?->format('d M Y');
+            $endDate = $subscription->accessEndsAt()?->format('d M Y');
 
             return redirect()->route('subscription.index')
                 ->with('success', 'Your subscription has been cancelled. You retain access until '.$endDate.'.');

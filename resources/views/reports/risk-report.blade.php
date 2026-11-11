@@ -126,11 +126,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
 @php $fallbackCount = (int) ($riskScore->meta['stock_risk_fallback_count'] ?? 0); @endphp
 @if($fallbackCount > 0)
 {{-- Transparency note, deliberately styled as muted info rather than a
-     warning: these holdings used the standard category default because the
-     enhanced classifier was unreachable when this report was generated. --}}
+     warning: these stocks got the flat stock score, either because no stock
+     classifier is configured or because the call failed for this run.
+     ReportProvenance::stockFallbackNote() says which. Never hidden. --}}
 <div class="data-note">
-    Note: {{ $fallbackCount }} {{ Str::plural('stock', $fallbackCount) }} scored using standard
-    risk assessment. Enhanced classification was unavailable at the time of processing.
+    {{ \App\Services\ReportProvenance::stockFallbackNote($fallbackCount) }}
 </div>
 @endif
 
@@ -221,13 +221,14 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; ma
             $isStale = $stockRisk && ($stockRisk['stale'] ?? false);
         @endphp
         <tr class="{{ $i % 2 === 1 ? 'even' : '' }}">
-            <td style="font-weight:600;">{{ $asset->name }}@if(!empty($asset->meta['fx_rate'])) <span style="font-weight:400;color:#64748b;">&middot; USD</span>@endif</td>
+            {{-- bold, not 600: DejaVu Sans ships regular and bold only, and dompdf falls back to Times for any other weight. --}}
+            <td style="font-weight:bold;">{{ $asset->name }}@if(!empty($asset->meta['fx_rate'])) <span style="font-weight:400;color:#64748b;">&middot; USD</span>@endif</td>
             <td style="color:#64748b;">{{ $asset->formattedAssetType() }}</td>
             <td style="color:#94a3b8;">{{ $asset->symbol ?: ($asset->isin ?: '—') }}</td>
-            <td style="text-align:right;">{{ $asset->quantity }}</td>
-            <td style="text-align:right;">{{ $asset->current_value !== null ? '₹'.number_format($asset->current_value, 2) : '—' }}@if(($asset->meta['value_basis'] ?? 'market') === 'cost')<br><span style="color:#64748b;">at cost</span>@endif</td>
+            <td style="text-align:right;">{{ $asset->quantity !== null ? \App\Support\IndianFormat::quantity($asset->quantity) : '—' }}</td>
+            <td style="text-align:right;">{{ $asset->current_value !== null ? \App\Support\IndianFormat::money($asset->current_value) : '—' }}@if(($asset->meta['value_basis'] ?? 'market') === 'cost')<br><span style="color:#64748b;">at cost</span>@endif</td>
             <td style="text-align:right;" class="{{ $plPositive ? 'green' : 'red' }}">
-                {{ $asset->profit_loss !== null ? ($plPositive ? '+' : '').'₹'.number_format($asset->profit_loss, 2) : '—' }}
+                {{ $asset->profit_loss !== null ? \App\Support\IndianFormat::money($asset->profit_loss, signed: true) : '—' }}
             </td>
             <td style="text-align:center;font-weight:700;" class="{{ $lvlClass }}">{{ number_format($asset->risk_score, 0) }}<br><span style="font-weight:400;color:#64748b;white-space:nowrap;">{{ \App\Services\ReportProvenance::scoreBasisLabel($asset) }}</span></td>
             <td style="text-align:center;font-weight:700;font-size:8px;" class="{{ $lvlClass }}">

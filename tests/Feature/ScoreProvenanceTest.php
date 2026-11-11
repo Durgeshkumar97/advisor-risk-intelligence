@@ -55,7 +55,7 @@ class ScoreProvenanceTest extends TestCase
     /** The risk-score cell of one holding's row, as text. */
     private function scoreCell(string $html, string $name): string
     {
-        $start = strpos($html, '<td style="font-weight:600;">'.$name);
+        $start = strpos($html, '<td style="font-weight:bold;">'.$name);
         $this->assertNotFalse($start, "No holdings row for {$name}.");
 
         $row = substr($html, $start, strpos($html, '</tr>', $start) - $start);

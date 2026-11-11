@@ -16,6 +16,7 @@ class Subscription extends Model
         'starts_at',
         'ends_at',
         'renewal_at',
+        'cancelled_at',
         'provider',
         'provider_subscription_id',
     ];
@@ -26,6 +27,7 @@ class Subscription extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'renewal_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     /*
@@ -96,6 +98,22 @@ class Subscription extends Model
         }
 
         return $this->ends_at && $this->ends_at->isPast();
+    }
+
+    /**
+     * The user cancelled this plan. Access is unaffected: it runs to the
+     * plan's own end date (see accessEndsAt()). Not to be confused with
+     * status 'cancelled', which the refund webhook sets to revoke access.
+     */
+    public function isCancelled(): bool
+    {
+        return $this->cancelled_at !== null;
+    }
+
+    /** The date access ends: the paid period's end, or the trial's. */
+    public function accessEndsAt(): ?\Illuminate\Support\Carbon
+    {
+        return $this->ends_at ?? $this->trial_ends_at;
     }
 
     public function isInGracePeriod(): bool

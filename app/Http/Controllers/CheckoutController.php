@@ -18,6 +18,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckoutController extends Controller
 {
+    /** Session key: when this browser last completed a payment as a guest. */
+    private const PAYMENT_RECEIVED_KEY = 'payment_received_at';
+
+    /** How long a guest can reload the payment-received page. */
+    private const PAYMENT_RECEIVED_TTL_MINUTES = 30;
+
     /*
     |--------------------------------------------------------------------------
     | SHOW CHECKOUT PAGE
@@ -178,12 +184,44 @@ class CheckoutController extends Controller
                 ? route('dashboard')
                 : route('onboarding');
         } else {
-            $redirect = route('login');
+            // A guest has no account to sign in to yet — it is created or
+            // matched by the fulfilment job. Send them to a page that says the
+            // payment arrived and how to get in, rather than a bare login form.
+            // The marker lets that page show only to someone who just paid.
+            $request->session()->put(self::PAYMENT_RECEIVED_KEY, now()->timestamp);
+            $redirect = route('payment.success');
         }
 
         return response()->json([
             'success' => true,
             'redirect' => $redirect,
         ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT RECEIVED PAGE  (GET /payment/success)
+    |--------------------------------------------------------------------------
+    |
+    | Signed-in buyers are sent to the dashboard by success(), but the page
+    | still works for them. A guest sees it only shortly after paying in this
+    | browser; anyone else is sent to the login page, so the page never tells
+    | a visitor who has not paid that a payment was received.
+    |
+    */
+
+    public function received(Request $request): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+    {
+        if (Auth::check()) {
+            return view('payment-success');
+        }
+
+        $paidAt = (int) $request->session()->get(self::PAYMENT_RECEIVED_KEY, 0);
+
+        if ($paidAt === 0 || now()->timestamp - $paidAt > self::PAYMENT_RECEIVED_TTL_MINUTES * 60) {
+            return redirect()->route('login');
+        }
+
+        return view('payment-success');
     }
 }

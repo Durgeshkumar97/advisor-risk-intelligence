@@ -37,7 +37,11 @@ return [
     ],
 
     'risk_service' => [
-        'url' => env('RISK_SERVICE_URL', 'http://127.0.0.1:8123'),
+        // Empty by default, so "no classifier configured" (the stock-level
+        // note says classification is not part of RiskSignal yet) is told
+        // apart from "configured but unreachable" (it says this run failed).
+        // A local risk_service is typically http://127.0.0.1:8123.
+        'url' => env('RISK_SERVICE_URL', ''),
         // Was 2s: a serial per-symbol loop on the risk_service side meant any
         // portfolio with more than one cold-cache mid/small-cap stock blew this
         // budget and fell back to a flat default for every holding. risk_service

@@ -146,7 +146,7 @@ describe('CheckoutController::success()', function () {
             ->assertJson(['success' => false]);
     });
 
-    it('never auto-logs in based on the payment\'s resolved user, and redirects to login', function () {
+    it('never auto-logs in based on the payment\'s resolved user, and redirects to the payment-received page', function () {
         // Simulates the fulfilment job (ProcessSuccessfulPayment, faked here via
         // Queue::fake()) having already matched this payment's email to an
         // EXISTING account by the time this check runs. The browser completing
@@ -165,9 +165,55 @@ describe('CheckoutController::success()', function () {
             'razorpay_signature' => 'sig_user_001',
         ])
             ->assertOk()
-            ->assertJson(['success' => true, 'redirect' => route('login')]);
+            ->assertJson(['success' => true, 'redirect' => route('payment.success')]);
 
         $this->assertGuest();
+    });
+
+    it('shows a guest who just paid a payment-received page that says how to get in — not a bare login form', function () {
+        $payment = pendingPayment($this->plan, orderId: 'order_guest_landing');
+
+        $this->mock(RazorpayService::class)
+            ->shouldReceive('verifySignature')->once()->andReturn(true);
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_guest_landing',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_guest_landing',
+        ])->assertJson(['success' => true, 'redirect' => route('payment.success')]);
+
+        $this->get(route('payment.success'))
+            ->assertOk()
+            ->assertSee('Payment received')
+            ->assertSee('set your password')
+            ->assertSee(route('login'), false)
+            // Activation is still running in the background at this point.
+            ->assertDontSee('Your subscription is now active');
+
+        $this->assertGuest();
+    });
+
+    it('does not tell a guest who has not just paid that a payment was received', function () {
+        $this->get(route('payment.success'))->assertRedirect(route('login'));
+    });
+
+    it('lets a guest reload the payment-received page for 30 minutes, then sends them to login', function () {
+        $payment = pendingPayment($this->plan, orderId: 'order_guest_reload');
+
+        $this->mock(RazorpayService::class)
+            ->shouldReceive('verifySignature')->once()->andReturn(true);
+
+        $this->postJson(route('payment.verify'), [
+            'razorpay_payment_id' => 'pay_guest_reload',
+            'razorpay_order_id' => $payment->order_id,
+            'razorpay_signature' => 'sig_guest_reload',
+        ])->assertOk();
+
+        $this->get(route('payment.success'))->assertOk();
+        $this->travel(29)->minutes();
+        $this->get(route('payment.success'))->assertOk()->assertSee('Payment received');
+        $this->travel(2)->minutes();
+        $this->get(route('payment.success'))->assertRedirect(route('login'));
     });
 
     it('redirects an already-authenticated buyer straight to their dashboard', function () {

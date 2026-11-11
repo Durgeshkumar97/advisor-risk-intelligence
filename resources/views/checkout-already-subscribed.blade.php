@@ -57,7 +57,8 @@
 
             @if($subscription->ends_at)
             <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--paper-3);font-size:.875rem;color:var(--ink-3);">
-                Renews / expires: <strong style="color:inherit;">{{ $subscription->ends_at->format('d M Y') }}</strong>
+                {{-- One-off plan, no auto-debit: it does not renew by itself. --}}
+                Access until: <strong style="color:inherit;">{{ $subscription->ends_at->format('d M Y') }}</strong>
                 &nbsp;·&nbsp;
                 {{ $subscription->daysRemaining() }} days remaining
             </div>

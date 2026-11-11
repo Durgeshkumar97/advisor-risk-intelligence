@@ -130,6 +130,32 @@ class ReportProvenance
     }
 
     /**
+     * The note shown when stocks fell back to the flat stock score, or null
+     * when none did. Never hidden; it states which of two things happened:
+     * no stock classifier is configured for this install, or one is and the
+     * call failed for this run. Read at render time — the PDF is rendered in
+     * the same job that scored it, so the two agree.
+     */
+    public static function stockFallbackNote(int $fallbackCount): ?string
+    {
+        if ($fallbackCount <= 0) {
+            return null;
+        }
+
+        $one = $fallbackCount === 1;
+        $stocks = $fallbackCount.' '.($one ? 'stock' : 'stocks');
+        $default = AssetRiskScorer::categoryDefault('stock');
+
+        if (! StockRiskService::isConfigured()) {
+            return "Note: {$stocks} ".($one ? 'is' : 'are')." scored by asset type (stock = {$default}), not individually. "
+                .'Stock-by-stock classification is not yet part of RiskSignal.';
+        }
+
+        return "Note: {$stocks} could not be classified individually this time and "
+            .($one ? 'was' : 'were')." scored by asset type (stock = {$default}).";
+    }
+
+    /**
      * "Risk scores: 2 from market data, 1 from the fund's AMFI category, 1
      * classified by the fund's name, 3 by asset category." A count of zero is
      * left out; the whole line is left out when every score is from market data.
